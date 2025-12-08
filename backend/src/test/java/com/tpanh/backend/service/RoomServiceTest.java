@@ -8,16 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.RoomUpdateRequest;
 import com.tpanh.backend.entity.Building;
@@ -26,6 +16,14 @@ import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.RoomRepository;
+import java.util.Arrays;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class RoomServiceTest {
@@ -173,8 +171,7 @@ class RoomServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(
-                        AppException.class, () -> roomService.updateRoom(ROOM_ID, request));
+                assertThrows(AppException.class, () -> roomService.updateRoom(ROOM_ID, request));
         assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
         verify(roomRepository).findById(ROOM_ID);
         verify(roomRepository, never()).save(any(Room.class));
@@ -217,8 +214,7 @@ class RoomServiceTest {
         room2.setStatus(STATUS_OCCUPIED);
 
         when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
-        when(roomRepository.findByBuildingId(BUILDING_ID))
-                .thenReturn(Arrays.asList(room, room2));
+        when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Arrays.asList(room, room2));
 
         // When
         final var response = roomService.getRoomsByBuildingId(BUILDING_ID);
@@ -238,8 +234,7 @@ class RoomServiceTest {
         // When & Then
         final var exception =
                 assertThrows(
-                        AppException.class,
-                        () -> roomService.getRoomsByBuildingId(BUILDING_ID));
+                        AppException.class, () -> roomService.getRoomsByBuildingId(BUILDING_ID));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
         verify(buildingRepository).findById(BUILDING_ID);
         verify(roomRepository, never()).findByBuildingId(any(Integer.class));

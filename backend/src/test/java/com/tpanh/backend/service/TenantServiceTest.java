@@ -8,17 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.entity.Tenant;
@@ -26,6 +15,15 @@ import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class TenantServiceTest {
@@ -234,8 +232,7 @@ class TenantServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(
-                        AppException.class, () -> tenantService.getTenantsByRoomId(ROOM_ID));
+                assertThrows(AppException.class, () -> tenantService.getTenantsByRoomId(ROOM_ID));
         assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
         verify(roomRepository).findById(ROOM_ID);
         verify(tenantRepository, never()).findByRoomIdOrderByStartDateDesc(any(Integer.class));
@@ -267,8 +264,7 @@ class TenantServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(
-                        AppException.class, () -> tenantService.endTenantContract(TENANT_ID));
+                assertThrows(AppException.class, () -> tenantService.endTenantContract(TENANT_ID));
         assertEquals(ErrorCode.TENANT_CONTRACT_ALREADY_ENDED, exception.getErrorCode());
         verify(tenantRepository).findById(TENANT_ID);
         verify(tenantRepository, never()).save(any(Tenant.class));
@@ -319,8 +315,7 @@ class TenantServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(
-                        AppException.class, () -> tenantService.endTenantContract(TENANT_ID));
+                assertThrows(AppException.class, () -> tenantService.endTenantContract(TENANT_ID));
         assertEquals(ErrorCode.TENANT_NOT_FOUND, exception.getErrorCode());
         verify(tenantRepository).findById(TENANT_ID);
         verify(tenantRepository, never()).save(any(Tenant.class));

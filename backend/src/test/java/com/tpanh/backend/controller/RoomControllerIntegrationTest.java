@@ -7,6 +7,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpanh.backend.dto.AuthenticationRequest;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomUpdateRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.WaterCalcMethod;
+import com.tpanh.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,16 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tpanh.backend.dto.AuthenticationRequest;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.RoomUpdateRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.WaterCalcMethod;
-import com.tpanh.backend.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
