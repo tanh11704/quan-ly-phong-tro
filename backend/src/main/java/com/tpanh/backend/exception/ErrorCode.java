@@ -11,6 +11,14 @@ public enum ErrorCode {
     INVALID_KEY(1001, "Mã lỗi không hợp lệ"),
     INVALID_BUILDING_ID(1002, "ID tòa nhà không được để trống"),
     INVALID_PERIOD(1003, "Kỳ thanh toán không được để trống"),
+    BUILDING_NAME_REQUIRED(1004, "Tên tòa nhà không được để trống"),
+    WATER_CALC_METHOD_REQUIRED(1005, "Phương pháp tính nước không được để trống"),
+    ELEC_PRICE_INVALID(1006, "Đơn giá điện không hợp lệ"),
+    WATER_PRICE_INVALID(1007, "Đơn giá nước không hợp lệ"),
+    BUILDING_ID_REQUIRED(1008, "ID tòa nhà không được để trống"),
+    ROOM_NO_REQUIRED(1009, "Số phòng không được để trống"),
+    PRICE_REQUIRED(1010, "Giá thuê không được để trống"),
+    PRICE_INVALID(1011, "Giá thuê không hợp lệ"),
 
     // Nhóm lỗi Nghiệp vụ (20xx) - Business Logic
     BUILDING_NOT_FOUND(2001, "Không tìm thấy tòa nhà này trong hệ thống"),
