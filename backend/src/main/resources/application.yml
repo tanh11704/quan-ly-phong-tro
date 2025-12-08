@@ -11,3 +11,9 @@ spring:
 
 app:
   api-prefix: /api/v1
+  jwt:
+    secret: your-256-bit-secret-key-change-in-production-minimum-32-chars
+  admin:
+    username: admin
+    password: admin123
+    full-name: Quản trị viên hệ thống

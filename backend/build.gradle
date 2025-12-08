@@ -3,7 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '4.0.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'checkstyle'
-	id 'com.diffplug.spotless' version '6.25.0'
+	id 'com.diffplug.spotless' version '8.1.0'
 }
 
 group = 'com.tpanh'
@@ -35,6 +35,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'com.nimbusds:nimbus-jose-jwt:9.37.3'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -48,7 +49,7 @@ dependencies {
 }
 
 checkstyle {
-    toolVersion = "10.12.5" 
+    toolVersion = "12.2.0" 
     
     configFile = file("${project.projectDir}/config/checkstyle/checkstyle.xml")
     

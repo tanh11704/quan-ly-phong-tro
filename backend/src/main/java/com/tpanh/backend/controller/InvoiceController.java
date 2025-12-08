@@ -38,7 +38,7 @@ public class InvoiceController {
 
         return ApiResponse.<List<InvoiceResponse>>builder()
                 .result(result)
-                .message("Invoices created successfully")
+                .message("Tạo hóa đơn thành công")
                 .build();
     }
 }

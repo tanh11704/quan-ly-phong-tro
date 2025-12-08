@@ -16,6 +16,17 @@ public enum ErrorCode {
     BUILDING_NOT_FOUND(2001, "Không tìm thấy tòa nhà này trong hệ thống"),
     ROOM_NOT_FOUND(2002, "Không tìm thấy phòng trọ"),
     INVOICE_EXISTED(2003, "Hóa đơn cho phòng này trong tháng đã tồn tại"),
+
+    // Nhóm lỗi Xác thực (30xx) - Authentication
+    USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),
+    PASSWORD_REQUIRED(3002, "Mật khẩu không được để trống"),
+    TOKEN_REQUIRED(3003, "Token không được để trống"),
+    ZALO_TOKEN_REQUIRED(3004, "Token Zalo không được để trống"),
+    INVALID_CREDENTIALS(3005, "Tên đăng nhập hoặc mật khẩu không đúng"),
+    USER_NOT_FOUND(3006, "Không tìm thấy người dùng"),
+    USER_INACTIVE(3007, "Tài khoản đã bị vô hiệu hóa"),
+    ZALO_AUTH_FAILED(3008, "Xác thực với Zalo thất bại"),
+    INVALID_TOKEN(3009, "Token không hợp lệ hoặc đã hết hạn"),
     ;
 
     ErrorCode(final int code, final String message) {
