@@ -1,12 +1,14 @@
 package com.tpanh.backend.exception;
 
-import com.tpanh.backend.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.tpanh.backend.dto.ApiResponse;
+
 @ControllerAdvice
+@io.swagger.v3.oas.annotations.Hidden
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = AppException.class)
@@ -39,11 +41,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
-    @ExceptionHandler(value = Exception.class)
+    @ExceptionHandler(value = RuntimeException.class)
     ResponseEntity<ApiResponse<Void>> handlingRuntimeException(final RuntimeException exception) {
         final ApiResponse<Void> apiResponse = new ApiResponse<>();
         apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        apiResponse.setMessage(exception.getMessage());
+        apiResponse.setMessage(
+                exception.getMessage() != null
+                        ? exception.getMessage()
+                        : ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(value = Exception.class)
+    ResponseEntity<ApiResponse<Void>> handlingException(final Exception exception) {
+        final ApiResponse<Void> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
+        apiResponse.setMessage(
+                exception.getMessage() != null
+                        ? exception.getMessage()
+                        : ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+        return ResponseEntity.internalServerError().body(apiResponse);
     }
 }

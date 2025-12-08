@@ -1,9 +1,12 @@
 package com.tpanh.backend.config;
 
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.servers.Server;
-import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
@@ -16,4 +19,13 @@ import org.springframework.context.annotation.Configuration;
         servers = {
             @Server(url = "http://localhost:8080", description = "Local Development Server")
         })
-public class OpenApiConfig {}
+public class OpenApiConfig {
+    @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("public")
+                .pathsToMatch("/api/**")
+                .packagesToScan("com.tpanh.backend.controller")
+                .build();
+    }
+}

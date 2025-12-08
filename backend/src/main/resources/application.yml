@@ -17,3 +17,13 @@ app:
     username: admin
     password: admin123
     full-name: Quản trị viên hệ thống
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  packages-to-scan: com.tpanh.backend.controller
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
