@@ -1,7 +1,10 @@
 package com.tpanh.backend.entity;
 
+import com.tpanh.backend.enums.WaterCalcMethod;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -31,6 +34,7 @@ public class Building {
     @Column(name = "water_unit_price")
     private Integer waterUnitPrice;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "water_calc_method")
-    private String waterCalcMethod; // 'BY_METER' hoặc 'PER_CAPITA'
+    private WaterCalcMethod waterCalcMethod;
 }

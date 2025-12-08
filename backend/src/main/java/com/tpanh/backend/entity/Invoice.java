@@ -1,10 +1,6 @@
 package com.tpanh.backend.entity;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.tpanh.backend.enums.InvoiceStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Data;
 
 @Entity
@@ -67,7 +65,8 @@ public class Invoice {
     @PrePersist // Tự động gán ngày tạo trước khi lưu vào DB
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (status == null)
+        if (status == null) {
             status = InvoiceStatus.DRAFT;
+        }
     }
 }

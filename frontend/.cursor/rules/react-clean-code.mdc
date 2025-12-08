@@ -1,0 +1,56 @@
+---
+description: Tiêu chuẩn Clean Code, Composition và Performance cho ReactJS
+globs: frontend/\*_/_.{ts,tsx}
+alwaysApply: true
+---
+
+# ReactJS - Component Design & Clean Code
+
+## 1. Composition & SOLID in React
+
+- **SRP (Components):** Một Component không nên quá 150-200 dòng. Nếu quá dài, hãy tách nhỏ thành sub-components.
+  - _Ví dụ:_ Thay vì một `UserPage` khổng lồ, hãy tách thành `UserInfo`, `UserOrders`, `UserSettings`.
+- **Composition over Inheritance:** Sử dụng `children` prop hoặc render props thay vì cố gắng extend component.
+- **ISP (Interface Segregation):** Props interface chỉ nên chứa những gì component thực sự cần. Tránh truyền cả object khổng lồ nếu chỉ dùng 1 field.
+
+## 2. DRY & Hooks Pattern
+
+- **Logic Extraction:** Nếu logic sử dụng `useState` và `useEffect` xuất hiện lặp lại, BẮT BUỘC tách ra Custom Hook.
+  - _Ví dụ:_ Logic fetch data, logic xử lý form, logic toggle modal -> `useFetch`, `useForm`, `useModal`.
+- **Utility Functions:** Các hàm xử lý string, date, format tiền tệ phải tách ra folder `utils/`, không viết inline trong component.
+
+## 3. Immutability & State
+
+- **Strict Immutability:** Không bao giờ dùng `push`, `pop`, `splice` trực tiếp trên state array. Dùng `filter`, `map`, spread operator `[...]`.
+- **Derived State:** Tránh lưu thừa state. Nếu `fullName` có thể tính từ `firstName` + `lastName`, đừng tạo state `fullName`. Tính toán nó ngay trong render (hoặc dùng `useMemo`).
+
+## 4. Code Quality & Formatting
+
+- **Early Return:** Tránh tam giác tử thần (deep nesting) trong JSX bằng cách return null hoặc Loading state sớm.
+- **Naming Convention:**
+  - Boolean props nên bắt đầu bằng `is`, `has`, `should` (ví dụ: `isLoading`, `hasError`).
+  - Handler functions nên bắt đầu bằng `handle` (ví dụ: `handleSubmit`), props truyền xuống là `on` (ví dụ: `onSubmit`).
+
+## Example: Clean Component
+
+```tsx
+// Props Interface rõ ràng
+interface UserCardProps {
+  final user: User; // Type chính xác
+  final onEdit: (id: string) => void;
+}
+
+export const UserCard = ({ user, onEdit }: UserCardProps) => {
+  // DRY: Logic format tách ra util
+  final formattedDate = formatDate(user.createdAt);
+
+  // KISS: Render đơn giản
+  return (
+    <div className="card">
+      <h3>{user.name}</h3>
+      <p>Joined: {formattedDate}</p>
+      <Button onClick={() => onEdit(user.id)}>Edit</Button>
+    </div>
+  );
+};
+```

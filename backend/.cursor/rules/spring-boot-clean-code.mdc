@@ -1,0 +1,84 @@
+---
+description: Tiêu chuẩn Clean Code, SOLID và Immutability cho Spring Boot
+globs: backend/**/*.java
+alwaysApply: true
+---
+
+# Java Spring Boot - Clean Code & Architecture Standards
+
+## 1. Core Principles (SOLID, DRY, KISS)
+
+- **SRP (Single Responsibility):** Mỗi Class/Method chỉ làm 1 việc duy nhất.
+  - _Vi phạm:_ Controller chứa logic xử lý data -> _Fix:_ Chuyển logic xuống Service.
+  - _Vi phạm:_ Service chứa logic validate phức tạp -> _Fix:_ Tách ra Validator Class riêng hoặc custom Annotation.
+- **OCP (Open/Closed):** Code nên mở để mở rộng nhưng đóng để sửa đổi. Sử dụng Strategy Pattern hoặc Polymorphism thay vì `if/else` hoặc `switch/case` phức tạp.
+- **DRY (Don't Repeat Yourself):**
+  - Không copy-paste code. Nếu logic lặp lại > 2 lần, tách thành Private Method hoặc Utility Class.
+  - Sử dụng Abstract Class hoặc Generic cho các logic chung.
+- **KISS (Keep It Simple, Stupid):**
+  - Ưu tiên code dễ đọc hơn code "thông minh" nhưng khó hiểu.
+  - Tránh nested loops/conditions quá sâu (Guard Clauses).
+
+## 2. Immutability & Safety (`final` keyword)
+
+- **Default to Final:**
+  - Luôn khai báo biến cục bộ (local variables), tham số (parameters), và thuộc tính (class fields) là `final` trừ khi bắt buộc phải thay đổi (mutable).
+  - Ví dụ: `final var user = userRepository.findById(id);`
+- **Constructor Injection:**
+  - Tất cả các dependencies trong Service/Controller phải là `private final`.
+  - Sử dụng `@RequiredArgsConstructor` của Lombok để tự động sinh constructor.
+
+## 3. Formatting & Style
+
+- **No Magic Numbers/Strings:** Thay thế các số/chuỗi cứng bằng `public static final` constants hoặc Enum.
+- **Guard Clauses:** Sử dụng Guard Clauses để giảm indentation (thụt đầu dòng).
+  - _Bad:_
+    ```java
+    if (user != null) {
+        if (user.isActive()) {
+            // logic
+        }
+    }
+    ```
+  - _Good:_
+    ```java
+    if (user == null || !user.isActive()) return;
+    // logic
+    ```
+
+## 4. JPA & Performance
+
+- **Avoid N+1:** Tuyệt đối tránh N+1 Queries. Bắt buộc dùng `JOIN FETCH` hoặc `@EntityGraph`.
+- **DTO Projection:** Chỉ query các trường cần thiết, tránh `SELECT *` khi không dùng hết dữ liệu entity.
+
+## Example: Applying Rules
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserService { // SRP: Chỉ xử lý logic User
+    private final UserRepository userRepository; // Immutability
+
+    public UserDTO updateUser(final UUID id, final UserUpdateDTO req) { // final params
+        final var user = userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // KISS: Update logic đơn giản, dễ đọc
+        if (req.getEmail() != null) {
+            user.setEmail(req.getEmail());
+        }
+
+        return userMapper.toDTO(userRepository.save(user));
+    }
+}
+```
+
+## 5. Logging & Observability
+
+- **Structured Logging:** Log phải có ngữ cảnh (userId, orderId), không log string vô nghĩa.
+- **Log Levels:**
+  - `ERROR`: Lỗi hệ thống, cần fix ngay.
+  - `WARN`: Logic sai nhưng hệ thống vẫn chạy (VD: Login sai pass 5 lần).
+  - `INFO`: Business events (VD: User A vừa đặt hàng B).
+  - `DEBUG`: Chỉ bật ở môi trường Dev.
+- **No System.out:** Tuyệt đối cấm `System.out.println()`. Dùng `Slf4j`.

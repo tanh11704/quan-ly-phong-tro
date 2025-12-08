@@ -1,0 +1,33 @@
+---
+description: Quy tắc chung về Engineering Culture, Git và Code Review
+globs: **/*
+alwaysApply: true
+---
+
+# General Engineering Standards
+
+## 1. The Boy Scout Rule
+
+- **"Always leave the code cleaner than you found it."**
+- Nếu bạn sửa một file và thấy code cũ viết xấu (vi phạm DRY/KISS), hãy refactor nhẹ nhàng (nếu trong phạm vi an toàn) ngay trong PR đó.
+
+## 2. YAGNI (You Aren't Gonna Need It)
+
+- Không viết code cho tương lai. Chỉ implement đúng những gì feature requirement yêu cầu hiện tại.
+- Không tạo abstract class, generic interface trừ khi đã có ít nhất 2 trường hợp sử dụng cụ thể.
+
+## 3. Clean Commits & Git
+
+- **Atomic Commits:** Mỗi commit chỉ giải quyết 1 vấn đề (1 feature hoặc 1 bug fix). Không gộp refactor code và fix bug vào chung 1 commit.
+- **No Dead Code:** Xóa code comment (code bị rào lại), xóa import thừa, xóa biến không dùng trước khi commit.
+
+## 4. Error Handling Philosophy
+
+- **Fail Fast:** Báo lỗi ngay lập tức khi input không hợp lệ (ngay đầu hàm), không để code chạy sai trạng thái rồi mới báo lỗi sau.
+- **Meaningful Errors:** Log lỗi phải có context (userId nào lỗi? input là gì?). Không bao giờ `catch (Exception e) {}` (swallow exception).
+
+## Database Management
+
+- **Migration Scripts:** Tuyệt đối không sửa DB bằng tay (PgAdmin/DBeaver) trên môi trường chung.
+- **Immutable Scripts:** File migration đã chạy rồi thì không được sửa nội dung. Nếu muốn sửa, phải tạo file version mới (V2\_\_...).
+- **Tools:** Bắt buộc sử dụng Flyway hoặc Liquibase.

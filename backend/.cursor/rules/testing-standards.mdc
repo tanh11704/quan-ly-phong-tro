@@ -1,0 +1,32 @@
+---
+description: Quy chuẩn Testing (Unit & Integration)
+globs: backend/src/test/**/*.java
+alwaysApply: true
+---
+
+# Testing Standards
+
+## 1. Hierarchy
+
+- **Unit Test:** Dùng `Mockito` test logic Service. Không load Spring Context.
+- **Integration Test:** Dùng `@SpringBootTest` kết hợp **Testcontainers** để chạy Postgres thật trong Docker. Không dùng H2 database cho Integration Test.
+
+## 2. Data Cleanliness
+
+- Dùng `@Transactional` trên method test để tự rollback dữ liệu sau khi chạy xong.
+
+## 3. Example Testcontainer
+
+```java
+@Testcontainers
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class UserIntegrationTest {
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+    }
+}
+```

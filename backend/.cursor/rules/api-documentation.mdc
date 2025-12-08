@@ -1,0 +1,30 @@
+---
+description: Quy chuẩn về API Documentation và Contract
+globs: backend/**/*Controller.java, backend/**/*DTO.java
+alwaysApply: true
+---
+
+# API Documentation Standards
+
+## 1. OpenAPI / Swagger
+
+- **Bắt buộc:** Mọi Controller public phải có annotation `@Operation` mô tả chức năng.
+- **Schema:** Mọi DTO request/response phải có `@Schema` mô tả ví dụ (example) cho từng trường.
+- **Không Hardcode:** Sử dụng constants cho các message lỗi hoặc success.
+
+## 2. API Versioning
+
+- URL bắt buộc phải có version: `/api/v1/...`
+- Không được thay đổi cấu trúc response của version cũ (Breaking Changes). Nếu đổi, phải lên `/api/v2/`.
+
+## Example
+
+```java
+@Operation(summary = "Get User Details", description = "Returns user data based on ID")
+@ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "Found the user"),
+    @ApiResponse(responseCode = "404", description = "User not found")
+})
+@GetMapping("/{id}")
+public ResponseEntity<UserDTO> getUser(@PathVariable UUID id) { ... }
+```

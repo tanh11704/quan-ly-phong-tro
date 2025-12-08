@@ -1,0 +1,74 @@
+---
+description: Quy chuẩn kiến trúc React: API, State, Performance và Env
+globs: frontend/src/**/*.{ts,tsx}
+alwaysApply: true
+---
+
+# React Architecture Standards
+
+## 1. API & Data Fetching (TanStack Query)
+
+- **No useEffect for Data Fetching:** Tuyệt đối không dùng `useEffect` để gọi API lấy dữ liệu.
+- **Use Query Hooks:** Sử dụng `useQuery` (cho GET) và `useMutation` (cho POST/PUT/DELETE).
+- **Stale Time:** Cấu hình `staleTime` hợp lý (VD: 5 phút) để tránh gọi API thừa thãi.
+- **Separation:** Tách logic gọi API ra file riêng trong folder `services/api/`, không gọi trực tiếp trong Component.
+
+## 2. Runtime Validation (Zod)
+
+- **Trust No One:** Không tin tưởng response từ Backend.
+- **Schema Validation:** Định nghĩa Zod Schema cho mọi API Response. Nếu API trả sai cấu trúc, Zod sẽ báo lỗi ngay lập tức thay vì để App crash ngầm.
+  ```ts
+  const UserSchema = z.object({
+    id: z.string().uuid(),
+    email: z.string().email(),
+    age: z.number().optional(),
+  });
+  ```
+
+## 3. Environment Variables
+
+- **No Hardcoding:** Không bao giờ hardcode URL (VD: localhost:8080).
+- **Use Vite Env:** Sử dụng import.meta.env.VITE_API_URL.
+- **Type Safety:** Tạo file vite-env.d.ts để TypeScript nhận diện các biến môi trường.
+
+## 4. Performance & Routing
+
+- **Lazy Loading:** Các trang (Pages) trong React Router phải được lazy() load.
+
+```ts
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+```
+
+- **Component Stability:** Các object/array config tĩnh phải khai báo bên ngoài Component hoặc dùng useMemo để tránh re-render.
+
+## 5. UI & Styling (Tailwind/CSS Modules)
+
+- **Avoid Inline Styles:** Hạn chế tối đa style={{ ... }}.
+- **Utility First:** Ưu tiên sử dụng Tailwind CSS class. Nếu style quá phức tạp, tách ra component nhỏ hoặc dùng @apply.
+
+---
+
+### Cập nhật cấu trúc thư mục Frontend chuẩn
+
+Để hỗ trợ các rule trên, cấu trúc thư mục `src/` của bạn nên được tổ chức lại như sau (AI sẽ hiểu code tốt hơn với cấu trúc này):
+
+```text
+frontend/src/
+├── assets/
+├── components/         # UI Components dùng chung (Button, Input)
+│   └── ui/             # Các component atomic
+├── config/             # Cấu hình Env, Constants
+├── features/           # QUAN TRỌNG: Chia theo tính năng
+│   ├── auth/           # Login, Register
+│   │   ├── api/        # API calls riêng cho Auth
+│   │   ├── components/ # Component riêng cho Auth
+│   │   └── types/      # Zod schemas & Types
+│   └── product/
+├── hooks/              # Global hooks (useTheme, useDebounce)
+├── layouts/            # MainLayout, AuthLayout
+├── lib/                # Cấu hình library (axios client, query client)
+├── pages/              # Các trang chính (được lazy load)
+├── routes/             # Cấu hình React Router
+├── stores/             # Global State (Zustand/Redux)
+└── utils/              # Hàm tiện ích thuần túy (formatDate)
+```
