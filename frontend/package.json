@@ -20,11 +20,17 @@
     "deploy": "zmp deploy"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.11.1",
+    "@tanstack/react-query": "^5.90.12",
+    "axios": "^1.13.2",
     "jotai": "^2.12.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.10.1",
     "zmp-sdk": "latest",
-    "zmp-ui": "latest"
+    "zmp-ui": "latest",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
