@@ -19,11 +19,15 @@ public enum ErrorCode {
     ROOM_NO_REQUIRED(1009, "Số phòng không được để trống"),
     PRICE_REQUIRED(1010, "Giá thuê không được để trống"),
     PRICE_INVALID(1011, "Giá thuê không hợp lệ"),
+    ROOM_ID_REQUIRED(1012, "ID phòng không được để trống"),
+    TENANT_NAME_REQUIRED(1013, "Tên khách thuê không được để trống"),
 
     // Nhóm lỗi Nghiệp vụ (20xx) - Business Logic
     BUILDING_NOT_FOUND(2001, "Không tìm thấy tòa nhà này trong hệ thống"),
     ROOM_NOT_FOUND(2002, "Không tìm thấy phòng trọ"),
     INVOICE_EXISTED(2003, "Hóa đơn cho phòng này trong tháng đã tồn tại"),
+    TENANT_NOT_FOUND(2004, "Không tìm thấy khách thuê"),
+    TENANT_CONTRACT_ALREADY_ENDED(2005, "Hợp đồng đã được kết thúc trước đó"),
 
     // Nhóm lỗi Xác thực (30xx) - Authentication
     USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),
