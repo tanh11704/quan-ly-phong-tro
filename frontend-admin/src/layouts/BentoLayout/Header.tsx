@@ -1,14 +1,28 @@
-import { BellOutlined, SearchOutlined } from '@ant-design/icons';
+import { BellOutlined, MenuOutlined, SearchOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import React from 'react';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="h-12 mb-2 bg-white rounded-full px-4 flex items-center justify-between shadow-sm"
+      className="h-12 mb-2 bg-white rounded-full md:px-4 px-3 flex items-center justify-between shadow-sm md:mx-0 mx-3 mt-3 md:mt-0"
     >
+      {/* Mobile Menu Button */}
+      {onMenuClick && (
+        <button
+          onClick={onMenuClick}
+          className="md:hidden w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-full transition-colors mr-2"
+        >
+          <MenuOutlined style={{ fontSize: 18, color: '#475569' }} />
+        </button>
+      )}
+
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
         <div className="relative">

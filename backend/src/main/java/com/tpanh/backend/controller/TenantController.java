@@ -73,7 +73,7 @@ public class TenantController {
                         description = "Không tìm thấy khách thuê")
             })
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ApiResponse<TenantResponse> getTenantById(@PathVariable final Integer id) {
         final var response = tenantService.getTenantById(id);
         return ApiResponse.<TenantResponse>builder()

@@ -12,7 +12,7 @@ export const QuickActionsCard: React.FC<QuickActionsCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="col-span-2 border border-slate-100 rounded-2xl p-4 hover:shadow-lg transition-shadow flex flex-col h-full"
+      className="col-span-1 sm:col-span-2 border border-slate-100 rounded-2xl p-4 hover:shadow-lg transition-shadow flex flex-col h-full"
     >
       <h3 className="text-xs font-bold text-slate-900 mb-2">{title}</h3>
       <div className="grid grid-cols-2 gap-2 flex-1">

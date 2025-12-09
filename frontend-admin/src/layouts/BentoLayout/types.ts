@@ -1,7 +1,10 @@
+import { Role } from '../../features/auth/types/auth';
+
 export interface MenuItem {
   key: string;
   icon: React.ReactNode;
   label: string;
+  allowedRoles?: Role[]; // Nếu không có, tất cả role đều được phép
 }
 
 export interface StatCardProps {

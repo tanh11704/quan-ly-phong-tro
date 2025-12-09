@@ -60,25 +60,28 @@ export const ChartCard: React.FC<ChartCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={`border border-slate-100 rounded-2xl p-4 hover:shadow-lg transition-shadow flex flex-col h-full ${className}`}
+      className={`border border-slate-100 rounded-2xl p-3 md:p-4 hover:shadow-lg transition-shadow flex flex-col min-h-[300px] md:min-h-0 md:h-full ${className}`}
     >
       <h3 className="text-sm font-bold text-slate-900 mb-3">{title}</h3>
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-[250px] md:min-h-0">
         {/* Y-axis and Chart Area */}
-        <div className="flex-1 flex gap-4 relative">
+        <div className="flex-1 flex gap-2 md:gap-4 relative min-h-0">
           {/* Y-axis */}
-          <div className="flex flex-col justify-between pb-2 pr-1 min-w-[60px]">
+          <div className="flex flex-col justify-between pb-2 pr-1 min-w-[50px] md:min-w-[60px]">
             {yAxisTicks.map((tick, i) => (
-              <span key={i} className="text-[10px] text-slate-500 font-medium whitespace-nowrap">
+              <span
+                key={i}
+                className="text-[9px] md:text-[10px] text-slate-500 font-medium whitespace-nowrap"
+              >
                 {formatValue(tick)}
               </span>
             ))}
           </div>
 
-          {/* Chart Bars */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <div className="flex-1 flex items-end justify-around gap-1 relative pb-2 min-h-0">
+          {/* Chart Bars - Cho phép scroll ngang trên mobile */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-x-auto">
+            <div className="flex-1 flex items-end justify-around gap-1 relative pb-2 min-h-[200px] md:min-h-0 md:min-w-0 min-w-[600px] md:min-w-0">
               {/* Grid lines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                 {yAxisTicks.map((_, i) => (
@@ -95,7 +98,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 return (
                   <div
                     key={i}
-                    className="flex-1 flex items-end justify-center group relative min-w-0"
+                    className="flex-1 flex items-end justify-center group relative min-w-[40px] md:min-w-0"
                     onMouseEnter={() => setHoveredIndex(i)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     style={{ height: '100%' }}
@@ -128,12 +131,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               })}
             </div>
 
-            {/* X-axis Labels */}
-            <div className="flex justify-around gap-1 pt-1 border-t border-slate-100 mt-auto">
+            {/* X-axis Labels - Cho phép scroll ngang */}
+            <div className="flex justify-around gap-1 pt-1 border-t border-slate-100 mt-auto min-w-[600px] md:min-w-0">
               {chartLabels.map((label, i) => (
                 <span
                   key={i}
-                  className="text-[10px] text-slate-500 font-medium flex-1 text-center truncate"
+                  className="text-[9px] md:text-[10px] text-slate-500 font-medium flex-1 text-center whitespace-nowrap min-w-[40px] md:min-w-0"
+                  title={label}
                 >
                   {label}
                 </span>

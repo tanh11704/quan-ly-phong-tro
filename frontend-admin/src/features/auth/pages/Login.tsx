@@ -1,11 +1,17 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input, message } from 'antd';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
+import { setAuthenticated, setRole } from '../../../stores/authSlice';
+import { useAppDispatch } from '../../../stores/hooks';
 import { useLoginMutation } from '../api/authApi';
 import { LoginSchema, type LoginFormData } from '../types/auth';
+import { setToken } from '../utils/tokenUtils';
 
 const Login = () => {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [login, { isLoading }] = useLoginMutation();
 
   const handleSubmit = async (values: LoginFormData) => {
@@ -16,11 +22,16 @@ const Login = () => {
 
       // Lưu token từ response.result.token
       const token = response.result.token;
-      localStorage.setItem('accessToken', token);
+      const role = response.result.role;
+      setToken(token);
+
+      // Cập nhật state authentication và role
+      dispatch(setAuthenticated(true));
+      dispatch(setRole(role));
 
       message.success(response.message || 'Đăng nhập thành công!');
       // Redirect sẽ được xử lý ở đây
-      window.location.href = '/dashboard';
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
       console.error('Login error:', error);

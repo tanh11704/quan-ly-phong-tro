@@ -18,7 +18,7 @@ export const authApi = api.injectEndpoints({
     }),
     introspect: builder.mutation<ApiResponse<IntrospectResponse>, IntrospectRequest>({
       query: (request) => ({
-        url: '/introspect',
+        url: '/auth/introspect',
         method: 'POST',
         data: request,
       }),

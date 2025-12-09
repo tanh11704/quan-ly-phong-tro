@@ -25,17 +25,17 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.1 }}
-      className="flex-1 bg-white rounded-[32px] shadow-sm overflow-hidden flex flex-col"
+      className="flex-1 bg-white md:rounded-[32px] rounded-none shadow-sm flex flex-col min-h-0"
     >
-      <div className="flex-1 overflow-hidden p-4 flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4 md:p-4 p-3 flex flex-col min-h-0">
         {/* Page Title */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">{title}</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 mb-1">{title}</h1>
           <p className="text-xs text-slate-500">{subtitle}</p>
         </motion.div>
 
-        {/* Bento Grid */}
-        <div className="flex-1 grid grid-cols-4 gap-3 grid-rows-3 min-h-0">
+        {/* Bento Grid - Responsive: 1 cột mobile, 2 cột tablet, 4 cột desktop */}
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 auto-rows-min min-h-0">
           <StatCard
             value={1234}
             label="Tổng đơn hàng"
@@ -62,7 +62,7 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
             title="Doanh thu theo tháng"
             data={CHART_DATA}
             delay={0.3}
-            className="col-span-2 row-span-2"
+            className="col-span-1 sm:col-span-2 lg:row-span-2"
           />
 
           <StatCard

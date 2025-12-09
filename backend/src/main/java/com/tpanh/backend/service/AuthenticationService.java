@@ -42,7 +42,7 @@ public class AuthenticationService {
         final var role = "ROLE_" + user.getRoles().name();
         final var token = jwtService.generateToken(user.getId(), role);
 
-        return new AuthenticationResponse(token);
+        return new AuthenticationResponse(token, user.getRoles());
     }
 
     @Transactional
@@ -70,7 +70,7 @@ public class AuthenticationService {
         final var role = "ROLE_" + user.getRoles().name();
         final var token = jwtService.generateToken(user.getId(), role);
 
-        return new AuthenticationResponse(token);
+        return new AuthenticationResponse(token, user.getRoles());
     }
 
     private User createNewZaloUser(final ZaloIdentityClient.ZaloUserInfo zaloUserInfo) {

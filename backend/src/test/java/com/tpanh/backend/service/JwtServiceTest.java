@@ -144,4 +144,72 @@ class JwtServiceTest {
         // Then
         assertFalse(isValid);
     }
+
+    @Test
+    void verifyToken_WithNullToken_ShouldReturnFalse() {
+        // When
+        final var isValid = jwtService.verifyToken(null);
+
+        // Then
+        assertFalse(isValid);
+    }
+
+    @Test
+    void verifyToken_WithEmptyToken_ShouldReturnFalse() {
+        // When
+        final var isValid = jwtService.verifyToken("");
+
+        // Then
+        assertFalse(isValid);
+    }
+
+    @Test
+    void extractUserId_WithNullToken_ShouldThrowException() {
+        // When & Then
+        assertThrows(RuntimeException.class, () -> jwtService.extractUserId(null));
+    }
+
+    @Test
+    void extractRole_WithNullToken_ShouldThrowException() {
+        // When & Then
+        assertThrows(RuntimeException.class, () -> jwtService.extractRole(null));
+    }
+
+    @Test
+    void extractUserId_WithEmptyToken_ShouldThrowException() {
+        // When & Then
+        assertThrows(RuntimeException.class, () -> jwtService.extractUserId(""));
+    }
+
+    @Test
+    void extractRole_WithEmptyToken_ShouldThrowException() {
+        // When & Then
+        assertThrows(RuntimeException.class, () -> jwtService.extractRole(""));
+    }
+
+    @Test
+    void verifyToken_WithTokenMissingExpiration_ShouldReturnTrue() throws JOSEException {
+        // Given - Create token without expiration (isExpired returns false when expiration is null)
+        final var now = Instant.now();
+        final var claimsSet =
+                new JWTClaimsSet.Builder()
+                        .issuer("com.tpanh.server")
+                        .subject(USER_ID)
+                        .claim("scope", ROLE)
+                        .issueTime(Date.from(now))
+                        .build(); // No expiration time
+
+        final var signedJWT =
+                new SignedJWT(
+                        new com.nimbusds.jose.JWSHeader(com.nimbusds.jose.JWSAlgorithm.HS256),
+                        claimsSet);
+        signedJWT.sign(new com.nimbusds.jose.crypto.MACSigner(TEST_SECRET_KEY));
+        final var tokenWithoutExpiration = signedJWT.serialize();
+
+        // When
+        final var isValid = jwtService.verifyToken(tokenWithoutExpiration);
+
+        // Then - Token without expiration is considered valid (not expired)
+        assertTrue(isValid);
+    }
 }

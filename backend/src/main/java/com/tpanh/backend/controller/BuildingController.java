@@ -71,7 +71,7 @@ public class BuildingController {
                         description = "Không có quyền truy cập")
             })
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ApiResponse<BuildingResponse> getBuildingById(@PathVariable final Integer id) {
         final var response = buildingService.getBuildingById(id);
         return ApiResponse.<BuildingResponse>builder()
@@ -96,7 +96,7 @@ public class BuildingController {
                         description = "Không có quyền truy cập")
             })
     @GetMapping("/{id}/rooms")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ApiResponse<List<RoomResponse>> getRoomsByBuildingId(@PathVariable final Integer id) {
         final var response = roomService.getRoomsByBuildingId(id);
         return ApiResponse.<List<RoomResponse>>builder()

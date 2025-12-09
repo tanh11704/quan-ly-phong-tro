@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+export enum Role {
+  ADMIN = 'ADMIN',
+  TENANT = 'TENANT',
+  MANAGER = 'MANAGER',
+}
+
 export const LoginSchema = z.object({
   username: z.string().min(1, 'Tên đăng nhập không được để trống'),
   password: z.string().min(1, 'Mật khẩu không được để trống'),
@@ -15,6 +21,7 @@ export type IntrospectRequest = z.infer<typeof IntrospectRequestSchema>;
 
 export const AuthenticationResponseSchema = z.object({
   token: z.string(),
+  role: z.nativeEnum(Role),
 });
 
 export type AuthenticationResponse = z.infer<typeof AuthenticationResponseSchema>;

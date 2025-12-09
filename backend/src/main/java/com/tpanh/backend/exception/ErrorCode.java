@@ -39,6 +39,7 @@ public enum ErrorCode {
     USER_INACTIVE(3007, "Tài khoản đã bị vô hiệu hóa"),
     ZALO_AUTH_FAILED(3008, "Xác thực với Zalo thất bại"),
     INVALID_TOKEN(3009, "Token không hợp lệ hoặc đã hết hạn"),
+    UNAUTHORIZED(3010, "Người dùng chưa đăng nhập hoặc không có quyền truy cập"),
     ;
 
     ErrorCode(final int code, final String message) {

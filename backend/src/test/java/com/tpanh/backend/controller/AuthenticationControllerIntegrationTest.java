@@ -97,6 +97,7 @@ class AuthenticationControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.token").exists())
+                .andExpect(jsonPath("$.result.role").value("ADMIN"))
                 .andExpect(jsonPath("$.message").value("Đăng nhập thành công"));
     }
 
@@ -194,6 +195,7 @@ class AuthenticationControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.token").exists())
+                .andExpect(jsonPath("$.result.role").value("TENANT"))
                 .andExpect(jsonPath("$.message").value("Xác thực Zalo thành công"));
     }
 
@@ -227,6 +229,7 @@ class AuthenticationControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.token").exists())
+                .andExpect(jsonPath("$.result.role").value("TENANT"))
                 .andExpect(jsonPath("$.message").value("Xác thực Zalo thành công"));
     }
 

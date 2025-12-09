@@ -87,6 +87,7 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals(Role.ADMIN, response.getRole());
         verify(userRepository).findByUsername(USERNAME);
         verify(passwordEncoder).matches(PASSWORD, HASHED_PASSWORD);
         verify(jwtService).generateToken(USER_ID, "ROLE_ADMIN");
@@ -173,6 +174,7 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals(Role.TENANT, response.getRole());
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
         verify(userRepository).save(any(User.class));
@@ -208,6 +210,7 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals(Role.TENANT, response.getRole());
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
         verify(userRepository, never()).save(any(User.class));

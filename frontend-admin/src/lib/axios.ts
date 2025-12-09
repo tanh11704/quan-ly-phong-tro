@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { removeToken } from '../features/auth/utils/tokenUtils';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -22,6 +23,15 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Nếu API trả về 401 → Token không hợp lệ hoặc đã hết hạn
+    if (error.response?.status === 401) {
+      // Xóa token và redirect về Login
+      removeToken();
+      // Dùng window.location để đảm bảo redirect ngay cả khi đang ở bất kỳ route nào
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   },
 );

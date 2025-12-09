@@ -1,5 +1,6 @@
 package com.tpanh.backend.config;
 
+import com.tpanh.backend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,12 +18,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.tpanh.backend.security.JwtAuthenticationFilter;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+    private static final long CORS_MAX_AGE_SECONDS = 3600L;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -40,14 +40,12 @@ public class SecurityConfig {
         final var configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(
                 java.util.Arrays.asList(
-                        "http://localhost:*",
-                        "https://*.zalo.me",
-                        "https://*.zaloapp.com"));
+                        "http://localhost:*", "https://*.zalo.me", "https://*.zaloapp.com"));
         configuration.setAllowedMethods(
                 java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+        configuration.setMaxAge(CORS_MAX_AGE_SECONDS);
 
         final var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
@@ -71,6 +69,16 @@ public class SecurityConfig {
             final AuthorizeHttpRequestsConfigurer<HttpSecurity>
                             .AuthorizationManagerRequestMatcherRegistry
                     authorize) {
+        configurePublicEndpoints(authorize);
+        configureAdminEndpoints(authorize);
+        configureManagerEndpoints(authorize);
+        authorize.anyRequest().authenticated();
+    }
+
+    private void configurePublicEndpoints(
+            final AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                            .AuthorizationManagerRequestMatcherRegistry
+                    authorize) {
         authorize
                 .requestMatchers(
                         HttpMethod.GET,
@@ -86,14 +94,26 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/v3/api-docs/swagger-config")
                 .permitAll()
                 .requestMatchers("/api/v1/auth/**", "/api/v1/token")
-                .permitAll()
+                .permitAll();
+    }
+
+    private void configureAdminEndpoints(
+            final AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                            .AuthorizationManagerRequestMatcherRegistry
+                    authorize) {
+        authorize.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
+    }
+
+    private void configureManagerEndpoints(
+            final AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                            .AuthorizationManagerRequestMatcherRegistry
+                    authorize) {
+        authorize
                 .requestMatchers(
                         "/api/v1/buildings/**",
                         "/api/v1/rooms/**",
                         "/api/v1/invoices/**",
                         "/api/v1/tenants/**")
-                .hasRole("MANAGER")
-                .anyRequest()
-                .authenticated();
+                .hasAnyRole("MANAGER", "ADMIN");
     }
 }

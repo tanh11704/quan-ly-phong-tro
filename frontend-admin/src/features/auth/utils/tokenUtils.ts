@@ -1,3 +1,5 @@
+import { Role } from '../types/auth';
+
 export const getToken = (): string | null => {
   return localStorage.getItem('accessToken');
 };
@@ -12,4 +14,40 @@ export const removeToken = (): void => {
 
 export const hasToken = (): boolean => {
   return !!getToken();
+};
+
+export const decodeToken = (token: string): Record<string, unknown> | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    // Decode base64 payload (phần thứ 2)
+    const payload = parts[1];
+    // Base64 URL decode
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
+};
+
+/**
+ * Lấy role từ JWT token
+ */
+export const getRoleFromToken = (token: string): Role | null => {
+  const decoded = decodeToken(token);
+  if (!decoded || !decoded.role) {
+    return null;
+  }
+
+  // Kiểm tra role có hợp lệ không
+  const role = decoded.role as string;
+  if (Object.values(Role).includes(role as Role)) {
+    return role as Role;
+  }
+
+  return null;
 };

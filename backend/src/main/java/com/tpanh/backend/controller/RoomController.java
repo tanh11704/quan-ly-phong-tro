@@ -124,7 +124,7 @@ public class RoomController {
                         description = "Không tìm thấy phòng")
             })
     @GetMapping("/{roomId}/tenants")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ApiResponse<List<TenantResponse>> getTenantsByRoomId(
             @PathVariable final Integer roomId) {
         final var response = tenantService.getTenantsByRoomId(roomId);
