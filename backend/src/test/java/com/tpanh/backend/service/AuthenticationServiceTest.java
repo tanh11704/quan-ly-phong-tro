@@ -245,4 +245,22 @@ class AuthenticationServiceTest {
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
     }
+
+    @Test
+    void authenticate_WithNullPassword_ShouldThrowException() {
+        // Given
+        final var request = new AuthenticationRequest();
+        request.setUsername(USERNAME);
+        request.setPassword(PASSWORD);
+
+        activeUser.setPassword(null);
+        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+
+        // When & Then
+        final var exception =
+                assertThrows(AppException.class, () -> authenticationService.authenticate(request));
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
+        verify(userRepository).findByUsername(USERNAME);
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+    }
 }

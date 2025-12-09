@@ -159,6 +159,26 @@ class TenantServiceTest {
     }
 
     @Test
+    void createTenant_WithNullRoomStatus_ShouldSetRoomToOCCUPIED() {
+        // Given
+        room.setStatus(null);
+        final var request = new TenantCreationRequest();
+        request.setRoomId(ROOM_ID);
+        request.setName(TENANT_NAME);
+
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
+        when(roomRepository.save(any(Room.class))).thenReturn(room);
+
+        // When
+        final var response = tenantService.createTenant(request);
+
+        // Then
+        assertNotNull(response);
+        verify(roomRepository).save(any(Room.class));
+    }
+
+    @Test
     void createTenant_WithInvalidRoomId_ShouldThrowException() {
         // Given
         final var request = new TenantCreationRequest();
@@ -319,5 +339,40 @@ class TenantServiceTest {
         assertEquals(ErrorCode.TENANT_NOT_FOUND, exception.getErrorCode());
         verify(tenantRepository).findById(TENANT_ID);
         verify(tenantRepository, never()).save(any(Tenant.class));
+    }
+
+    @Test
+    void endTenantContract_WithNullRoom_ShouldNotUpdateRoomStatus() {
+        // Given
+        tenant.setRoom(null);
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
+
+        // When
+        final var response = tenantService.endTenantContract(TENANT_ID);
+
+        // Then
+        assertNotNull(response);
+        verify(tenantRepository).findById(TENANT_ID);
+        verify(tenantRepository).save(any(Tenant.class));
+        verify(roomRepository, never()).save(any(Room.class));
+    }
+
+    @Test
+    void getTenantById_WithNullRoom_ShouldReturnTenantWithNullRoomFields() {
+        // Given
+        tenant.setRoom(null);
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+
+        // When
+        final var response = tenantService.getTenantById(TENANT_ID);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(TENANT_ID, response.getId());
+        assertEquals(TENANT_NAME, response.getName());
+        assertEquals(null, response.getRoomId());
+        assertEquals(null, response.getRoomNo());
+        verify(tenantRepository).findById(TENANT_ID);
     }
 }

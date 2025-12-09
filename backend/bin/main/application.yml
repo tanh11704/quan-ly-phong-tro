@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/phongtro
+    username: postgres
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+app:
+  api-prefix: /api/v1
+  jwt:
+    secret: your-256-bit-secret-key-change-in-production-minimum-32-chars
+  admin:
+    username: admin
+    password: admin123
+    full-name: Quản trị viên hệ thống
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  packages-to-scan: com.tpanh.backend.controller
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json

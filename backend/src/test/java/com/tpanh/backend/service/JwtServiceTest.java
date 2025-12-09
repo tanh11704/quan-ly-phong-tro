@@ -7,6 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import java.time.Instant;
+import java.util.Date;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -96,5 +100,48 @@ class JwtServiceTest {
 
         // When & Then
         assertThrows(RuntimeException.class, () -> jwtService.extractRole(invalidToken));
+    }
+
+    @Test
+    void verifyToken_WithExpiredToken_ShouldReturnFalse() throws JOSEException {
+        // Given - Create expired token
+        final var now = Instant.now();
+        final var expiredTime = now.minusSeconds(86400L); // 1 day ago
+
+        final var claimsSet =
+                new JWTClaimsSet.Builder()
+                        .issuer("com.tpanh.server")
+                        .subject(USER_ID)
+                        .claim("scope", ROLE)
+                        .issueTime(Date.from(expiredTime))
+                        .expirationTime(Date.from(expiredTime.plusSeconds(86400L)))
+                        .build();
+
+        final var signedJWT =
+                new SignedJWT(
+                        new com.nimbusds.jose.JWSHeader(com.nimbusds.jose.JWSAlgorithm.HS256),
+                        claimsSet);
+        signedJWT.sign(new com.nimbusds.jose.crypto.MACSigner(TEST_SECRET_KEY));
+        final var expiredToken = signedJWT.serialize();
+
+        // When
+        final var isValid = jwtService.verifyToken(expiredToken);
+
+        // Then
+        assertFalse(isValid);
+    }
+
+    @Test
+    void verifyToken_WithTokenFromDifferentSecret_ShouldReturnFalse() throws JOSEException {
+        // Given - Create token with different secret
+        final var differentSecret = "different-secret-key-minimum-32-characters-long";
+        final var differentJwtService = new JwtService(differentSecret);
+        final var tokenFromDifferentSecret = differentJwtService.generateToken(USER_ID, ROLE);
+
+        // When - Verify with original secret
+        final var isValid = jwtService.verifyToken(tokenFromDifferentSecret);
+
+        // Then
+        assertFalse(isValid);
     }
 }

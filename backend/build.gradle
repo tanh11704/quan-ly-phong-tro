@@ -4,6 +4,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'checkstyle'
 	id 'com.diffplug.spotless' version '8.1.0'
+    id 'jacoco'
 }
 
 group = 'com.tpanh'
@@ -44,6 +45,7 @@ dependencies {
 	testImplementation 'org.testcontainers:testcontainers:1.19.3'
 	testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
 	testImplementation 'org.testcontainers:postgresql:1.19.3'
+    testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -70,4 +72,114 @@ spotless {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+	reports {
+		junitXml.required = false
+		html.required = false
+	}
+}
+
+jacoco {
+	toolVersion = "0.8.14"
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+	
+	// Verification sẽ chạy riêng khi cần
+	
+	afterEvaluate {
+		classDirectories.setFrom(
+			files(classDirectories.files.collect {
+				fileTree(dir: it, excludes: [
+					'**/dto/**',
+					'**/entity/**',
+					'**/enums/**',
+					'**/config/**',
+					'**/exception/**',
+					'**/mapper/**',
+					'**/repository/**',
+					'**/client/**',
+					'**/security/**',
+					'**/BackendApplication.class',
+					'**/*MapperImpl.class'
+				])
+			})
+		)
+	}
+}
+
+jacocoTestCoverageVerification {
+	dependsOn jacocoTestReport
+	violationRules {
+		rule {
+			element = 'CLASS'
+			excludes = [
+				'**.*Dto',
+				'**.*Entity',
+				'**.*Enum',
+				'**.*Config',
+				'**.*Exception*',
+				'**.*Mapper*',
+				'**.*Repository',
+				'**.*Client',
+				'**.*Filter',
+				'**.*Properties',
+				'**.*Handler',
+				'**.*Controller',
+				'**.*BackendApplication'
+			]
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.80
+			}
+		}
+		
+		rule {
+			element = 'CLASS'
+			excludes = [
+				'**.*Dto',
+				'**.*Entity',
+				'**.*Enum',
+				'**.*Config',
+				'**.*Exception*',
+				'**.*Mapper*',
+				'**.*Repository',
+				'**.*Client',
+				'**.*Filter',
+				'**.*Properties',
+				'**.*Handler',
+				'**.*Controller',
+				'**.*BackendApplication'
+			]
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 0.70
+			}
+		}
+	}
+}
+
+task openJacocoReport {
+	doLast {
+		final def reportPath = file("${buildDir}/reports/jacoco/test/html/index.html")
+		if (reportPath.exists()) {
+			println "\n✅ JaCoCo HTML Report: ${reportPath.toURI()}"
+			println "📊 Mở file này trong trình duyệt để xem coverage report"
+		} else {
+			println "❌ Coverage report chưa được generate. Chạy: ./gradlew test jacocoTestReport"
+		}
+	}
+}
+
+task verifyCoverage {
+	dependsOn test, jacocoTestReport, jacocoTestCoverageVerification
+	description = 'Chạy tests, generate coverage report và verify coverage thresholds'
 }

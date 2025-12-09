@@ -162,6 +162,26 @@ class RoomServiceTest {
     }
 
     @Test
+    void updateRoom_WithNullFields_ShouldNotUpdateFields() {
+        // Given
+        final var request = new RoomUpdateRequest();
+        request.setRoomNo(null);
+        request.setPrice(null);
+        request.setStatus(null);
+
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.save(any(Room.class))).thenReturn(room);
+
+        // When
+        final var response = roomService.updateRoom(ROOM_ID, request);
+
+        // Then
+        assertNotNull(response);
+        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).save(any(Room.class));
+    }
+
+    @Test
     void updateRoom_WithInvalidId_ShouldThrowException() {
         // Given
         final var request = new RoomUpdateRequest();

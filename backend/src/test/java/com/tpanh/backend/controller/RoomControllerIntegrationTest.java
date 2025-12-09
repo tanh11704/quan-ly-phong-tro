@@ -1,5 +1,6 @@
 package com.tpanh.backend.controller;
 
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,7 +26,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -44,9 +47,16 @@ class RoomControllerIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired private WebApplicationContext webApplicationContext;
 
-    @Autowired private ObjectMapper objectMapper;
+    private MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper =
+            new ObjectMapper()
+                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                    .disable(
+                            com.fasterxml.jackson.databind.SerializationFeature
+                                    .WRITE_DATES_AS_TIMESTAMPS);
 
     @Autowired private UserRepository userRepository;
 
@@ -59,6 +69,13 @@ class RoomControllerIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        mockMvc =
+                MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                        .apply(springSecurity())
+                        .build();
+
+        userRepository.deleteAll();
+
         final var user =
                 User.builder()
                         .username(USERNAME)
@@ -117,7 +134,7 @@ class RoomControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result.id").exists())
                 .andExpect(jsonPath("$.result.buildingId").value(buildingId))
                 .andExpect(jsonPath("$.result.roomNo").value("P.101"))
@@ -141,7 +158,7 @@ class RoomControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result.status").value("VACANT"));
     }
 

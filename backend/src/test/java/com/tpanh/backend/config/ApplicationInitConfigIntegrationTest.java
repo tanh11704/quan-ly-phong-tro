@@ -55,7 +55,11 @@ class ApplicationInitConfigIntegrationTest {
 
     @Test
     void initAdminUser_WhenAdminExists_ShouldNotCreateDuplicate() {
-        // Given - Admin đã tồn tại (từ lần chạy trước)
+        // Given - Xóa admin nếu đã tồn tại từ test trước
+        userRepository.findByUsername("testadmin").ifPresent(userRepository::delete);
+        userRepository.flush();
+
+        // Tạo admin trước
         final var existingAdmin =
                 User.builder()
                         .username("testadmin")
@@ -64,17 +68,15 @@ class ApplicationInitConfigIntegrationTest {
                         .roles(Role.ADMIN)
                         .active(true)
                         .build();
-        userRepository.save(existingAdmin);
+        userRepository.saveAndFlush(existingAdmin);
 
         final var countBefore = userRepository.count();
 
-        // When - ApplicationInitConfig chạy lại
+        // When - ApplicationInitConfig đã chạy khi Spring Boot khởi động
         // (Trong thực tế, nó chỉ chạy 1 lần khi app start, nhưng test này verify logic)
 
-        // Then - Không tạo duplicate
-        final var adminOpt = userRepository.findByUsername("testadmin");
-        assertTrue(adminOpt.isPresent());
-        // Có thể là existing admin hoặc admin mới được tạo, nhưng chỉ có 1
-        assertEquals(1, userRepository.findByUsername("testadmin").stream().count());
+        // Then - Không tạo duplicate (chỉ có 1 admin với username "testadmin")
+        final var adminCount = userRepository.findByUsername("testadmin").stream().count();
+        assertEquals(1, adminCount, "Chỉ nên có 1 admin user với username testadmin");
     }
 }

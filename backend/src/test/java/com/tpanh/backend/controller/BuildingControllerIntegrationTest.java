@@ -1,11 +1,13 @@
 package com.tpanh.backend.controller;
 
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tpanh.backend.dto.AuthenticationRequest;
 import com.tpanh.backend.dto.BuildingCreationRequest;
 import com.tpanh.backend.entity.User;
@@ -21,7 +23,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -40,13 +44,16 @@ class BuildingControllerIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    @Autowired private MockMvc mockMvc;
-
-    @Autowired private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper =
+            new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Autowired private UserRepository userRepository;
 
     @Autowired private PasswordEncoder passwordEncoder;
+
+    @Autowired private WebApplicationContext webApplicationContext;
+
+    private MockMvc mockMvc;
 
     private static final String USERNAME = "testmanager";
     private static final String PASSWORD = "testpass123";
@@ -54,6 +61,13 @@ class BuildingControllerIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        mockMvc =
+                MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                        .apply(springSecurity())
+                        .build();
+
+        userRepository.deleteAll();
+
         final var user =
                 User.builder()
                         .username(USERNAME)
@@ -97,7 +111,7 @@ class BuildingControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result.id").exists())
                 .andExpect(jsonPath("$.result.name").value("Trọ Xanh"))
                 .andExpect(jsonPath("$.result.ownerName").value("Nguyễn Văn Chủ"))
@@ -120,7 +134,7 @@ class BuildingControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result.elecUnitPrice").value(3500))
                 .andExpect(jsonPath("$.result.waterUnitPrice").value(20000));
     }

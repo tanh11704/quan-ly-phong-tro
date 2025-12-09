@@ -37,7 +37,7 @@ public class RoomController {
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
+                        responseCode = "201",
                         description = "Thêm phòng thành công"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
@@ -50,6 +50,7 @@ public class RoomController {
                         description = "Không tìm thấy tòa nhà")
             })
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<RoomResponse> createRoom(
             @RequestBody @Valid final RoomCreationRequest request) {

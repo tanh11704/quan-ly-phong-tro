@@ -18,6 +18,15 @@ public class GlobalExceptionHandler {
         apiResponse.setCode(errorCode.getCode());
         apiResponse.setMessage(errorCode.getMessage());
 
+        // Trả về 404 cho các lỗi NOT_FOUND
+        if (errorCode == ErrorCode.BUILDING_NOT_FOUND
+                || errorCode == ErrorCode.ROOM_NOT_FOUND
+                || errorCode == ErrorCode.TENANT_NOT_FOUND
+                || errorCode == ErrorCode.USER_NOT_FOUND) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(apiResponse);
+        }
+
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
