@@ -5,13 +5,12 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds
+  timeout: 10000,
 });
 
-// Request Interceptor: Tự động gắn Token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken'); // Hoặc lấy từ Store
+    const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -20,12 +19,9 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response Interceptor: Xử lý lỗi tập trung & Refresh Token
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Logic Refresh Token sẽ nằm ở đây
-    // Nếu lỗi 401 -> Gọi refresh -> Retry request gốc
     return Promise.reject(error);
   },
 );
