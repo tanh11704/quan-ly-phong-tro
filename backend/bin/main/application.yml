@@ -32,14 +32,6 @@ app:
     password: admin123
     full-name: Quản trị viên hệ thống
 
-sentry:
-  dsn: ${SENTRY_DSN:}
-  environment: ${SENTRY_ENVIRONMENT:development}
-  traces-sample-rate: 1.0
-  enable-tracing: true
-  max-breadcrumbs: 50
-  send-default-pii: false
-
 springdoc:
   api-docs:
     path: /v3/api-docs
