@@ -1,4 +1,5 @@
-import { api } from '../../../stores/api';
+import { useMutation } from '@tanstack/react-query';
+import axiosInstance from '../../../lib/axios';
 import type {
   ApiResponse,
   AuthenticationResponse,
@@ -7,23 +8,30 @@ import type {
   LoginFormData,
 } from '../types/auth';
 
-export const authApi = api.injectEndpoints({
-  endpoints: (builder) => ({
-    login: builder.mutation<ApiResponse<AuthenticationResponse>, LoginFormData>({
-      query: (credentials) => ({
-        url: '/token',
-        method: 'POST',
-        data: credentials,
-      }),
-    }),
-    introspect: builder.mutation<ApiResponse<IntrospectResponse>, IntrospectRequest>({
-      query: (request) => ({
-        url: '/auth/introspect',
-        method: 'POST',
-        data: request,
-      }),
-    }),
-  }),
-});
+// Login mutation
+export const useLoginMutation = () => {
+  return useMutation({
+    mutationFn: async (
+      credentials: LoginFormData,
+    ): Promise<ApiResponse<AuthenticationResponse>> => {
+      const response = await axiosInstance.post<ApiResponse<AuthenticationResponse>>(
+        '/token',
+        credentials,
+      );
+      return response.data;
+    },
+  });
+};
 
-export const { useLoginMutation, useIntrospectMutation } = authApi;
+// Introspect mutation
+export const useIntrospectMutation = () => {
+  return useMutation({
+    mutationFn: async (request: IntrospectRequest): Promise<ApiResponse<IntrospectResponse>> => {
+      const response = await axiosInstance.post<ApiResponse<IntrospectResponse>>(
+        '/auth/introspect',
+        request,
+      );
+      return response.data;
+    },
+  });
+};

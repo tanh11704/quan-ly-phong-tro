@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
-    "@reduxjs/toolkit": "^2.11.1",
     "@tailwindcss/vite": "^4.1.17",
+    "@tanstack/react-query": "^5.90.12",
     "antd": "^6.1.0",
     "axios": "^1.13.2",
     "framer-motion": "^12.23.25",
@@ -20,7 +20,6 @@
     "react": "^19.2.0",
     "react-countup": "^6.5.3",
     "react-dom": "^19.2.0",
-    "react-redux": "^9.2.0",
     "react-router-dom": "^7.10.1",
     "zod": "^4.1.13"
   },

@@ -1,13 +1,12 @@
 import { Navigate } from 'react-router-dom';
-import { useAppSelector } from '../../../stores/hooks';
+import { useAuth } from '../context';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
+  const { isAuthenticated, isInitialized } = useAuth();
 
   // Chờ init xong mới check
   if (!isInitialized) {

@@ -1,7 +1,7 @@
 import { HomeOutlined, MenuOutlined } from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useMemo } from 'react';
-import { useAppSelector } from '../../stores/hooks';
+import { useAuth } from '../../features/auth/context';
 import { MENU_ITEM_VARIANTS, SIDEBAR_VARIANTS, getMenuItemsByRole } from './constants';
 import type { MenuItem } from './types';
 
@@ -18,7 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   onSelectMenu,
 }) => {
-  const role = useAppSelector((state) => state.auth.role);
+  const { role } = useAuth();
 
   // Filter menu items theo role
   const menuItems = useMemo(() => getMenuItemsByRole(role), [role]);

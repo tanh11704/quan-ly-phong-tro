@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setAuthenticated, setInitialized, setRole } from '../../../stores/authSlice';
-import { useAppDispatch, useAppSelector } from '../../../stores/hooks';
+import { useAuth } from '../context';
 import { useTokenValidation } from '../hooks/useTokenValidation';
 import { getRoleFromToken, getToken, removeToken } from '../utils/tokenUtils';
 
@@ -10,9 +9,8 @@ interface AuthInitProps {
 }
 
 export const AuthInit = ({ children }: AuthInitProps) => {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
+  const { isInitialized, setAuthenticated, setInitialized, setRole } = useAuth();
   const { validateToken } = useTokenValidation();
 
   useEffect(() => {
@@ -26,8 +24,8 @@ export const AuthInit = ({ children }: AuthInitProps) => {
 
       // Nếu không có token → chưa đăng nhập
       if (!token) {
-        dispatch(setAuthenticated(false));
-        dispatch(setInitialized(true));
+        setAuthenticated(false);
+        setInitialized(true);
         return;
       }
 
@@ -38,24 +36,24 @@ export const AuthInit = ({ children }: AuthInitProps) => {
         if (isValid) {
           // Lấy role từ token
           const role = getRoleFromToken(token);
-          dispatch(setAuthenticated(true));
+          setAuthenticated(true);
           if (role) {
-            dispatch(setRole(role));
+            setRole(role);
           }
         } else {
           // Token không hợp lệ → xóa và redirect
           removeToken();
-          dispatch(setAuthenticated(false));
+          setAuthenticated(false);
           navigate('/login', { replace: true });
         }
       } catch (error) {
         // Lỗi khi validate → xóa token và redirect
         console.error('Auth init error:', error);
         removeToken();
-        dispatch(setAuthenticated(false));
+        setAuthenticated(false);
         navigate('/login', { replace: true });
       } finally {
-        dispatch(setInitialized(true));
+        setInitialized(true);
       }
     };
 

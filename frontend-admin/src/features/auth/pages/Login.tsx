@@ -2,32 +2,26 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input, message } from 'antd';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { setAuthenticated, setRole } from '../../../stores/authSlice';
-import { useAppDispatch } from '../../../stores/hooks';
 import { useLoginMutation } from '../api/authApi';
+import { useAuth } from '../context';
 import { LoginSchema, type LoginFormData } from '../types/auth';
-import { setToken } from '../utils/tokenUtils';
 
 const Login = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const [login, { isLoading }] = useLoginMutation();
+  const { login: loginAuth } = useAuth();
+  const { mutateAsync: login, isPending: isLoading } = useLoginMutation();
 
   const handleSubmit = async (values: LoginFormData) => {
     try {
       // Validate với Zod
       const validatedData = LoginSchema.parse(values);
-      const response = await login(validatedData).unwrap();
+      const response = await login(validatedData);
 
-      // Lưu token từ response.result.token
+      // Lưu token và cập nhật auth state
       const token = response.result.token;
       const role = response.result.role;
-      setToken(token);
-
-      // Cập nhật state authentication và role
-      dispatch(setAuthenticated(true));
-      dispatch(setRole(role));
+      loginAuth(token, role);
 
       message.success(response.message || 'Đăng nhập thành công!');
       // Redirect sẽ được xử lý ở đây
