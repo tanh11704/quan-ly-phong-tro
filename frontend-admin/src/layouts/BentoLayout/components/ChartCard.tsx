@@ -79,9 +79,9 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             ))}
           </div>
 
-          {/* Chart Bars - Cho phép scroll ngang trên mobile */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-x-auto">
-            <div className="flex-1 flex items-end justify-around gap-1 relative pb-2 min-h-[200px] md:min-h-0 md:min-w-0 min-w-[600px] md:min-w-0">
+          {/* Chart Bars - Responsive, không có min-width cố định */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-x-auto overflow-y-hidden">
+            <div className="flex-1 flex items-end justify-around gap-1 relative pb-2 min-h-[200px] md:min-h-0 w-full">
               {/* Grid lines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                 {yAxisTicks.map((_, i) => (
@@ -98,7 +98,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 return (
                   <div
                     key={i}
-                    className="flex-1 flex items-end justify-center group relative min-w-[40px] md:min-w-0"
+                    className="flex-1 flex items-end justify-center group relative"
                     onMouseEnter={() => setHoveredIndex(i)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     style={{ height: '100%' }}
@@ -131,12 +131,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               })}
             </div>
 
-            {/* X-axis Labels - Cho phép scroll ngang */}
-            <div className="flex justify-around gap-1 pt-1 border-t border-slate-100 mt-auto min-w-[600px] md:min-w-0">
+            {/* X-axis Labels - Responsive */}
+            <div className="flex justify-around gap-1 pt-1 border-t border-slate-100 mt-auto w-full">
               {chartLabels.map((label, i) => (
                 <span
                   key={i}
-                  className="text-[9px] md:text-[10px] text-slate-500 font-medium flex-1 text-center whitespace-nowrap min-w-[40px] md:min-w-0"
+                  className="text-[9px] md:text-[10px] text-slate-500 font-medium flex-1 text-center whitespace-nowrap"
                   title={label}
                 >
                   {label}

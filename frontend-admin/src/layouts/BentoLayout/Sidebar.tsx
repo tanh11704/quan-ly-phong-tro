@@ -57,8 +57,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="h-full bg-slate-900 md:rounded-3xl rounded-none shadow-sm flex flex-col overflow-hidden"
     >
-      {/* Logo & Toggle */}
-      <div className="p-6 flex items-center justify-between">
+      {/* Logo & Toggle - Fixed ở trên cùng */}
+      <div className="flex-shrink-0 p-6 flex items-center justify-between border-b border-white/10">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
@@ -67,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
               exit={{ opacity: 0 }}
               className="flex items-center gap-3"
             >
-              <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <HomeOutlined style={{ fontSize: 18, color: 'white' }} />
               </div>
               <span className="text-white font-semibold text-lg">Bento</span>
@@ -83,8 +83,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
         </button>
       </div>
 
-      {/* Menu Items */}
-      <div className="flex-1 px-3 overflow-y-auto scrollbar-hide">
+      {/* Menu Items - Scrollable ở giữa */}
+      <div className="flex-1 min-h-0 px-3 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {menuItems.map((item: MenuItem) => (
           <motion.div
             key={item.key}
@@ -123,10 +123,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
         ))}
       </div>
 
-      {/* User Profile */}
-      <div className="p-4 border-t border-white/10">
+      {/* User Profile - Fixed ở dưới cùng - Padding giống phần trên */}
+      <div className="flex-shrink-0 px-6 py-6 border-t border-white/10">
         <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
-          <div className="w-10 h-10 bg-linear-to-br from-pink-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
             {role ? role.charAt(0) : 'U'}
           </div>
           <AnimatePresence>
