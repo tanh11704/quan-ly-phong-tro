@@ -231,7 +231,7 @@ class TenantServiceTest {
         tenant2.setName("Nguyễn Văn B");
         tenant2.setStartDate(LocalDate.now().minusDays(10));
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.existsById(ROOM_ID)).thenReturn(true);
         when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID))
                 .thenReturn(Arrays.asList(tenant, tenant2));
 
@@ -241,20 +241,20 @@ class TenantServiceTest {
         // Then
         assertNotNull(response);
         assertEquals(2, response.size());
-        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).existsById(ROOM_ID);
         verify(tenantRepository).findByRoomIdOrderByStartDateDesc(ROOM_ID);
     }
 
     @Test
     void getTenantsByRoomId_WithInvalidRoomId_ShouldThrowException() {
         // Given
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
+        when(roomRepository.existsById(ROOM_ID)).thenReturn(false);
 
         // When & Then
         final var exception =
                 assertThrows(AppException.class, () -> tenantService.getTenantsByRoomId(ROOM_ID));
         assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
-        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).existsById(ROOM_ID);
         verify(tenantRepository, never()).findByRoomIdOrderByStartDateDesc(any(Integer.class));
     }
 

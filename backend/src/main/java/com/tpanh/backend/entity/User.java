@@ -1,6 +1,7 @@
 package com.tpanh.backend.entity;
 
 import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -29,6 +30,7 @@ public class User {
     private static final int PASSWORD_LENGTH = 255;
     private static final int ZALO_ID_LENGTH = 50;
     private static final int FULL_NAME_LENGTH = 100;
+    private static final int EMAIL_LENGTH = 255;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -50,6 +52,14 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role roles;
+
+    @Column(length = EMAIL_LENGTH, unique = true)
+    private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
 
     @Builder.Default
     @Column(nullable = false)

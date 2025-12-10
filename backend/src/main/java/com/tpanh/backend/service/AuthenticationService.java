@@ -6,6 +6,7 @@ import com.tpanh.backend.dto.AuthenticationResponse;
 import com.tpanh.backend.dto.ExchangeTokenRequest;
 import com.tpanh.backend.entity.User;
 import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.UserStatus;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.UserRepository;
@@ -32,6 +33,10 @@ public class AuthenticationService {
 
         if (!user.getActive()) {
             throw new AppException(ErrorCode.USER_INACTIVE);
+        }
+
+        if (user.getStatus() == UserStatus.PENDING) {
+            throw new AppException(ErrorCode.USER_PENDING_ACTIVATION);
         }
 
         if (user.getPassword() == null
@@ -78,6 +83,7 @@ public class AuthenticationService {
                 .zaloId(zaloUserInfo.getId())
                 .fullName(zaloUserInfo.getName())
                 .roles(Role.TENANT)
+                .status(UserStatus.ACTIVE)
                 .active(true)
                 .build();
     }
