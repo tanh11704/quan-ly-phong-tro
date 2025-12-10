@@ -1,5 +1,6 @@
 package com.tpanh.backend.service;
 
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Tenant;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +71,33 @@ public class TenantService {
 
         final var tenants = tenantRepository.findByRoomIdOrderByStartDateDesc(roomId);
         return tenants.stream().map(tenantMapper::toResponse).toList();
+    }
+
+    public PageResponse<TenantResponse> getTenantsByRoomId(
+            final Integer roomId, final Pageable pageable) {
+        if (!roomRepository.existsById(roomId)) {
+            throw new AppException(ErrorCode.ROOM_NOT_FOUND);
+        }
+
+        final var page = tenantRepository.findByRoomIdOrderByStartDateDesc(roomId, pageable);
+        final var content = page.getContent().stream().map(tenantMapper::toResponse).toList();
+
+        return PageResponse.<TenantResponse>builder()
+                .content(content)
+                .page(buildPageInfo(page))
+                .message("Lấy danh sách khách thuê thành công")
+                .build();
+    }
+
+    private PageResponse.PageInfo buildPageInfo(final Page<?> page) {
+        return PageResponse.PageInfo.builder()
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .build();
     }
 
     @Transactional

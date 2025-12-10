@@ -1,13 +1,17 @@
 package com.tpanh.backend.controller;
 
+import com.tpanh.backend.config.PaginationConfig;
 import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.UserDTO;
 import com.tpanh.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +28,9 @@ public class AdminController {
 
     @Operation(
             summary = "Danh sách người dùng",
-            description = "Admin xem danh sách tất cả người dùng (đặc biệt là Manager) để hỗ trợ")
+            description =
+                    "Admin xem danh sách tất cả người dùng (đặc biệt là Manager) để hỗ trợ (có phân trang). "
+                            + "Sử dụng query parameters: page, size, sort")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -36,12 +42,11 @@ public class AdminController {
             })
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<UserDTO>> getAllUsers() {
-        final var users = userService.getAllUsers();
-        return ApiResponse.<List<UserDTO>>builder()
-                .result(users)
-                .message("Lấy danh sách người dùng thành công")
-                .build();
+    public PageResponse<UserDTO> getAllUsers(
+            @Parameter(description = "Thông tin phân trang (page, size, sort)")
+                    @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "createdAt,desc")
+                    final Pageable pageable) {
+        return userService.getAllUsers(pageable);
     }
 
     @Operation(

@@ -1,6 +1,8 @@
 package com.tpanh.backend.controller;
 
+import com.tpanh.backend.config.PaginationConfig;
 import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.dto.RoomUpdateRequest;
@@ -8,11 +10,13 @@ import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.service.RoomService;
 import com.tpanh.backend.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -110,7 +114,9 @@ public class RoomController {
 
     @Operation(
             summary = "Lịch sử khách của phòng",
-            description = "Lấy danh sách lịch sử khách thuê của một phòng (chỉ Manager)")
+            description =
+                    "Lấy danh sách lịch sử khách thuê của một phòng (chỉ Manager, có phân trang). "
+                            + "Sử dụng query parameters: page, size, sort")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -125,12 +131,11 @@ public class RoomController {
             })
     @GetMapping("/{roomId}/tenants")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ApiResponse<List<TenantResponse>> getTenantsByRoomId(
-            @PathVariable final Integer roomId) {
-        final var response = tenantService.getTenantsByRoomId(roomId);
-        return ApiResponse.<List<TenantResponse>>builder()
-                .result(response)
-                .message("Lấy lịch sử khách thành công")
-                .build();
+    public PageResponse<TenantResponse> getTenantsByRoomId(
+            @PathVariable final Integer roomId,
+            @Parameter(description = "Thông tin phân trang (page, size, sort)")
+                    @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "startDate,desc")
+                    final Pageable pageable) {
+        return tenantService.getTenantsByRoomId(roomId, pageable);
     }
 }

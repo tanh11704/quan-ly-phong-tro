@@ -3,12 +3,14 @@ package com.tpanh.backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Room;
@@ -27,6 +29,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class TenantServiceTest {
@@ -396,5 +402,57 @@ class TenantServiceTest {
         assertEquals(null, response.getRoomId());
         assertEquals(null, response.getRoomNo());
         verify(tenantRepository).findById(TENANT_ID);
+    }
+
+    @Test
+    void getTenantsByRoomId_WithPageable_ShouldReturnPageResponse() {
+        // Given
+        final var tenant2 = new Tenant();
+        tenant2.setId(2);
+        tenant2.setRoom(room);
+        tenant2.setName("Nguyễn Văn B");
+        tenant2.setStartDate(LocalDate.now().minusDays(10));
+
+        when(roomRepository.existsById(ROOM_ID)).thenReturn(true);
+
+        final Pageable pageable = PageRequest.of(0, 10);
+        final Page<Tenant> page = new PageImpl<>(Arrays.asList(tenant, tenant2), pageable, 2);
+
+        when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID, pageable))
+                .thenReturn(page);
+
+        // When
+        final var response = tenantService.getTenantsByRoomId(ROOM_ID, pageable);
+
+        // Then
+        assertNotNull(response);
+        assertNotNull(response.getContent());
+        assertEquals(2, response.getContent().size());
+        assertNotNull(response.getPage());
+        assertEquals(0, response.getPage().getPage());
+        assertEquals(10, response.getPage().getSize());
+        assertEquals(2, response.getPage().getTotalElements());
+        assertEquals(1, response.getPage().getTotalPages());
+        assertTrue(response.getPage().isFirst());
+        assertTrue(response.getPage().isLast());
+        verify(roomRepository).existsById(ROOM_ID);
+        verify(tenantRepository).findByRoomIdOrderByStartDateDesc(ROOM_ID, pageable);
+    }
+
+    @Test
+    void getTenantsByRoomId_WithPageable_InvalidRoomId_ShouldThrowException() {
+        // Given
+        final Pageable pageable = PageRequest.of(0, 10);
+        when(roomRepository.existsById(ROOM_ID)).thenReturn(false);
+
+        // When & Then
+        final var exception =
+                assertThrows(
+                        AppException.class,
+                        () -> tenantService.getTenantsByRoomId(ROOM_ID, pageable));
+        assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
+        verify(roomRepository).existsById(ROOM_ID);
+        verify(tenantRepository, never())
+                .findByRoomIdOrderByStartDateDesc(any(Integer.class), any(Pageable.class));
     }
 }

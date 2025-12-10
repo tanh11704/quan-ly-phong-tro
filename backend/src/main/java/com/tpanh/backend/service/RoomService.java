@@ -1,5 +1,6 @@
 package com.tpanh.backend.service;
 
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.dto.RoomUpdateRequest;
@@ -13,6 +14,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,5 +90,33 @@ public class RoomService {
 
         final var rooms = roomRepository.findByBuildingId(buildingId);
         return rooms.stream().map(roomMapper::toResponse).toList();
+    }
+
+    public PageResponse<RoomResponse> getRoomsByBuildingId(
+            final Integer buildingId, final Pageable pageable) {
+        final var building =
+                buildingRepository
+                        .findById(buildingId)
+                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
+
+        final var page = roomRepository.findByBuildingId(buildingId, pageable);
+        final var content = page.getContent().stream().map(roomMapper::toResponse).toList();
+
+        return PageResponse.<RoomResponse>builder()
+                .content(content)
+                .page(buildPageInfo(page))
+                .message("Lấy danh sách phòng thành công")
+                .build();
+    }
+
+    private PageResponse.PageInfo buildPageInfo(final Page<?> page) {
+        return PageResponse.PageInfo.builder()
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .build();
     }
 }

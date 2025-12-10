@@ -1,11 +1,14 @@
 package com.tpanh.backend.exception;
 
-import com.tpanh.backend.dto.ApiResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import com.tpanh.backend.dto.ApiResponse;
+
+import lombok.extern.slf4j.Slf4j;
 
 @ControllerAdvice
 @io.swagger.v3.oas.annotations.Hidden
@@ -58,6 +61,28 @@ public class GlobalExceptionHandler {
         final ApiResponse<Void> apiResponse = new ApiResponse<>();
         apiResponse.setCode(errorCode.getCode());
         apiResponse.setMessage(errorCode.getMessage());
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(value = HttpMessageNotReadableException.class)
+    ResponseEntity<ApiResponse<Void>> handlingHttpMessageNotReadable(
+            final HttpMessageNotReadableException exception) {
+        log.warn("HTTP message not readable: {}", exception.getMessage());
+
+        String errorMessage = "Dữ liệu không hợp lệ";
+        if (exception.getMessage() != null) {
+            if (exception.getMessage().contains("WaterCalcMethod")) {
+                errorMessage =
+                        "Phương pháp tính nước không hợp lệ. Chỉ chấp nhận: BY_METER hoặc PER_CAPITA";
+            } else if (exception.getMessage().contains("Enum")) {
+                errorMessage = "Giá trị enum không hợp lệ";
+            }
+        }
+
+        final ApiResponse<Void> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.INVALID_KEY.getCode());
+        apiResponse.setMessage(errorMessage);
 
         return ResponseEntity.badRequest().body(apiResponse);
     }

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.UserDTO;
 import com.tpanh.backend.entity.User;
 import com.tpanh.backend.enums.Role;
@@ -29,6 +30,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -300,5 +305,47 @@ class UserServiceTest {
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
         verify(userRepository).findById(USER_ID);
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void getAllUsers_WithPageable_ShouldReturnPageResponse() {
+        // Given
+        final var user1 =
+                User.builder()
+                        .id("user-1")
+                        .username("user1")
+                        .fullName("User 1")
+                        .roles(Role.ADMIN)
+                        .active(true)
+                        .build();
+        final var user2 =
+                User.builder()
+                        .id("user-2")
+                        .username("user2")
+                        .fullName("User 2")
+                        .roles(Role.MANAGER)
+                        .active(true)
+                        .build();
+
+        final Pageable pageable = PageRequest.of(0, 10);
+        final Page<User> page = new PageImpl<>(Arrays.asList(user1, user2), pageable, 2);
+
+        when(userRepository.findAll(pageable)).thenReturn(page);
+
+        // When
+        final var response = userService.getAllUsers(pageable);
+
+        // Then
+        assertNotNull(response);
+        assertNotNull(response.getContent());
+        assertEquals(2, response.getContent().size());
+        assertNotNull(response.getPage());
+        assertEquals(0, response.getPage().getPage());
+        assertEquals(10, response.getPage().getSize());
+        assertEquals(2, response.getPage().getTotalElements());
+        assertEquals(1, response.getPage().getTotalPages());
+        assertTrue(response.getPage().isFirst());
+        assertTrue(response.getPage().isLast());
+        verify(userRepository).findAll(pageable);
     }
 }

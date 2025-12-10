@@ -1,5 +1,6 @@
 package com.tpanh.backend.service;
 
+import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.UserDTO;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
@@ -8,6 +9,8 @@ import com.tpanh.backend.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,28 @@ public class UserService {
     public List<UserDTO> getAllUsers() {
         final var users = userRepository.findAll();
         return users.stream().map(userMapper::toDTO).toList();
+    }
+
+    public PageResponse<UserDTO> getAllUsers(final Pageable pageable) {
+        final var page = userRepository.findAll(pageable);
+        final var content = page.getContent().stream().map(userMapper::toDTO).toList();
+
+        return PageResponse.<UserDTO>builder()
+                .content(content)
+                .page(buildPageInfo(page))
+                .message("Lấy danh sách người dùng thành công")
+                .build();
+    }
+
+    private PageResponse.PageInfo buildPageInfo(final Page<?> page) {
+        return PageResponse.PageInfo.builder()
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .build();
     }
 
     @Transactional
