@@ -39,7 +39,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'com.nimbusds:nimbus-jose-jwt:9.37.3'
-	implementation 'io.sentry:sentry-spring-boot-starter-jakarta:7.8.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
