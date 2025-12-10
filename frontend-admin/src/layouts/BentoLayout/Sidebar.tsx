@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               exit={{ opacity: 0 }}
               className="flex items-center gap-3"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <HomeOutlined style={{ fontSize: 18, color: 'white' }} />
               </div>
               <span className="text-white font-semibold text-lg">Bento</span>
@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* User Profile */}
       <div className="p-4 border-t border-white/10">
         <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
-          <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-linear-to-br from-pink-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
             {role ? role.charAt(0) : 'U'}
           </div>
           <AnimatePresence>
