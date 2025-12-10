@@ -5,6 +5,7 @@ import com.tpanh.backend.dto.BuildingResponse;
 import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.BuildingMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,6 +20,7 @@ public class BuildingService {
     private static final int DEFAULT_WATER_UNIT_PRICE = 20000;
 
     private final BuildingRepository buildingRepository;
+    private final BuildingMapper buildingMapper;
 
     @Transactional
     @CacheEvict(value = "buildings", allEntries = true)
@@ -38,7 +40,7 @@ public class BuildingService {
         building.setWaterCalcMethod(request.getWaterCalcMethod());
 
         final var savedBuilding = buildingRepository.save(building);
-        return toResponse(savedBuilding);
+        return buildingMapper.toResponse(savedBuilding);
     }
 
     @Cacheable(value = "buildings", key = "#id")
@@ -47,18 +49,6 @@ public class BuildingService {
                 buildingRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
-        return toResponse(building);
-    }
-
-    private BuildingResponse toResponse(final Building building) {
-        return BuildingResponse.builder()
-                .id(building.getId())
-                .name(building.getName())
-                .ownerName(building.getOwnerName())
-                .ownerPhone(building.getOwnerPhone())
-                .elecUnitPrice(building.getElecUnitPrice())
-                .waterUnitPrice(building.getWaterUnitPrice())
-                .waterCalcMethod(building.getWaterCalcMethod())
-                .build();
+        return buildingMapper.toResponse(building);
     }
 }

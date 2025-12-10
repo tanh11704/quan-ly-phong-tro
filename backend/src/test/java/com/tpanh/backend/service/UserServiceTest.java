@@ -7,14 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tpanh.backend.dto.UserDTO;
 import com.tpanh.backend.entity.User;
 import com.tpanh.backend.enums.Role;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.UserMapper;
 import com.tpanh.backend.repository.UserRepository;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +40,7 @@ class UserServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private Authentication authentication;
+    @Mock private UserMapper userMapper;
 
     @InjectMocks private UserService userService;
 
@@ -52,6 +56,21 @@ class UserServiceTest {
                         .roles(Role.ADMIN)
                         .active(true)
                         .build();
+
+        // Mock mapper to return response based on user (lenient for tests that don't use mapper)
+        lenient()
+                .when(userMapper.toDTO(any(User.class)))
+                .thenAnswer(
+                        invocation -> {
+                            final User u = invocation.getArgument(0);
+                            return UserDTO.builder()
+                                    .id(u.getId())
+                                    .username(u.getUsername())
+                                    .fullName(u.getFullName())
+                                    .role(u.getRoles())
+                                    .active(u.getActive())
+                                    .build();
+                        });
     }
 
     @AfterEach

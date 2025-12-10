@@ -4,14 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.BuildingResponse;
 import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.enums.WaterCalcMethod;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.BuildingMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +34,7 @@ class BuildingServiceTest {
     private static final int BUILDING_ID = 1;
 
     @Mock private BuildingRepository buildingRepository;
+    @Mock private BuildingMapper buildingMapper;
 
     @InjectMocks private BuildingService buildingService;
 
@@ -46,6 +50,24 @@ class BuildingServiceTest {
         savedBuilding.setElecUnitPrice(CUSTOM_ELEC_PRICE);
         savedBuilding.setWaterUnitPrice(CUSTOM_WATER_PRICE);
         savedBuilding.setWaterCalcMethod(WaterCalcMethod.BY_METER);
+
+        // Mock mapper to return response based on building (lenient for tests that don't use
+        // mapper)
+        lenient()
+                .when(buildingMapper.toResponse(any(Building.class)))
+                .thenAnswer(
+                        invocation -> {
+                            final Building b = invocation.getArgument(0);
+                            return BuildingResponse.builder()
+                                    .id(b.getId())
+                                    .name(b.getName())
+                                    .ownerName(b.getOwnerName())
+                                    .ownerPhone(b.getOwnerPhone())
+                                    .elecUnitPrice(b.getElecUnitPrice())
+                                    .waterUnitPrice(b.getWaterUnitPrice())
+                                    .waterCalcMethod(b.getWaterCalcMethod())
+                                    .build();
+                        });
     }
 
     @Test

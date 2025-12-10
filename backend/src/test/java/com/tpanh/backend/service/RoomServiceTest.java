@@ -4,16 +4,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.dto.RoomUpdateRequest;
 import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.RoomMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import java.util.Arrays;
@@ -37,6 +40,7 @@ class RoomServiceTest {
 
     @Mock private RoomRepository roomRepository;
     @Mock private BuildingRepository buildingRepository;
+    @Mock private RoomMapper roomMapper;
 
     @InjectMocks private RoomService roomService;
 
@@ -55,6 +59,28 @@ class RoomServiceTest {
         room.setRoomNo(ROOM_NO);
         room.setPrice(ROOM_PRICE);
         room.setStatus(STATUS_VACANT);
+
+        // Mock mapper to return response based on room (lenient for tests that don't use mapper)
+        lenient()
+                .when(roomMapper.toResponse(any(Room.class)))
+                .thenAnswer(
+                        invocation -> {
+                            final Room r = invocation.getArgument(0);
+                            return RoomResponse.builder()
+                                    .id(r.getId())
+                                    .buildingId(
+                                            r.getBuilding() != null
+                                                    ? r.getBuilding().getId()
+                                                    : null)
+                                    .buildingName(
+                                            r.getBuilding() != null
+                                                    ? r.getBuilding().getName()
+                                                    : null)
+                                    .roomNo(r.getRoomNo())
+                                    .price(r.getPrice())
+                                    .status(r.getStatus())
+                                    .build();
+                        });
     }
 
     @Test

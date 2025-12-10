@@ -6,6 +6,7 @@ import com.tpanh.backend.dto.RoomUpdateRequest;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.RoomMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoomService {
     private final RoomRepository roomRepository;
     private final BuildingRepository buildingRepository;
+    private final RoomMapper roomMapper;
 
     @Transactional
     @CacheEvict(value = "rooms", key = "#request.buildingId")
@@ -36,7 +38,7 @@ public class RoomService {
         room.setStatus(request.getStatus() != null ? request.getStatus() : "VACANT");
 
         final var savedRoom = roomRepository.save(room);
-        return toResponse(savedRoom);
+        return roomMapper.toResponse(savedRoom);
     }
 
     @Transactional
@@ -59,7 +61,7 @@ public class RoomService {
         final var updatedRoom = roomRepository.save(room);
         final var buildingId = updatedRoom.getBuilding().getId();
         evictRoomsCache(buildingId);
-        return toResponse(updatedRoom);
+        return roomMapper.toResponse(updatedRoom);
     }
 
     @Transactional
@@ -84,17 +86,6 @@ public class RoomService {
                         .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
         final var rooms = roomRepository.findByBuildingId(buildingId);
-        return rooms.stream().map(this::toResponse).toList();
-    }
-
-    private RoomResponse toResponse(final Room room) {
-        return RoomResponse.builder()
-                .id(room.getId())
-                .buildingId(room.getBuilding().getId())
-                .buildingName(room.getBuilding().getName())
-                .roomNo(room.getRoomNo())
-                .price(room.getPrice())
-                .status(room.getStatus())
-                .build();
+        return rooms.stream().map(roomMapper::toResponse).toList();
     }
 }

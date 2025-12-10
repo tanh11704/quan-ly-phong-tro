@@ -4,15 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.tpanh.backend.dto.TenantCreationRequest;
+import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.entity.Tenant;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.TenantMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import java.time.LocalDate;
@@ -37,6 +40,7 @@ class TenantServiceTest {
 
     @Mock private TenantRepository tenantRepository;
     @Mock private RoomRepository roomRepository;
+    @Mock private TenantMapper tenantMapper;
 
     @InjectMocks private TenantService tenantService;
 
@@ -57,6 +61,24 @@ class TenantServiceTest {
         tenant.setPhone(TENANT_PHONE);
         tenant.setIsContractHolder(true);
         tenant.setStartDate(LocalDate.now());
+
+        // Mock mapper to return response based on tenant (lenient for tests that don't use mapper)
+        lenient()
+                .when(tenantMapper.toResponse(any(Tenant.class)))
+                .thenAnswer(
+                        invocation -> {
+                            final Tenant t = invocation.getArgument(0);
+                            return TenantResponse.builder()
+                                    .id(t.getId())
+                                    .roomId(t.getRoom() != null ? t.getRoom().getId() : null)
+                                    .roomNo(t.getRoom() != null ? t.getRoom().getRoomNo() : null)
+                                    .name(t.getName())
+                                    .phone(t.getPhone())
+                                    .isContractHolder(t.getIsContractHolder())
+                                    .startDate(t.getStartDate())
+                                    .endDate(t.getEndDate())
+                                    .build();
+                        });
     }
 
     @Test

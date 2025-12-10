@@ -5,6 +5,7 @@ import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Tenant;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.TenantMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantService {
     private final TenantRepository tenantRepository;
     private final RoomRepository roomRepository;
+    private final TenantMapper tenantMapper;
 
     @Transactional
     public TenantResponse createTenant(final TenantCreationRequest request) {
@@ -46,7 +48,7 @@ public class TenantService {
         }
 
         evictTenantCaches(request.getRoomId(), savedTenant.getId());
-        return toResponse(savedTenant);
+        return tenantMapper.toResponse(savedTenant);
     }
 
     @Cacheable(value = "tenants", key = "#id")
@@ -55,7 +57,7 @@ public class TenantService {
                 tenantRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
-        return toResponse(tenant);
+        return tenantMapper.toResponse(tenant);
     }
 
     @Cacheable(value = "tenantsByRoom", key = "#roomId")
@@ -65,7 +67,7 @@ public class TenantService {
         }
 
         final var tenants = tenantRepository.findByRoomIdOrderByStartDateDesc(roomId);
-        return tenants.stream().map(this::toResponse).toList();
+        return tenants.stream().map(tenantMapper::toResponse).toList();
     }
 
     @Transactional
@@ -88,7 +90,7 @@ public class TenantService {
         if (roomId != null) {
             evictTenantCaches(roomId, id);
         }
-        return toResponse(updatedTenant);
+        return tenantMapper.toResponse(updatedTenant);
     }
 
     private void updateRoomStatusIfNeeded(final Tenant tenant) {
@@ -115,18 +117,5 @@ public class TenantService {
             })
     private void evictTenantCaches(final Integer roomId, final Integer tenantId) {
         // Method chỉ để evict cache, không có logic gì
-    }
-
-    private TenantResponse toResponse(final Tenant tenant) {
-        return TenantResponse.builder()
-                .id(tenant.getId())
-                .roomId(tenant.getRoom() != null ? tenant.getRoom().getId() : null)
-                .roomNo(tenant.getRoom() != null ? tenant.getRoom().getRoomNo() : null)
-                .name(tenant.getName())
-                .phone(tenant.getPhone())
-                .isContractHolder(tenant.getIsContractHolder())
-                .startDate(tenant.getStartDate())
-                .endDate(tenant.getEndDate())
-                .build();
     }
 }
