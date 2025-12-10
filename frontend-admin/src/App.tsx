@@ -4,11 +4,13 @@ import { Route, Routes } from 'react-router-dom';
 import { themeConfig } from './config/themeConfig';
 import { AuthInit } from './features/auth/components/AuthInit';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
+import { BentoLayout } from './layouts';
 
 const Login = lazy(() => import('./features/auth/pages/Login'));
 const Register = lazy(() => import('./features/auth/pages/Register'));
 const Activate = lazy(() => import('./features/auth/pages/Activate'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Buildings = lazy(() => import('./features/buildings/pages/Buildings'));
 
 const App = () => {
   return (
@@ -26,6 +28,16 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buildings"
+              element={
+                <ProtectedRoute>
+                  <BentoLayout>
+                    <Buildings />
+                  </BentoLayout>
                 </ProtectedRoute>
               }
             />

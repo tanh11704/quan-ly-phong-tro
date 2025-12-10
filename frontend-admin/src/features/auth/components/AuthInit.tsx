@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context';
 import { useTokenValidation } from '../hooks/useTokenValidation';
-import { getRoleFromToken, getToken, removeToken } from '../utils/tokenUtils';
+import { getRole, getRoleFromToken, getToken, removeToken } from '../utils/tokenUtils';
 
 interface AuthInitProps {
   children: React.ReactNode;
@@ -34,8 +34,12 @@ export const AuthInit = ({ children }: AuthInitProps) => {
         const isValid = await validateToken(token);
 
         if (isValid) {
-          // Lấy role từ token
-          const role = getRoleFromToken(token);
+          // Lấy role từ token hoặc localStorage
+          let role = getRoleFromToken(token);
+          // Nếu không lấy được từ token, thử lấy từ localStorage
+          if (!role) {
+            role = getRole();
+          }
           setAuthenticated(true);
           if (role) {
             setRole(role);

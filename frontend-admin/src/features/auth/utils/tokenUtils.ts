@@ -10,6 +10,19 @@ export const setToken = (token: string): void => {
 
 export const removeToken = (): void => {
   localStorage.removeItem('accessToken');
+  localStorage.removeItem('userRole');
+};
+
+export const setRole = (role: Role): void => {
+  localStorage.setItem('userRole', role);
+};
+
+export const getRole = (): Role | null => {
+  const role = localStorage.getItem('userRole');
+  if (role && Object.values(Role).includes(role as Role)) {
+    return role as Role;
+  }
+  return null;
 };
 
 export const hasToken = (): boolean => {

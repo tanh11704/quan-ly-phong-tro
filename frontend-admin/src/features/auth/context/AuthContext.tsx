@@ -1,13 +1,24 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { Role } from '../types/auth';
-import { removeToken, setToken } from '../utils/tokenUtils';
+import {
+  getRole,
+  getToken,
+  removeToken,
+  setRole as setRoleStorage,
+  setToken,
+} from '../utils/tokenUtils';
 import { AuthContext, type AuthState } from './authContextValue';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [state, setState] = useState<AuthState>({
-    isAuthenticated: false,
-    isInitialized: false,
-    role: null,
+  // Initialize state từ localStorage nếu có
+  const [state, setState] = useState<AuthState>(() => {
+    const token = getToken();
+    const role = getRole();
+    return {
+      isAuthenticated: !!token,
+      isInitialized: false,
+      role: role || null,
+    };
   });
 
   const setAuthenticated = useCallback((value: boolean) => {
@@ -19,6 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setRole = useCallback((role: Role) => {
+    setRoleStorage(role);
     setState((prev) => ({ ...prev, role }));
   }, []);
 
@@ -33,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback((token: string, role: Role) => {
     setToken(token);
+    setRoleStorage(role);
     setState({
       isAuthenticated: true,
       isInitialized: true,
