@@ -1,5 +1,12 @@
 package com.tpanh.backend.service;
 
+import java.util.List;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.dto.RoomUpdateRequest;
@@ -8,10 +15,8 @@ import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.RoomRepository;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +25,7 @@ public class RoomService {
     private final BuildingRepository buildingRepository;
 
     @Transactional
+    @CacheEvict(value = "rooms", key = "#request.buildingId")
     public RoomResponse createRoom(final RoomCreationRequest request) {
         final var building =
                 buildingRepository
@@ -54,6 +60,8 @@ public class RoomService {
         }
 
         final var updatedRoom = roomRepository.save(room);
+        final var buildingId = updatedRoom.getBuilding().getId();
+        evictRoomsCache(buildingId);
         return toResponse(updatedRoom);
     }
 
@@ -63,9 +71,16 @@ public class RoomService {
                 roomRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+        final var buildingId = room.getBuilding().getId();
         roomRepository.delete(room);
+        evictRoomsCache(buildingId);
     }
 
+    @CacheEvict(value = "rooms", key = "#buildingId")
+    private void evictRoomsCache(final Integer buildingId) {
+    }
+
+    @Cacheable(value = "rooms", key = "#buildingId")
     public List<RoomResponse> getRoomsByBuildingId(final Integer buildingId) {
         final var building =
                 buildingRepository

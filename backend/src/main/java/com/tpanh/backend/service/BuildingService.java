@@ -1,14 +1,18 @@
 package com.tpanh.backend.service;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.tpanh.backend.dto.BuildingCreationRequest;
 import com.tpanh.backend.dto.BuildingResponse;
 import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.BuildingRepository;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +23,7 @@ public class BuildingService {
     private final BuildingRepository buildingRepository;
 
     @Transactional
+    @CacheEvict(value = "buildings", allEntries = true)
     public BuildingResponse createBuilding(final BuildingCreationRequest request) {
         final var building = new Building();
         building.setName(request.getName());
@@ -38,6 +43,7 @@ public class BuildingService {
         return toResponse(savedBuilding);
     }
 
+    @Cacheable(value = "buildings", key = "#id")
     public BuildingResponse getBuildingById(final Integer id) {
         final var building =
                 buildingRepository

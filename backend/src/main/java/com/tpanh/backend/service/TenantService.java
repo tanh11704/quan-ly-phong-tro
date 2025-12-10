@@ -1,5 +1,14 @@
 package com.tpanh.backend.service;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Tenant;
@@ -7,11 +16,8 @@ import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
-import java.time.LocalDate;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,9 +48,11 @@ public class TenantService {
             roomRepository.save(room);
         }
 
+        evictTenantCaches(request.getRoomId(), savedTenant.getId());
         return toResponse(savedTenant);
     }
 
+    @Cacheable(value = "tenants", key = "#id")
     public TenantResponse getTenantById(final Integer id) {
         final var tenant =
                 tenantRepository
@@ -53,11 +61,11 @@ public class TenantService {
         return toResponse(tenant);
     }
 
+    @Cacheable(value = "tenantsByRoom", key = "#roomId")
     public List<TenantResponse> getTenantsByRoomId(final Integer roomId) {
-        final var room =
-                roomRepository
-                        .findById(roomId)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+        if (!roomRepository.existsById(roomId)) {
+            throw new AppException(ErrorCode.ROOM_NOT_FOUND);
+        }
 
         final var tenants = tenantRepository.findByRoomIdOrderByStartDateDesc(roomId);
         return tenants.stream().map(this::toResponse).toList();
@@ -78,6 +86,7 @@ public class TenantService {
         final var updatedTenant = tenantRepository.save(tenant);
 
         final var room = tenant.getRoom();
+        final Integer roomId = room != null ? room.getId() : null;
         if (room != null) {
             final var activeTenantsCount =
                     tenantRepository.findByRoomIdOrderByStartDateDesc(room.getId()).stream()
@@ -90,7 +99,19 @@ public class TenantService {
             }
         }
 
+        if (roomId != null) {
+            evictTenantCaches(roomId, id);
+        }
         return toResponse(updatedTenant);
+    }
+
+    @Caching(
+            evict = {
+                @CacheEvict(value = "tenants", key = "#tenantId"),
+                @CacheEvict(value = "tenantsByRoom", key = "#roomId")
+            })
+    private void evictTenantCaches(final Integer roomId, final Integer tenantId) {
+        // Method chỉ để evict cache, không có logic gì
     }
 
     private TenantResponse toResponse(final Tenant tenant) {
