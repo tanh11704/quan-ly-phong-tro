@@ -27,7 +27,7 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
       transition={{ delay: 0.1 }}
       className="h-full bg-white md:rounded-[32px] rounded-none shadow-sm flex flex-col overflow-hidden"
     >
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-4 p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-4">
         {/* Page Title */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
           <h1 className="text-xl md:text-2xl font-bold text-slate-900 mb-1">{title}</h1>

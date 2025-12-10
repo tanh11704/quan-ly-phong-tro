@@ -1,5 +1,12 @@
 package com.tpanh.backend.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.tpanh.backend.dto.ApiResponse;
 import com.tpanh.backend.dto.AuthenticationRequest;
 import com.tpanh.backend.dto.AuthenticationResponse;
@@ -11,17 +18,12 @@ import com.tpanh.backend.dto.RegistrationResponse;
 import com.tpanh.backend.service.AuthenticationService;
 import com.tpanh.backend.service.JwtService;
 import com.tpanh.backend.service.RegistrationService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("${app.api-prefix}")
@@ -141,7 +143,7 @@ public class AuthenticationController {
                         description = "Token không hợp lệ hoặc đã hết hạn")
             })
     @GetMapping("/auth/activate")
-    public ApiResponse<String> activate(@RequestParam final String token) {
+    public ApiResponse<String> activate(@RequestParam("token") final String token) {
         registrationService.activateAccount(token);
         return ApiResponse.<String>builder()
                 .result("Tài khoản đã được kích hoạt thành công")

@@ -37,7 +37,7 @@ const BentoLayout: React.FC<BentoLayoutProps> = ({ children }) => {
           top-0 left-0
           h-screen md:h-full z-50
           transition-transform duration-300 ease-in-out
-          flex-shrink-0
+          shrink-0
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
         `}
@@ -47,7 +47,7 @@ const BentoLayout: React.FC<BentoLayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen w-full min-w-0 overflow-hidden">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <Header onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">

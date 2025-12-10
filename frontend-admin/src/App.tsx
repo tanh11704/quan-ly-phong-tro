@@ -6,6 +6,8 @@ import { AuthInit } from './features/auth/components/AuthInit';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
 
 const Login = lazy(() => import('./features/auth/pages/Login'));
+const Register = lazy(() => import('./features/auth/pages/Register'));
+const Activate = lazy(() => import('./features/auth/pages/Activate'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 
 const App = () => {
@@ -17,6 +19,8 @@ const App = () => {
         >
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/activate" element={<Activate />} />
             <Route
               path="/dashboard"
               element={

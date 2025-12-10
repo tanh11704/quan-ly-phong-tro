@@ -42,3 +42,29 @@ export type ApiResponse<T> = {
   result: T;
   message: string;
 };
+
+// Registration types
+export const RegistrationRequestSchema = z.object({
+  username: z
+    .string()
+    .min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự')
+    .max(50, 'Tên đăng nhập không được quá 50 ký tự'),
+  password: z
+    .string()
+    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+    .max(100, 'Mật khẩu không được quá 100 ký tự'),
+  fullName: z
+    .string()
+    .min(1, 'Họ và tên không được để trống')
+    .max(100, 'Họ và tên không được quá 100 ký tự'),
+  email: z.string().email('Email không hợp lệ'),
+});
+
+export type RegistrationRequest = z.infer<typeof RegistrationRequestSchema>;
+
+export const RegistrationResponseSchema = z.object({
+  userId: z.string(),
+  message: z.string(),
+});
+
+export type RegistrationResponse = z.infer<typeof RegistrationResponseSchema>;

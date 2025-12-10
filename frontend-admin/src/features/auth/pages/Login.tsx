@@ -1,7 +1,7 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input, message } from 'antd';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLoginMutation } from '../api/authApi';
 import { useAuth } from '../context';
 import { LoginSchema, type LoginFormData } from '../types/auth';
@@ -33,7 +33,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -57,7 +57,7 @@ const Login = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', delay: 0.4 }}
-              className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             >
               <LockOutlined className="text-2xl text-white" />
             </motion.div>
@@ -133,7 +133,7 @@ const Login = () => {
                   htmlType="submit"
                   loading={isLoading}
                   block
-                  className="h-12 rounded-lg text-base font-semibold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="h-12 rounded-lg text-base font-semibold bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Đăng nhập
                 </Button>
@@ -149,12 +149,12 @@ const Login = () => {
             className="mt-6 text-center text-sm text-gray-500"
           >
             Chưa có tài khoản?{' '}
-            <a
-              href="#register"
+            <Link
+              to="/register"
               className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               Đăng ký ngay
-            </a>
+            </Link>
           </motion.div>
         </motion.div>
       </motion.div>

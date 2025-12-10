@@ -119,7 +119,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       initial={{ height: 0 }}
                       animate={{ height: `${height}%` }}
                       transition={{ delay: 0.5 + i * 0.05, duration: 0.3 }}
-                      className={`w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t transition-all ${
+                      className={`w-full bg-linear-to-t from-blue-500 to-blue-400 rounded-t transition-all ${
                         isHovered ? 'from-blue-600 to-blue-500 shadow-lg scale-105 z-10' : ''
                       }`}
                       style={{
