@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { BentoGrid } from './BentoGrid';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
-const BentoLayout: React.FC = () => {
+interface BentoLayoutProps {
+  children?: React.ReactNode;
+}
+
+const BentoLayout: React.FC<BentoLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedKey, setSelectedKey] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const handleToggleCollapse = () => {
     setCollapsed(!collapsed);
   };
 
-  const handleSelectMenu = (key: string) => {
-    setSelectedKey(key);
-    // Đóng mobile menu sau khi chọn
-    setMobileMenuOpen(false);
-  };
+  // Render BentoGrid for dashboard, otherwise render children
+  const isDashboard = location.pathname === '/dashboard';
 
   return (
     <div className="min-h-screen w-full bg-slate-100 md:p-3 p-0 flex flex-col md:flex-row gap-0 md:gap-3">
@@ -39,20 +41,13 @@ const BentoLayout: React.FC = () => {
           md:translate-x-0
         `}
       >
-        <Sidebar
-          collapsed={collapsed}
-          selectedKey={selectedKey}
-          onToggleCollapse={handleToggleCollapse}
-          onSelectMenu={handleSelectMenu}
-        />
+        <Sidebar collapsed={collapsed} onToggleCollapse={handleToggleCollapse} />
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen md:min-h-0 md:h-screen w-full md:min-w-0">
         <Header onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
-        <div className="flex-1 overflow-y-auto">
-          <BentoGrid />
-        </div>
+        <div className="flex-1 overflow-y-auto">{isDashboard ? <BentoGrid /> : children}</div>
       </div>
     </div>
   );

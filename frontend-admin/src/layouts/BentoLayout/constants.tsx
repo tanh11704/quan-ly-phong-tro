@@ -1,5 +1,6 @@
 import {
   BarChartOutlined,
+  BugOutlined,
   CalendarOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -63,6 +64,12 @@ export const ALL_MENU_ITEMS: MenuItem[] = [
   },
 
   // Menu cho ADMIN (quản lý hệ thống - chỉ xem và khóa)
+  {
+    key: 'sentry-logs',
+    icon: <BugOutlined style={{ fontSize: 20 }} />,
+    label: 'Sentry Logs',
+    allowedRoles: [Role.ADMIN],
+  },
   {
     key: 'managers',
     icon: <TeamOutlined style={{ fontSize: 20 }} />,

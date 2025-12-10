@@ -6,6 +6,9 @@ import App from './App';
 import { AuthProvider } from './features/auth/context';
 import './index.css';
 import { queryClient } from './lib/queryClient';
+import { initSentry } from './lib/sentry';
+
+initSentry();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

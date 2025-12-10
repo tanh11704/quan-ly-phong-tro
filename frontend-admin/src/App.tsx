@@ -4,9 +4,11 @@ import { Route, Routes } from 'react-router-dom';
 import { themeConfig } from './config/themeConfig';
 import { AuthInit } from './features/auth/components/AuthInit';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
+import { BentoLayout } from './layouts';
 
 const Login = lazy(() => import('./features/auth/pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const SentryLogs = lazy(() => import('./features/sentry/pages/SentryLogs'));
 
 const App = () => {
   return (
@@ -22,6 +24,16 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sentry-logs"
+              element={
+                <ProtectedRoute>
+                  <BentoLayout>
+                    <SentryLogs />
+                  </BentoLayout>
                 </ProtectedRoute>
               }
             />

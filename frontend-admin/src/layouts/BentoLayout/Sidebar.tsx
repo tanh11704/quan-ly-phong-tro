@@ -1,24 +1,38 @@
 import { HomeOutlined, MenuOutlined } from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context';
 import { MENU_ITEM_VARIANTS, SIDEBAR_VARIANTS, getMenuItemsByRole } from './constants';
 import type { MenuItem } from './types';
 
 interface SidebarProps {
   collapsed: boolean;
-  selectedKey: string;
   onToggleCollapse: () => void;
-  onSelectMenu: (key: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  collapsed,
-  selectedKey,
-  onToggleCollapse,
-  onSelectMenu,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
   const { role } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Map route paths to menu keys
+  const getSelectedKey = () => {
+    if (location.pathname === '/dashboard') return 'dashboard';
+    if (location.pathname === '/sentry-logs') return 'sentry-logs';
+    return 'dashboard';
+  };
+
+  const selectedKey = getSelectedKey();
+
+  const handleSelectMenu = (key: string) => {
+    const routeMap: Record<string, string> = {
+      dashboard: '/dashboard',
+      'sentry-logs': '/sentry-logs',
+    };
+    const route = routeMap[key] || '/dashboard';
+    navigate(route);
+  };
 
   // Filter menu items theo role
   const menuItems = useMemo(() => getMenuItemsByRole(role), [role]);
@@ -78,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             key={item.key}
             variants={MENU_ITEM_VARIANTS}
             whileHover="hover"
-            onClick={() => onSelectMenu(item.key)}
+            onClick={() => handleSelectMenu(item.key)}
             className={`
               mb-2 rounded-2xl cursor-pointer transition-all duration-200
               ${

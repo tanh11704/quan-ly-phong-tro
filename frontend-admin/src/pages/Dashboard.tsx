@@ -1,7 +1,11 @@
 import { BentoLayout } from '../layouts';
 
 const Dashboard = () => {
-  return <BentoLayout />;
+  return (
+    <BentoLayout>
+      <div />
+    </BentoLayout>
+  );
 };
 
 export default Dashboard;
