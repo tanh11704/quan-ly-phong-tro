@@ -11,10 +11,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -156,5 +159,55 @@ public class SentryController {
                 .result(result)
                 .message("Lấy danh sách Sentry events thành công")
                 .build();
+    }
+
+    @Operation(
+            summary = "Test Sentry integration",
+            description =
+                    "Endpoint để test Sentry integration bằng cách tạo exception hoặc message. "
+                            + "Có thể test với các loại: exception, message, error")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Test thành công"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Test exception được throw"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "Chỉ Admin mới có quyền truy cập")
+            })
+    @PostMapping("/test")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<String> testSentry(@RequestBody final SentryTestRequest request) {
+        final var type = request.getType() != null ? request.getType() : "message";
+        final var message = request.getMessage() != null ? request.getMessage() : "Test message";
+
+        switch (type.toLowerCase()) {
+            case "exception":
+            case "error":
+                throw new RuntimeException("Sentry Test Exception: " + message);
+            case "message":
+            default:
+                io.sentry.Sentry.captureMessage("Sentry Test Message: " + message);
+                return ApiResponse.<String>builder()
+                        .result("Message sent to Sentry successfully")
+                        .message("Test message đã được gửi lên Sentry")
+                        .build();
+        }
+    }
+
+    @Data
+    @Schema(description = "Request để test Sentry")
+    static class SentryTestRequest {
+        @Schema(
+                description = "Loại test",
+                example = "message",
+                allowableValues = {"message", "exception", "error"})
+        private String type;
+
+        @Schema(description = "Nội dung message hoặc exception", example = "This is a test")
+        private String message;
     }
 }
