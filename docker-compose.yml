@@ -3,9 +3,27 @@ version: "3.8"
 services:
   db:
     image: postgres:14-alpine
+    container_name: postgres_container
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_DB=phongtro
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123456
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    image: redis:alpine
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
