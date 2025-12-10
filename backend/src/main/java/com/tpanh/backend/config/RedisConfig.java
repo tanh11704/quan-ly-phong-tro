@@ -1,7 +1,6 @@
 package com.tpanh.backend.config;
 
 import java.time.Duration;
-
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -17,25 +16,25 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @EnableCaching
 public class RedisConfig {
 
-  private static final String CACHE_KEY_PREFIX = "room-management:";
+    private static final String CACHE_KEY_PREFIX = "room-management:";
 
-  @Bean
-  public CacheManager cacheManager(final RedisConnectionFactory redisConnectionFactory) {
-    final RedisCacheConfiguration defaultConfig =
-        RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(Duration.ofHours(1))
-            .prefixCacheNameWith(CACHE_KEY_PREFIX)
-            .serializeKeysWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(
-                    new StringRedisSerializer()))
-            .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(
-                    new GenericJackson2JsonRedisSerializer()))
-            .disableCachingNullValues();
+    @Bean
+    public CacheManager cacheManager(final RedisConnectionFactory redisConnectionFactory) {
+        final RedisCacheConfiguration defaultConfig =
+                RedisCacheConfiguration.defaultCacheConfig()
+                        .entryTtl(Duration.ofHours(1))
+                        .prefixCacheNameWith(CACHE_KEY_PREFIX)
+                        .serializeKeysWith(
+                                RedisSerializationContext.SerializationPair.fromSerializer(
+                                        new StringRedisSerializer()))
+                        .serializeValuesWith(
+                                RedisSerializationContext.SerializationPair.fromSerializer(
+                                        new GenericJackson2JsonRedisSerializer()))
+                        .disableCachingNullValues();
 
-    return RedisCacheManager.builder(redisConnectionFactory)
-        .cacheDefaults(defaultConfig)
-        .transactionAware()
-        .build();
-  }
+        return RedisCacheManager.builder(redisConnectionFactory)
+                .cacheDefaults(defaultConfig)
+                .transactionAware()
+                .build();
+    }
 }

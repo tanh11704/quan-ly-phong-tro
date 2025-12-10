@@ -1,14 +1,5 @@
 package com.tpanh.backend.service;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Tenant;
@@ -16,8 +7,14 @@ import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
-
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -85,24 +82,30 @@ public class TenantService {
         tenant.setEndDate(LocalDate.now());
         final var updatedTenant = tenantRepository.save(tenant);
 
-        final var room = tenant.getRoom();
-        final Integer roomId = room != null ? room.getId() : null;
-        if (room != null) {
-            final var activeTenantsCount =
-                    tenantRepository.findByRoomIdOrderByStartDateDesc(room.getId()).stream()
-                            .filter(t -> t.getEndDate() == null)
-                            .count();
+        updateRoomStatusIfNeeded(tenant);
 
-            if (activeTenantsCount == 0) {
-                room.setStatus("VACANT");
-                roomRepository.save(room);
-            }
-        }
-
+        final var roomId = tenant.getRoom() != null ? tenant.getRoom().getId() : null;
         if (roomId != null) {
             evictTenantCaches(roomId, id);
         }
         return toResponse(updatedTenant);
+    }
+
+    private void updateRoomStatusIfNeeded(final Tenant tenant) {
+        final var room = tenant.getRoom();
+        if (room == null) {
+            return;
+        }
+
+        final var activeTenantsCount =
+                tenantRepository.findByRoomIdOrderByStartDateDesc(room.getId()).stream()
+                        .filter(t -> t.getEndDate() == null)
+                        .count();
+
+        if (activeTenantsCount == 0) {
+            room.setStatus("VACANT");
+            roomRepository.save(room);
+        }
     }
 
     @Caching(
