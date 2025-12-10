@@ -1,44 +1,67 @@
 package com.tpanh.backend.service;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
     private static final String ACTIVATION_EMAIL_SUBJECT = "Kích hoạt tài khoản Manager";
-    private static final String ACTIVATION_EMAIL_TEMPLATE =
-            """
-            Xin chào %s,
+    private static final String EMAIL_TEMPLATE_PATH = "templates/activation-email.html";
 
-            Cảm ơn bạn đã đăng ký tài khoản Manager trên hệ thống quản lý phòng trọ.
+    private final JavaMailSender mailSender;
 
-            Vui lòng click vào link sau để kích hoạt tài khoản:
-            %s
-
-            Link này sẽ hết hạn sau 24 giờ.
-
-            Trân trọng,
-            Hệ thống quản lý phòng trọ
-            """;
-
-    @Value("${app.frontend-url:http://localhost:3000}")
+    @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    public void sendActivationEmail(final String email, final String fullName, final String token) {
-        final var activationLink = frontendUrl + "/activate?token=" + token;
-        final var emailBody = String.format(ACTIVATION_EMAIL_TEMPLATE, fullName, activationLink);
+    @Value("${spring.mail.username:}")
+    private String fromEmail;
 
-        // TODO: Tích hợp với email service thực tế (SendGrid, AWS SES, etc.)
-        // Hiện tại chỉ log để test
-        log.info("Sending activation email to: {}", email);
-        log.debug("Activation link: {}", activationLink);
-        log.debug("Email body:\n{}", emailBody);
+    public void sendActivationEmail(
+            final String email, final String fullName, final String token) {
+        try {
+            final var activationLink = frontendUrl + "/activate?token=" + token;
+            final var htmlContent = loadEmailTemplate(fullName, activationLink);
 
-        // Trong production, sử dụng:
-        // emailSender.send(email, ACTIVATION_EMAIL_SUBJECT, emailBody);
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper =
+                    new MimeMessageHelper(
+                            message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(fromEmail.isEmpty() ? "noreply@phongtro.com" : fromEmail);
+            helper.setTo(email);
+            helper.setSubject(ACTIVATION_EMAIL_SUBJECT);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("Activation email sent successfully to: {}", email);
+        } catch (final MessagingException | IOException e) {
+            log.error("Failed to send activation email to: {}", email, e);
+            throw new RuntimeException("Failed to send activation email", e);
+        }
+    }
+
+    private String loadEmailTemplate(final String fullName, final String activationLink)
+            throws IOException {
+        final var resource = new ClassPathResource(EMAIL_TEMPLATE_PATH);
+        final var templateContent =
+                StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+
+        return templateContent
+                .replace("{{fullName}}", fullName)
+                .replace("{{activationLink}}", activationLink);
     }
 }

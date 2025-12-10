@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-10T22:34:46+0700",
+    date = "2025-12-10T22:41:29+0700",
     comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
@@ -20,16 +20,16 @@ public class RoomMapperImpl implements RoomMapper {
             return null;
         }
 
-        RoomResponse roomResponse = new RoomResponse();
+        RoomResponse.RoomResponseBuilder roomResponse = RoomResponse.builder();
 
-        roomResponse.setBuildingId( roomBuildingId( room ) );
-        roomResponse.setBuildingName( roomBuildingName( room ) );
-        roomResponse.setId( room.getId() );
-        roomResponse.setRoomNo( room.getRoomNo() );
-        roomResponse.setPrice( room.getPrice() );
-        roomResponse.setStatus( room.getStatus() );
+        roomResponse.buildingId( roomBuildingId( room ) );
+        roomResponse.buildingName( roomBuildingName( room ) );
+        roomResponse.id( room.getId() );
+        roomResponse.price( room.getPrice() );
+        roomResponse.roomNo( room.getRoomNo() );
+        roomResponse.status( room.getStatus() );
 
-        return roomResponse;
+        return roomResponse.build();
     }
 
     private Integer roomBuildingId(Room room) {
