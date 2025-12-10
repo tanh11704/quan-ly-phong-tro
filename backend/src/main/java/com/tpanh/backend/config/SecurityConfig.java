@@ -101,11 +101,7 @@ public class SecurityConfig {
             final AuthorizeHttpRequestsConfigurer<HttpSecurity>
                             .AuthorizationManagerRequestMatcherRegistry
                     authorize) {
-        authorize
-                .requestMatchers("/api/v1/admin/**")
-                .hasRole("ADMIN")
-                .requestMatchers("/api/v1/sentry/**")
-                .hasRole("ADMIN");
+        authorize.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
     }
 
     private void configureManagerEndpoints(

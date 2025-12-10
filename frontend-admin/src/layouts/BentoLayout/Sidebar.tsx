@@ -19,7 +19,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   // Map route paths to menu keys
   const getSelectedKey = () => {
     if (location.pathname === '/dashboard') return 'dashboard';
-    if (location.pathname === '/sentry-logs') return 'sentry-logs';
     return 'dashboard';
   };
 
@@ -28,7 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   const handleSelectMenu = (key: string) => {
     const routeMap: Record<string, string> = {
       dashboard: '/dashboard',
-      'sentry-logs': '/sentry-logs',
     };
     const route = routeMap[key] || '/dashboard';
     navigate(route);

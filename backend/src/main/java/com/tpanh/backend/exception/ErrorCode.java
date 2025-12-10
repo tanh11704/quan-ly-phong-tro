@@ -40,10 +40,6 @@ public enum ErrorCode {
     ZALO_AUTH_FAILED(3008, "Xác thực với Zalo thất bại"),
     INVALID_TOKEN(3009, "Token không hợp lệ hoặc đã hết hạn"),
     UNAUTHORIZED(3010, "Người dùng chưa đăng nhập hoặc không có quyền truy cập"),
-
-    // Nhóm lỗi Sentry (40xx)
-    SENTRY_API_ERROR(4001, "Lỗi khi gọi Sentry API"),
-    SENTRY_ISSUE_NOT_FOUND(4002, "Không tìm thấy Sentry issue"),
     ;
 
     ErrorCode(final int code, final String message) {
