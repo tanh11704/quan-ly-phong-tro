@@ -12,7 +12,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.UserDTO;
 import com.tpanh.backend.entity.User;
 import com.tpanh.backend.enums.Role;

@@ -8,21 +8,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpanh.backend.dto.UtilityReadingCreationRequest;
 import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
@@ -37,6 +22,20 @@ import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.UserRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -161,7 +160,8 @@ class UtilityReadingControllerIntegrationTest {
                                 .with(user(managerId).roles("MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.id").value(saved.getId()))
-                .andExpect(jsonPath("$.message").value("Lấy thông tin chỉ số điện nước thành công"));
+                .andExpect(
+                        jsonPath("$.message").value("Lấy thông tin chỉ số điện nước thành công"));
     }
 
     @Test
@@ -194,7 +194,7 @@ class UtilityReadingControllerIntegrationTest {
                                 .param("month", "2025-01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").isArray())
-                .andExpect(jsonPath("$.message").value("Lấy danh sách chỉ số điện nước thành công"));
+                .andExpect(
+                        jsonPath("$.message").value("Lấy danh sách chỉ số điện nước thành công"));
     }
 }
-

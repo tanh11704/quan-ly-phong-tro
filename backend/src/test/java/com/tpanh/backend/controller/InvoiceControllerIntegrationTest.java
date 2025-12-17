@@ -7,22 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpanh.backend.dto.AuthenticationRequest;
 import com.tpanh.backend.dto.BuildingCreationRequest;
@@ -44,6 +28,21 @@ import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import com.tpanh.backend.repository.UserRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -281,9 +280,12 @@ class InvoiceControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").isArray())
-                .andExpect(jsonPath("$.result.length()").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(
+                        jsonPath("$.result.length()").value(org.hamcrest.Matchers.greaterThan(0)))
                 .andExpect(jsonPath("$.result[0].waterAmount").value(40000)) // 2 tenants * 20000
-                .andExpect(jsonPath("$.result[0].totalAmount").value(3040000)); // 3000000 (room) + 0 (elec) + 40000 (water)
+                .andExpect(
+                        jsonPath("$.result[0].totalAmount")
+                                .value(3040000)); // 3000000 (room) + 0 (elec) + 40000 (water)
     }
 
     @Test
@@ -332,7 +334,9 @@ class InvoiceControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request2)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").isArray())
-                .andExpect(jsonPath("$.result").isEmpty()); // Should be empty as invoice already exists
+                .andExpect(
+                        jsonPath("$.result")
+                                .isEmpty()); // Should be empty as invoice already exists
     }
 
     @Test
@@ -435,7 +439,8 @@ class InvoiceControllerIntegrationTest {
                         post("/api/v1/invoices/generate")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden()); // 403 when no authentication (Spring Security behavior)
+                .andExpect(status().isForbidden()); // 403 when no authentication (Spring Security
+        // behavior)
     }
 
     @Test
@@ -559,15 +564,17 @@ class InvoiceControllerIntegrationTest {
         request.setBuildingId(buildingId);
         request.setPeriod("2025-01");
 
-        final var createResponse = mockMvc.perform(
-                        post("/api/v1/invoices/generate")
-                                .header("Authorization", "Bearer " + authToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andReturn();
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/invoices/generate")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk())
+                        .andReturn();
 
-        final var responseJson = objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var responseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
         final var invoiceId = responseJson.get("result").get(0).get("id").asInt();
 
         // When & Then
@@ -598,15 +605,17 @@ class InvoiceControllerIntegrationTest {
         request.setBuildingId(buildingId);
         request.setPeriod("2025-01");
 
-        final var createResponse = mockMvc.perform(
-                        post("/api/v1/invoices/generate")
-                                .header("Authorization", "Bearer " + authToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andReturn();
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/invoices/generate")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk())
+                        .andReturn();
 
-        final var responseJson = objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var responseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
         final var invoiceId = responseJson.get("result").get(0).get("id").asInt();
 
         // When & Then
@@ -625,15 +634,17 @@ class InvoiceControllerIntegrationTest {
         request.setBuildingId(buildingId);
         request.setPeriod("2025-01");
 
-        final var createResponse = mockMvc.perform(
-                        post("/api/v1/invoices/generate")
-                                .header("Authorization", "Bearer " + authToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andReturn();
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/invoices/generate")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk())
+                        .andReturn();
 
-        final var responseJson = objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var responseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
         final var invoiceId = responseJson.get("result").get(0).get("id").asInt();
 
         // Pay first time
@@ -674,15 +685,17 @@ class InvoiceControllerIntegrationTest {
         request.setBuildingId(buildingId);
         request.setPeriod("2025-01");
 
-        final var createResponse = mockMvc.perform(
-                        post("/api/v1/invoices/generate")
-                                .header("Authorization", "Bearer " + authToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andReturn();
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/invoices/generate")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk())
+                        .andReturn();
 
-        final var responseJson = objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var responseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
         final var invoiceId = responseJson.get("result").get(0).get("id").asInt();
 
         // When & Then - Should fail because tenant has no email

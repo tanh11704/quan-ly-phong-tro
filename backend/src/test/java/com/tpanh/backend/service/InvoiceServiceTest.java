@@ -16,24 +16,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import com.tpanh.backend.dto.InvoiceDetailResponse;
 import com.tpanh.backend.dto.InvoiceResponse;
 import com.tpanh.backend.entity.Building;
@@ -54,6 +36,22 @@ import com.tpanh.backend.repository.MeterRecordRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceServiceTest {
@@ -138,9 +136,13 @@ class InvoiceServiceTest {
                             final InvoiceResponse response = new InvoiceResponse();
                             response.setId(invoice.getId());
                             response.setRoomNo(
-                                    invoice.getRoom() != null ? invoice.getRoom().getRoomNo() : null);
+                                    invoice.getRoom() != null
+                                            ? invoice.getRoom().getRoomNo()
+                                            : null);
                             response.setTenantName(
-                                    invoice.getTenant() != null ? invoice.getTenant().getName() : null);
+                                    invoice.getTenant() != null
+                                            ? invoice.getTenant().getName()
+                                            : null);
                             response.setPeriod(invoice.getPeriod());
                             response.setRoomPrice(invoice.getRoomPrice());
                             response.setElecAmount(invoice.getElecAmount());
@@ -151,7 +153,8 @@ class InvoiceServiceTest {
                             return response;
                         });
 
-        // Mock UtilityReadingRepository to return empty (fallback to MeterRecord for existing tests)
+        // Mock UtilityReadingRepository to return empty (fallback to MeterRecord for existing
+        // tests)
         lenient()
                 .when(utilityReadingRepository.findByRoomIdAndMonth(anyInt(), any(String.class)))
                 .thenReturn(Optional.empty());
@@ -164,11 +167,9 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.of(elecRecord));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.of(waterRecord));
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(1);
 
@@ -251,11 +252,9 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.empty());
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.of(waterRecord));
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(1);
 
@@ -291,11 +290,9 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.of(elecRecord));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.of(waterRecord));
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(2); // 2 tenants
 
@@ -330,11 +327,9 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.of(elecRecord));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.of(waterRecord));
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(1);
 
@@ -370,25 +365,20 @@ class InvoiceServiceTest {
         tenant2.setName("Nguyễn Văn B");
         tenant2.setIsContractHolder(true);
 
-        when(roomRepository.findByBuildingId(BUILDING_ID))
-                .thenReturn(Arrays.asList(room1, room2));
+        when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Arrays.asList(room1, room2));
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_2, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_2))
                 .thenReturn(Optional.of(tenant2));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.of(elecRecord));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.of(waterRecord));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_2, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_2, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.empty());
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_2, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_2, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.empty());
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(1);
         when(tenantRepository.countByRoomId(ROOM_ID_2)).thenReturn(1);
@@ -415,9 +405,7 @@ class InvoiceServiceTest {
         invoice2.setTotalAmount(ROOM_PRICE);
         invoice2.setStatus(InvoiceStatus.DRAFT);
 
-        when(invoiceRepository.save(any(Invoice.class)))
-                .thenReturn(invoice1)
-                .thenReturn(invoice2);
+        when(invoiceRepository.save(any(Invoice.class))).thenReturn(invoice1).thenReturn(invoice2);
 
         // When
         final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
@@ -450,11 +438,9 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.ELEC))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.of(elecRecord));
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(
-                        ROOM_ID_1, PERIOD, MeterType.WATER))
+        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.empty());
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(1);
 
@@ -500,11 +486,13 @@ class InvoiceServiceTest {
         final Pageable pageable = PageRequest.of(0, 10);
         final Page<Invoice> page = new PageImpl<>(Arrays.asList(invoice), pageable, 1);
 
-        when(invoiceRepository.findByBuildingIdWithFilters(BUILDING_ID, PERIOD, InvoiceStatus.UNPAID, pageable))
+        when(invoiceRepository.findByBuildingIdWithFilters(
+                        BUILDING_ID, PERIOD, InvoiceStatus.UNPAID, pageable))
                 .thenReturn(page);
 
         // When
-        final var result = invoiceService.getInvoices(BUILDING_ID, PERIOD, InvoiceStatus.UNPAID, pageable);
+        final var result =
+                invoiceService.getInvoices(BUILDING_ID, PERIOD, InvoiceStatus.UNPAID, pageable);
 
         // Then
         assertNotNull(result);
@@ -514,7 +502,8 @@ class InvoiceServiceTest {
         assertEquals(10, result.getPage().getSize());
         assertEquals(1, result.getPage().getTotalElements());
         assertEquals("Lấy danh sách hóa đơn thành công", result.getMessage());
-        verify(invoiceRepository).findByBuildingIdWithFilters(BUILDING_ID, PERIOD, InvoiceStatus.UNPAID, pageable);
+        verify(invoiceRepository)
+                .findByBuildingIdWithFilters(BUILDING_ID, PERIOD, InvoiceStatus.UNPAID, pageable);
     }
 
     @Test
@@ -581,7 +570,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.findById(999)).thenReturn(Optional.empty());
 
         // When & Then
-        final var exception = assertThrows(AppException.class, () -> invoiceService.getInvoiceDetail(999));
+        final var exception =
+                assertThrows(AppException.class, () -> invoiceService.getInvoiceDetail(999));
         assertEquals(ErrorCode.INVOICE_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -632,7 +622,8 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void getInvoiceDetail_WithUtilityReadingMissingPreviousButHasHistory_ShouldReturnNullPreviousValues() {
+    void
+            getInvoiceDetail_WithUtilityReadingMissingPreviousButHasHistory_ShouldReturnNullPreviousValues() {
         final Invoice invoice = new Invoice();
         invoice.setId(1);
         invoice.setRoom(room1);
@@ -656,7 +647,8 @@ class InvoiceServiceTest {
                 .thenReturn(Optional.of(currentReading));
         when(utilityReadingRepository.findByRoomIdAndMonth(ROOM_ID_1, "2024-12"))
                 .thenReturn(Optional.empty());
-        when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(ROOM_ID_1, PERIOD)).thenReturn(true);
+        when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(ROOM_ID_1, PERIOD))
+                .thenReturn(true);
 
         final var result = invoiceService.getInvoiceDetail(1);
         assertNotNull(result);
@@ -767,7 +759,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.findById(999)).thenReturn(Optional.empty());
 
         // When & Then
-        final var exception = assertThrows(AppException.class, () -> invoiceService.payInvoice(999));
+        final var exception =
+                assertThrows(AppException.class, () -> invoiceService.payInvoice(999));
         assertEquals(ErrorCode.INVOICE_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -814,18 +807,26 @@ class InvoiceServiceTest {
         invoice.setDueDate(LocalDate.now().plusDays(5));
 
         when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
-        doNothing().when(emailService).sendInvoiceEmail(
-                anyString(), anyString(), anyString(), anyString(), anyInt(), any(LocalDate.class));
+        doNothing()
+                .when(emailService)
+                .sendInvoiceEmail(
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyInt(),
+                        any(LocalDate.class));
 
         // When & Then
         assertDoesNotThrow(() -> invoiceService.sendInvoiceEmail(1));
-        verify(emailService).sendInvoiceEmail(
-                eq("tenant@example.com"),
-                eq(TENANT_NAME),
-                eq(ROOM_NO_1),
-                eq(PERIOD),
-                eq(3350000),
-                any(LocalDate.class));
+        verify(emailService)
+                .sendInvoiceEmail(
+                        eq("tenant@example.com"),
+                        eq(TENANT_NAME),
+                        eq(ROOM_NO_1),
+                        eq(PERIOD),
+                        eq(3350000),
+                        any(LocalDate.class));
     }
 
     @Test
@@ -834,7 +835,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.findById(999)).thenReturn(Optional.empty());
 
         // When & Then
-        final var exception = assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(999));
+        final var exception =
+                assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(999));
         assertEquals(ErrorCode.INVOICE_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -849,7 +851,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
 
         // When & Then
-        final var exception = assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(1));
+        final var exception =
+                assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(1));
         assertEquals(ErrorCode.TENANT_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -865,7 +868,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
 
         // When & Then
-        final var exception = assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(1));
+        final var exception =
+                assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(1));
         assertEquals(ErrorCode.EMAIL_REQUIRED, exception.getErrorCode());
     }
 
@@ -881,7 +885,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
 
         // When & Then
-        final var exception = assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(1));
+        final var exception =
+                assertThrows(AppException.class, () -> invoiceService.sendInvoiceEmail(1));
         assertEquals(ErrorCode.EMAIL_REQUIRED, exception.getErrorCode());
     }
 
@@ -951,9 +956,12 @@ class InvoiceServiceTest {
                 .thenReturn(Optional.of(currentReading));
         when(utilityReadingRepository.findByRoomIdAndMonth(ROOM_ID_1, "2024-12"))
                 .thenReturn(Optional.empty());
-        when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(ROOM_ID_1, PERIOD)).thenReturn(true);
+        when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(ROOM_ID_1, PERIOD))
+                .thenReturn(true);
 
-        final var ex = assertThrows(AppException.class, () -> invoiceService.createInvoice(building, PERIOD));
+        final var ex =
+                assertThrows(
+                        AppException.class, () -> invoiceService.createInvoice(building, PERIOD));
         assertEquals(ErrorCode.MISSING_PREVIOUS_UTILITY_READING, ex.getErrorCode());
     }
 
@@ -1145,14 +1153,15 @@ class InvoiceServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(utilityReadingRepository, org.mockito.Mockito.atLeast(1)).findByRoomIdAndMonth(ROOM_ID_1, "2024-12");
+        verify(utilityReadingRepository, org.mockito.Mockito.atLeast(1))
+                .findByRoomIdAndMonth(ROOM_ID_1, "2024-12");
     }
 
     @Test
     void createInvoice_WithNullElecUnitPrice_ShouldReturnZeroElecAmount() {
         // Given
         building.setElecUnitPrice(null);
-        
+
         // UtilityReading path is skipped when elecUnitPrice is null,
         // so the code falls back to MeterRecord
         when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Arrays.asList(room1));

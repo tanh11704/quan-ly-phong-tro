@@ -9,8 +9,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.mail.Message;
+import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,11 +22,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import jakarta.mail.Message;
-import jakarta.mail.Session;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
@@ -189,9 +187,7 @@ class EmailServiceTest {
                         RuntimeException.class,
                         () ->
                                 emailService.sendActivationEmail(
-                                        "invalid@@email.com",
-                                        "Test Admin",
-                                        "token-123"));
+                                        "invalid@@email.com", "Test Admin", "token-123"));
         assertNotNull(ex.getMessage());
         verify(mailSender, never()).send(any(MimeMessage.class));
     }
@@ -217,4 +213,3 @@ class EmailServiceTest {
         assertEquals("Hóa đơn phòng P.202 - Tháng 2025-06", sent.getSubject());
     }
 }
-

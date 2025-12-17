@@ -9,16 +9,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.tpanh.backend.dto.UtilityReadingCreationRequest;
 import com.tpanh.backend.dto.UtilityReadingResponse;
 import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
@@ -30,6 +20,14 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.UtilityReadingMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class UtilityReadingServiceTest {
@@ -78,7 +76,8 @@ class UtilityReadingServiceTest {
         when(roomRepository.findById(999)).thenReturn(Optional.empty());
 
         final var ex =
-                assertThrows(AppException.class, () -> utilityReadingService.createUtilityReading(req));
+                assertThrows(
+                        AppException.class, () -> utilityReadingService.createUtilityReading(req));
         assertEquals(ErrorCode.ROOM_NOT_FOUND, ex.getErrorCode());
     }
 
@@ -93,7 +92,8 @@ class UtilityReadingServiceTest {
                 .thenReturn(Optional.of(new UtilityReading()));
 
         final var ex =
-                assertThrows(AppException.class, () -> utilityReadingService.createUtilityReading(req));
+                assertThrows(
+                        AppException.class, () -> utilityReadingService.createUtilityReading(req));
         assertEquals(ErrorCode.UTILITY_READING_EXISTED, ex.getErrorCode());
     }
 
@@ -116,7 +116,8 @@ class UtilityReadingServiceTest {
                 .thenReturn(Optional.of(prev));
 
         final var ex =
-                assertThrows(AppException.class, () -> utilityReadingService.createUtilityReading(req));
+                assertThrows(
+                        AppException.class, () -> utilityReadingService.createUtilityReading(req));
         assertEquals(ErrorCode.UTILITY_READING_INVALID_INDEX, ex.getErrorCode());
     }
 
@@ -190,7 +191,9 @@ class UtilityReadingServiceTest {
         final var ex =
                 assertThrows(
                         AppException.class,
-                        () -> utilityReadingService.updateUtilityReading(99, new UtilityReadingUpdateRequest()));
+                        () ->
+                                utilityReadingService.updateUtilityReading(
+                                        99, new UtilityReadingUpdateRequest()));
         assertEquals(ErrorCode.UTILITY_READING_NOT_FOUND, ex.getErrorCode());
     }
 
@@ -215,7 +218,9 @@ class UtilityReadingServiceTest {
         req.setWaterIndex(250); // < 300
 
         final var ex =
-                assertThrows(AppException.class, () -> utilityReadingService.updateUtilityReading(5, req));
+                assertThrows(
+                        AppException.class,
+                        () -> utilityReadingService.updateUtilityReading(5, req));
         assertEquals(ErrorCode.UTILITY_READING_INVALID_INDEX, ex.getErrorCode());
     }
 
@@ -236,7 +241,8 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.of(prev));
 
-        when(utilityReadingRepository.save(any(UtilityReading.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(utilityReadingRepository.save(any(UtilityReading.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         final var req = new UtilityReadingUpdateRequest();
         req.setWaterIndex(250); // < 300
@@ -261,7 +267,8 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.empty());
 
-        when(utilityReadingRepository.save(any(UtilityReading.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(utilityReadingRepository.save(any(UtilityReading.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         final var req = new UtilityReadingUpdateRequest();
         req.setElectricIndex(150);
@@ -278,7 +285,8 @@ class UtilityReadingServiceTest {
     void getUtilityReadingById_notFound_shouldThrow() {
         when(utilityReadingRepository.findById(1)).thenReturn(Optional.empty());
         final var ex =
-                assertThrows(AppException.class, () -> utilityReadingService.getUtilityReadingById(1));
+                assertThrows(
+                        AppException.class, () -> utilityReadingService.getUtilityReadingById(1));
         assertEquals(ErrorCode.UTILITY_READING_NOT_FOUND, ex.getErrorCode());
     }
 
@@ -357,11 +365,12 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2024-12"))
                 .thenReturn(Optional.of(prevReading));
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -383,11 +392,12 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), ""))
                 .thenReturn(Optional.empty());
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -399,7 +409,8 @@ class UtilityReadingServiceTest {
         final var req = new UtilityReadingCreationRequest();
         req.setRoomId(room.getId());
         req.setMonth("2025-02");
-        req.setElectricIndex(90); // Even though this is less than some value, previousElectricIndex is null
+        req.setElectricIndex(
+                90); // Even though this is less than some value, previousElectricIndex is null
 
         final var prevReading = new UtilityReading();
         prevReading.setRoom(room);
@@ -412,11 +423,12 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.of(prevReading));
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -442,11 +454,12 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.of(prevReading));
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -474,11 +487,12 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.of(prevReading));
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -505,11 +519,12 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.of(prevReading));
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -531,11 +546,12 @@ class UtilityReadingServiceTest {
                 .thenReturn(Optional.empty()); // No previous reading
 
         when(utilityReadingRepository.save(any(UtilityReading.class)))
-                .thenAnswer(inv -> {
-                    final var r = inv.getArgument(0, UtilityReading.class);
-                    r.setId(1);
-                    return r;
-                });
+                .thenAnswer(
+                        inv -> {
+                            final var r = inv.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
 
         final var res = utilityReadingService.createUtilityReading(req);
         assertNotNull(res);
@@ -556,7 +572,8 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findById(5)).thenReturn(Optional.of(reading));
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.empty());
-        when(utilityReadingRepository.save(any(UtilityReading.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(utilityReadingRepository.save(any(UtilityReading.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         final var req = new UtilityReadingUpdateRequest();
         req.setImageEvidence("new-image.jpg");
@@ -579,7 +596,8 @@ class UtilityReadingServiceTest {
         when(utilityReadingRepository.findById(5)).thenReturn(Optional.of(reading));
         when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
                 .thenReturn(Optional.empty());
-        when(utilityReadingRepository.save(any(UtilityReading.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(utilityReadingRepository.save(any(UtilityReading.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         final var req = new UtilityReadingUpdateRequest();
         req.setWaterIndex(250);
@@ -611,4 +629,3 @@ class UtilityReadingServiceTest {
         assertEquals(0, res.size());
     }
 }
-

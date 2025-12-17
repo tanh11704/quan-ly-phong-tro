@@ -1,5 +1,20 @@
 package com.tpanh.backend.controller;
 
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.BuildingResponse;
+import com.tpanh.backend.dto.BuildingUpdateRequest;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.service.BuildingService;
+import com.tpanh.backend.service.RoomService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -14,23 +29,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.BuildingResponse;
-import com.tpanh.backend.dto.BuildingUpdateRequest;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.service.BuildingService;
-import com.tpanh.backend.service.RoomService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/buildings")
@@ -140,9 +138,7 @@ public class BuildingController {
                 .build();
     }
 
-    @Operation(
-            summary = "Xóa tòa nhà",
-            description = "Xóa tòa nhà (chỉ Manager sở hữu)")
+    @Operation(summary = "Xóa tòa nhà", description = "Xóa tòa nhà (chỉ Manager sở hữu)")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -159,9 +155,7 @@ public class BuildingController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<Void> deleteBuilding(@PathVariable final Integer id) {
         buildingService.deleteBuilding(id);
-        return ApiResponse.<Void>builder()
-                .message("Xóa tòa nhà thành công")
-                .build();
+        return ApiResponse.<Void>builder().message("Xóa tòa nhà thành công").build();
     }
 
     @Operation(

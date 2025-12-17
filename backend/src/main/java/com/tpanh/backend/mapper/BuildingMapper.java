@@ -1,10 +1,9 @@
 package com.tpanh.backend.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-
 import com.tpanh.backend.dto.BuildingResponse;
 import com.tpanh.backend.entity.Building;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface BuildingMapper {

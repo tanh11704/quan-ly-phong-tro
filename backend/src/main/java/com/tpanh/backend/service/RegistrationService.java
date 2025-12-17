@@ -1,13 +1,5 @@
 package com.tpanh.backend.service;
 
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.tpanh.backend.dto.RegistrationRequest;
 import com.tpanh.backend.dto.RegistrationResponse;
 import com.tpanh.backend.entity.User;
@@ -16,8 +8,13 @@ import com.tpanh.backend.enums.UserStatus;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.UserRepository;
-
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -35,7 +32,8 @@ public class RegistrationService {
             final UserRepository userRepository,
             final PasswordEncoder passwordEncoder,
             final EmailService emailService,
-            @Qualifier("customStringRedisTemplate") final RedisTemplate<String, String> redisTemplate) {
+            @Qualifier("customStringRedisTemplate")
+                    final RedisTemplate<String, String> redisTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;

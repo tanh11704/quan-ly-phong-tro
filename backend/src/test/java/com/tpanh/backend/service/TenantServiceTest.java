@@ -10,21 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.entity.Room;
@@ -35,6 +20,19 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.TenantMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class TenantServiceTest {
@@ -420,8 +418,7 @@ class TenantServiceTest {
         final Pageable pageable = PageRequest.of(0, 10);
         final Page<Tenant> page = new PageImpl<>(Arrays.asList(tenant, tenant2), pageable, 2);
 
-        when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID, pageable))
-                .thenReturn(page);
+        when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID, pageable)).thenReturn(page);
 
         // When
         final var response = tenantService.getTenantsByRoomId(ROOM_ID, pageable);

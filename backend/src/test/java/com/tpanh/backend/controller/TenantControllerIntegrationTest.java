@@ -8,8 +8,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpanh.backend.dto.AuthenticationRequest;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.TenantCreationRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.WaterCalcMethod;
+import com.tpanh.backend.repository.TenantRepository;
+import com.tpanh.backend.repository.UserRepository;
 import java.time.LocalDate;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,17 +34,6 @@ import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tpanh.backend.dto.AuthenticationRequest;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.TenantCreationRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.WaterCalcMethod;
-import com.tpanh.backend.repository.TenantRepository;
-import com.tpanh.backend.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -225,7 +223,9 @@ class TenantControllerIntegrationTest {
                                 .with(user("testmanager").roles("MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+                .andExpect(
+                        jsonPath("$.content.length()")
+                                .value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
                 .andExpect(jsonPath("$.content[?(@.name == 'Nguyễn Văn A')]").exists());
     }
 
@@ -284,17 +284,17 @@ class TenantControllerIntegrationTest {
         tenant2Request.setStartDate(LocalDate.now().minusDays(10));
 
         mockMvc.perform(
-                post("/api/v1/tenants")
-                        .header("Authorization", "Bearer " + authToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tenant1Request)))
+                        post("/api/v1/tenants")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(tenant1Request)))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(
-                post("/api/v1/tenants")
-                        .header("Authorization", "Bearer " + authToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tenant2Request)))
+                        post("/api/v1/tenants")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(tenant2Request)))
                 .andExpect(status().isCreated());
 
         // When & Then
@@ -304,7 +304,9 @@ class TenantControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].name").value("Nguyễn Văn A")) // Sorted by startDate desc
+                .andExpect(
+                        jsonPath("$.content[0].name")
+                                .value("Nguyễn Văn A")) // Sorted by startDate desc
                 .andExpect(jsonPath("$.message").value("Lấy danh sách khách thuê thành công"));
     }
 

@@ -1,7 +1,24 @@
 package com.tpanh.backend.controller;
 
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.InvoiceCreationRequest;
+import com.tpanh.backend.dto.InvoiceDetailResponse;
+import com.tpanh.backend.dto.InvoiceResponse;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.entity.Building;
+import com.tpanh.backend.enums.InvoiceStatus;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.service.InvoiceService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -15,26 +32,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.InvoiceCreationRequest;
-import com.tpanh.backend.dto.InvoiceDetailResponse;
-import com.tpanh.backend.dto.InvoiceResponse;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.entity.Building;
-import com.tpanh.backend.enums.InvoiceStatus;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.service.InvoiceService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/invoices")
@@ -110,7 +107,8 @@ public class InvoiceController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<InvoiceResponse> getInvoices(
-            @Parameter(description = "ID tòa nhà", required = true) @RequestParam final Integer buildingId,
+            @Parameter(description = "ID tòa nhà", required = true) @RequestParam
+                    final Integer buildingId,
             @Parameter(description = "Kỳ thanh toán (VD: 2025-01)", example = "2025-01")
                     @RequestParam(required = false)
                     final String period,

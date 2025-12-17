@@ -1,13 +1,11 @@
 package com.tpanh.backend.repository;
 
+import com.tpanh.backend.entity.Room;
+import com.tpanh.backend.enums.RoomStatus;
 import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.tpanh.backend.entity.Room;
-import com.tpanh.backend.enums.RoomStatus;
 
 public interface RoomRepository extends JpaRepository<Room, Integer> {
 

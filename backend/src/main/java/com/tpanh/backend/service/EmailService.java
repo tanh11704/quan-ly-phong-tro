@@ -1,19 +1,17 @@
 package com.tpanh.backend.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +28,7 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    public void sendActivationEmail(
-            final String email, final String fullName, final String token) {
+    public void sendActivationEmail(final String email, final String fullName, final String token) {
         try {
             final var activationLink = frontendUrl + "/activate?token=" + token;
             final var htmlContent = loadEmailTemplate(fullName, activationLink);
@@ -39,7 +36,9 @@ public class EmailService {
             final MimeMessage message = mailSender.createMimeMessage();
             final MimeMessageHelper helper =
                     new MimeMessageHelper(
-                            message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+                            message,
+                            MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                            StandardCharsets.UTF_8.name());
 
             helper.setFrom(fromEmail.isEmpty() ? "noreply@phongtro.com" : fromEmail);
             helper.setTo(email);
@@ -79,12 +78,15 @@ public class EmailService {
 
         try {
             final var subject = String.format("Hóa đơn phòng %s - Tháng %s", roomNo, period);
-            final var htmlContent = buildInvoiceEmailContent(tenantName, roomNo, period, totalAmount, dueDate);
+            final var htmlContent =
+                    buildInvoiceEmailContent(tenantName, roomNo, period, totalAmount, dueDate);
 
             final MimeMessage message = mailSender.createMimeMessage();
             final MimeMessageHelper helper =
                     new MimeMessageHelper(
-                            message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+                            message,
+                            MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                            StandardCharsets.UTF_8.name());
 
             helper.setFrom(fromEmail.isEmpty() ? "noreply@phongtro.com" : fromEmail);
             helper.setTo(email);
@@ -106,7 +108,8 @@ public class EmailService {
             final Integer totalAmount,
             final java.time.LocalDate dueDate) {
         final var formattedAmount = String.format("%,d", totalAmount);
-        final var formattedDueDate = dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        final var formattedDueDate =
+                dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
         return String.format(
                 """

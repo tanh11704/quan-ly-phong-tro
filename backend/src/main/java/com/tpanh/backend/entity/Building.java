@@ -1,7 +1,6 @@
 package com.tpanh.backend.entity;
 
 import com.tpanh.backend.enums.WaterCalcMethod;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -8,6 +8,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.tpanh.backend.dto.AuthenticationRequest;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.BuildingUpdateRequest;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.enums.WaterCalcMethod;
+import com.tpanh.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,18 +34,6 @@ import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.tpanh.backend.dto.AuthenticationRequest;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.BuildingUpdateRequest;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.RoomStatus;
-import com.tpanh.backend.enums.WaterCalcMethod;
-import com.tpanh.backend.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -277,8 +276,7 @@ class BuildingControllerIntegrationTest {
 
     @Test
     void getBuildings_WithoutAuth_ShouldReturnForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/buildings"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/buildings")).andExpect(status().isForbidden());
     }
 
     // ===== Tests for updateBuilding endpoint =====
@@ -395,8 +393,7 @@ class BuildingControllerIntegrationTest {
 
     @Test
     void deleteBuilding_WithoutAuth_ShouldReturnForbidden() throws Exception {
-        mockMvc.perform(delete("/api/v1/buildings/1"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/v1/buildings/1")).andExpect(status().isForbidden());
     }
 
     // ===== Tests for getRoomsByBuildingId with status filter =====

@@ -1,18 +1,5 @@
 package com.tpanh.backend.service;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.tpanh.backend.dto.InvoiceDetailResponse;
 import com.tpanh.backend.dto.InvoiceResponse;
 import com.tpanh.backend.dto.PageResponse;
@@ -33,8 +20,19 @@ import com.tpanh.backend.repository.MeterRecordRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
-
+import com.tpanh.backend.util.PeriodUtils;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -92,70 +90,28 @@ public class InvoiceService {
 
     private int calculateElectricityCost(
             final Integer roomId, final String period, final Building building) {
-        // Try to use UtilityReading first (new approach)
-        final var currentReading = utilityReadingRepository.findByRoomIdAndMonth(roomId, period);
-        if (currentReading.isPresent()
-                && currentReading.get().getElectricIndex() != null
-                && building.getElecUnitPrice() != null) {
-            final String previousMonth = getPreviousMonth(period);
-            final var previousReading =
-                    utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
-
-            final int currentValue = currentReading.get().getElectricIndex();
-            final int previousValue =
-                    resolvePreviousElectricIndexOrThrow(roomId, period, previousReading);
-
-            final int usage = currentValue - previousValue;
-            if (usage < 0) {
-                return 0; // Guard clause: negative usage is invalid
-            }
-            return usage * building.getElecUnitPrice();
+        final Integer elecUnitPrice = building.getElecUnitPrice();
+        if (elecUnitPrice == null) {
+            return 0;
         }
-
-        // Fallback to MeterRecord (backward compatibility)
-        final var elecRecord =
-                meterRecordRepository.findByRoomIdAndPeriodAndType(roomId, period, MeterType.ELEC);
-        if (elecRecord.isPresent() && building.getElecUnitPrice() != null) {
-            final int usage =
-                    elecRecord.get().getCurrentValue() - elecRecord.get().getPreviousValue();
-            if (usage < 0) {
-                return 0; // Guard clause: negative usage is invalid
-            }
-            return usage * building.getElecUnitPrice();
+        final var costFromUtilityReading =
+                calculateElectricityCostFromUtilityReading(roomId, period, elecUnitPrice);
+        if (costFromUtilityReading != null) {
+            return costFromUtilityReading;
         }
-        return 0;
+        return calculateElectricityCostFromMeterRecord(roomId, period, elecUnitPrice);
     }
 
     private int calculateWaterCost(
             final Integer roomId, final String period, final Building building) {
-        // Try to use UtilityReading first (new approach)
-        final var currentReading = utilityReadingRepository.findByRoomIdAndMonth(roomId, period);
-        if (currentReading.isPresent() && currentReading.get().getWaterIndex() != null) {
-            final String previousMonth = getPreviousMonth(period);
-            final var previousReading =
-                    utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
-
-            final int currentValue = currentReading.get().getWaterIndex();
-            final int previousValue = resolvePreviousWaterIndexOrThrow(roomId, period, previousReading);
-
-            final int waterUsage = currentValue - previousValue;
-            final int validUsage = waterUsage < 0 ? 0 : waterUsage; // Guard clause
+        final var costFromUtilityReading = calculateWaterUsageFromUtilityReading(roomId, period);
+        if (costFromUtilityReading != null) {
             final int tenantCount = tenantRepository.countByRoomId(roomId);
-            return calculateWaterFee(building, validUsage, tenantCount);
+            return calculateWaterFee(building, costFromUtilityReading, tenantCount);
         }
-
-        // Fallback to MeterRecord (backward compatibility)
-        final var waterRecord =
-                meterRecordRepository.findByRoomIdAndPeriodAndType(roomId, period, MeterType.WATER);
-        final int waterUsage =
-                waterRecord
-                        .map(r -> {
-                            final int usage = r.getCurrentValue() - r.getPreviousValue();
-                            return usage < 0 ? 0 : usage; // Guard clause: negative usage is invalid
-                        })
-                        .orElse(0);
+        final int waterUsageFromMeterRecord = calculateWaterUsageFromMeterRecord(roomId, period);
         final int tenantCount = tenantRepository.countByRoomId(roomId);
-        return calculateWaterFee(building, waterUsage, tenantCount);
+        return calculateWaterFee(building, waterUsageFromMeterRecord, tenantCount);
     }
 
     private Invoice buildInvoice(
@@ -214,80 +170,162 @@ public class InvoiceService {
 
     @Cacheable(value = "invoices", key = "#id")
     public InvoiceDetailResponse getInvoiceDetail(final Integer id) {
-        final Invoice invoice =
-                invoiceRepository
-                        .findById(id)
-                        .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
-
+        final Invoice invoice = getInvoiceOrThrow(id);
         final InvoiceDetailResponse response = invoiceMapper.toDetailResponse(invoice);
+        if (tryPopulateUtilityReadingDetails(invoice, response)) {
+            return response;
+        }
+        populateMeterRecordDetails(invoice, response);
+        return response;
+    }
 
-        // Try to use UtilityReading first (new approach)
+    private Invoice getInvoiceOrThrow(final Integer id) {
+        return invoiceRepository
+                .findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+    }
+
+    private Integer calculateElectricityCostFromUtilityReading(
+            final Integer roomId, final String period, final Integer elecUnitPrice) {
+        final var currentReading = utilityReadingRepository.findByRoomIdAndMonth(roomId, period);
+        if (currentReading.isEmpty() || currentReading.get().getElectricIndex() == null) {
+            return null;
+        }
+        final String previousMonth = getPreviousMonth(period);
+        final var previousReading =
+                utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
+        final int currentValue = currentReading.get().getElectricIndex();
+        final int previousValue =
+                resolvePreviousElectricIndexOrThrow(roomId, period, previousReading);
+        final int usage = currentValue - previousValue;
+        return usage < 0 ? 0 : usage * elecUnitPrice;
+    }
+
+    private int calculateElectricityCostFromMeterRecord(
+            final Integer roomId, final String period, final Integer elecUnitPrice) {
+        final var elecRecord =
+                meterRecordRepository.findByRoomIdAndPeriodAndType(roomId, period, MeterType.ELEC);
+        if (elecRecord.isEmpty()) {
+            return 0;
+        }
+        final int usage = elecRecord.get().getCurrentValue() - elecRecord.get().getPreviousValue();
+        return usage < 0 ? 0 : usage * elecUnitPrice;
+    }
+
+    private Integer calculateWaterUsageFromUtilityReading(
+            final Integer roomId, final String period) {
+        final var currentReading = utilityReadingRepository.findByRoomIdAndMonth(roomId, period);
+        if (currentReading.isEmpty() || currentReading.get().getWaterIndex() == null) {
+            return null;
+        }
+        final String previousMonth = getPreviousMonth(period);
+        final var previousReading =
+                utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
+        final int currentValue = currentReading.get().getWaterIndex();
+        final int previousValue = resolvePreviousWaterIndexOrThrow(roomId, period, previousReading);
+        final int usage = currentValue - previousValue;
+        return usage < 0 ? 0 : usage;
+    }
+
+    private int calculateWaterUsageFromMeterRecord(final Integer roomId, final String period) {
+        final var waterRecord =
+                meterRecordRepository.findByRoomIdAndPeriodAndType(roomId, period, MeterType.WATER);
+        if (waterRecord.isEmpty()) {
+            return 0;
+        }
+        final int usage =
+                waterRecord.get().getCurrentValue() - waterRecord.get().getPreviousValue();
+        return usage < 0 ? 0 : usage;
+    }
+
+    private boolean tryPopulateUtilityReadingDetails(
+            final Invoice invoice, final InvoiceDetailResponse response) {
         final var currentReading =
                 utilityReadingRepository.findByRoomIdAndMonth(
                         invoice.getRoom().getId(), invoice.getPeriod());
-        if (currentReading.isPresent()) {
-            final String previousMonth = getPreviousMonth(invoice.getPeriod());
-            final var previousReading =
-                    utilityReadingRepository.findByRoomIdAndMonth(
-                            invoice.getRoom().getId(), previousMonth);
-
-            // Electricity
-            if (currentReading.get().getElectricIndex() != null) {
-                final int currentValue = currentReading.get().getElectricIndex();
-                final Integer previousValue =
-                        resolvePreviousElectricIndexForDisplay(invoice.getRoom().getId(), invoice.getPeriod(), previousReading);
-                response.setElecPreviousValue(previousValue);
-                response.setElecCurrentValue(currentValue);
-                response.setElecUsage(previousValue != null ? currentValue - previousValue : null);
-                if (invoice.getRoom().getBuilding().getElecUnitPrice() != null) {
-                    response.setElecUnitPrice(invoice.getRoom().getBuilding().getElecUnitPrice());
-                }
-            }
-
-            // Water
-            if (currentReading.get().getWaterIndex() != null) {
-                final int currentValue = currentReading.get().getWaterIndex();
-                final Integer previousValue =
-                        resolvePreviousWaterIndexForDisplay(invoice.getRoom().getId(), invoice.getPeriod(), previousReading);
-                response.setWaterPreviousValue(previousValue);
-                response.setWaterCurrentValue(currentValue);
-                response.setWaterUsage(previousValue != null ? currentValue - previousValue : null);
-                if (invoice.getRoom().getBuilding().getWaterUnitPrice() != null) {
-                    response.setWaterUnitPrice(invoice.getRoom().getBuilding().getWaterUnitPrice());
-                }
-            }
-
-            return response;
+        if (currentReading.isEmpty()) {
+            return false;
         }
+        final String previousMonth = getPreviousMonth(invoice.getPeriod());
+        final var previousReading =
+                utilityReadingRepository.findByRoomIdAndMonth(
+                        invoice.getRoom().getId(), previousMonth);
+        populateElectricityFromUtilityReading(
+                invoice, response, currentReading.get(), previousReading);
+        populateWaterFromUtilityReading(invoice, response, currentReading.get(), previousReading);
+        return true;
+    }
 
-        // Fallback to MeterRecord (backward compatibility)
-        final Optional<MeterRecord> elecRecord =
+    private void populateElectricityFromUtilityReading(
+            final Invoice invoice,
+            final InvoiceDetailResponse response,
+            final UtilityReading currentReading,
+            final Optional<UtilityReading> previousReading) {
+        if (currentReading.getElectricIndex() == null) {
+            return;
+        }
+        final int currentValue = currentReading.getElectricIndex();
+        final Integer previousValue =
+                resolvePreviousElectricIndexForDisplay(
+                        invoice.getRoom().getId(), invoice.getPeriod(), previousReading);
+        response.setElecPreviousValue(previousValue);
+        response.setElecCurrentValue(currentValue);
+        response.setElecUsage(previousValue != null ? currentValue - previousValue : null);
+        response.setElecUnitPrice(invoice.getRoom().getBuilding().getElecUnitPrice());
+    }
+
+    private void populateWaterFromUtilityReading(
+            final Invoice invoice,
+            final InvoiceDetailResponse response,
+            final UtilityReading currentReading,
+            final Optional<UtilityReading> previousReading) {
+        if (currentReading.getWaterIndex() == null) {
+            return;
+        }
+        final int currentValue = currentReading.getWaterIndex();
+        final Integer previousValue =
+                resolvePreviousWaterIndexForDisplay(
+                        invoice.getRoom().getId(), invoice.getPeriod(), previousReading);
+        response.setWaterPreviousValue(previousValue);
+        response.setWaterCurrentValue(currentValue);
+        response.setWaterUsage(previousValue != null ? currentValue - previousValue : null);
+        response.setWaterUnitPrice(invoice.getRoom().getBuilding().getWaterUnitPrice());
+    }
+
+    private void populateMeterRecordDetails(
+            final Invoice invoice, final InvoiceDetailResponse response) {
+        populateElectricityFromMeterRecord(invoice, response);
+        populateWaterFromMeterRecord(invoice, response);
+    }
+
+    private void populateElectricityFromMeterRecord(
+            final Invoice invoice, final InvoiceDetailResponse response) {
+        final var elecRecord =
                 meterRecordRepository.findByRoomIdAndPeriodAndType(
                         invoice.getRoom().getId(), invoice.getPeriod(), MeterType.ELEC);
-        if (elecRecord.isPresent()) {
-            final MeterRecord record = elecRecord.get();
-            response.setElecPreviousValue(record.getPreviousValue());
-            response.setElecCurrentValue(record.getCurrentValue());
-            response.setElecUsage(record.getCurrentValue() - record.getPreviousValue());
-            if (invoice.getRoom().getBuilding().getElecUnitPrice() != null) {
-                response.setElecUnitPrice(invoice.getRoom().getBuilding().getElecUnitPrice());
-            }
+        if (elecRecord.isEmpty()) {
+            return;
         }
+        final MeterRecord record = elecRecord.get();
+        response.setElecPreviousValue(record.getPreviousValue());
+        response.setElecCurrentValue(record.getCurrentValue());
+        response.setElecUsage(record.getCurrentValue() - record.getPreviousValue());
+        response.setElecUnitPrice(invoice.getRoom().getBuilding().getElecUnitPrice());
+    }
 
-        final Optional<MeterRecord> waterRecord =
+    private void populateWaterFromMeterRecord(
+            final Invoice invoice, final InvoiceDetailResponse response) {
+        final var waterRecord =
                 meterRecordRepository.findByRoomIdAndPeriodAndType(
                         invoice.getRoom().getId(), invoice.getPeriod(), MeterType.WATER);
-        if (waterRecord.isPresent()) {
-            final MeterRecord record = waterRecord.get();
-            response.setWaterPreviousValue(record.getPreviousValue());
-            response.setWaterCurrentValue(record.getCurrentValue());
-            response.setWaterUsage(record.getCurrentValue() - record.getPreviousValue());
-            if (invoice.getRoom().getBuilding().getWaterUnitPrice() != null) {
-                response.setWaterUnitPrice(invoice.getRoom().getBuilding().getWaterUnitPrice());
-            }
+        if (waterRecord.isEmpty()) {
+            return;
         }
-
-        return response;
+        final MeterRecord record = waterRecord.get();
+        response.setWaterPreviousValue(record.getPreviousValue());
+        response.setWaterCurrentValue(record.getCurrentValue());
+        response.setWaterUsage(record.getCurrentValue() - record.getPreviousValue());
+        response.setWaterUnitPrice(invoice.getRoom().getBuilding().getWaterUnitPrice());
     }
 
     private int resolvePreviousElectricIndexOrThrow(
@@ -358,7 +396,8 @@ public class InvoiceService {
             throw new AppException(ErrorCode.INVOICE_ALREADY_PAID);
         }
 
-        if (invoice.getStatus() != InvoiceStatus.UNPAID && invoice.getStatus() != InvoiceStatus.DRAFT) {
+        if (invoice.getStatus() != InvoiceStatus.UNPAID
+                && invoice.getStatus() != InvoiceStatus.DRAFT) {
             throw new AppException(ErrorCode.INVOICE_CANNOT_BE_PAID);
         }
 
@@ -405,24 +444,6 @@ public class InvoiceService {
     }
 
     private String getPreviousMonth(final String period) {
-        // Format: "YYYY-MM" -> "YYYY-MM" (previous month)
-        try {
-            final var parts = period.split("-");
-            final int year = Integer.parseInt(parts[0]);
-            final int month = Integer.parseInt(parts[1]);
-
-            int prevYear = year;
-            int prevMonth = month - 1;
-
-            if (prevMonth < 1) {
-                prevMonth = 12;
-                prevYear = year - 1;
-            }
-
-            return String.format("%04d-%02d", prevYear, prevMonth);
-        } catch (final Exception e) {
-            // If parsing fails, return empty string (will result in no previous reading)
-            return "";
-        }
+        return PeriodUtils.getPreviousMonth(period);
     }
 }

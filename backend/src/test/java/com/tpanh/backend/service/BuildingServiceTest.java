@@ -11,11 +11,22 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.BuildingResponse;
+import com.tpanh.backend.dto.BuildingUpdateRequest;
+import com.tpanh.backend.entity.Building;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.WaterCalcMethod;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.BuildingMapper;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.repository.UserRepository;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,19 +40,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.BuildingResponse;
-import com.tpanh.backend.dto.BuildingUpdateRequest;
-import com.tpanh.backend.entity.Building;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.WaterCalcMethod;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.mapper.BuildingMapper;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class BuildingServiceTest {
@@ -225,7 +223,8 @@ class BuildingServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         final Pageable pageable = PageRequest.of(0, 10);
-        final Page<Building> page = new PageImpl<>(Arrays.asList(savedBuilding, building2), pageable, 2);
+        final Page<Building> page =
+                new PageImpl<>(Arrays.asList(savedBuilding, building2), pageable, 2);
 
         when(buildingRepository.findByManagerId(MANAGER_ID, pageable)).thenReturn(page);
 
@@ -375,8 +374,9 @@ class BuildingServiceTest {
         when(buildingRepository.findByIdAndManagerId(999, MANAGER_ID)).thenReturn(Optional.empty());
 
         // When & Then
-        final var exception = assertThrows(
-                AppException.class, () -> buildingService.updateBuilding(999, request));
+        final var exception =
+                assertThrows(
+                        AppException.class, () -> buildingService.updateBuilding(999, request));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -425,8 +425,8 @@ class BuildingServiceTest {
         when(buildingRepository.findByIdAndManagerId(999, MANAGER_ID)).thenReturn(Optional.empty());
 
         // When & Then
-        final var exception = assertThrows(
-                AppException.class, () -> buildingService.deleteBuilding(999));
+        final var exception =
+                assertThrows(AppException.class, () -> buildingService.deleteBuilding(999));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -442,8 +442,8 @@ class BuildingServiceTest {
         request.setWaterCalcMethod(WaterCalcMethod.BY_METER);
 
         // When & Then
-        final var exception = assertThrows(
-                AppException.class, () -> buildingService.createBuilding(request));
+        final var exception =
+                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
         assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
     }
 
@@ -461,8 +461,8 @@ class BuildingServiceTest {
         request.setWaterCalcMethod(WaterCalcMethod.BY_METER);
 
         // When & Then
-        final var exception = assertThrows(
-                AppException.class, () -> buildingService.createBuilding(request));
+        final var exception =
+                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
         assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
     }
 
@@ -478,8 +478,8 @@ class BuildingServiceTest {
         when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.empty());
 
         // When & Then
-        final var exception = assertThrows(
-                AppException.class, () -> buildingService.createBuilding(request));
+        final var exception =
+                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
     }
 

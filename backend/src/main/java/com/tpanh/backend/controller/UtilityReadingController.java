@@ -1,7 +1,18 @@
 package com.tpanh.backend.controller;
 
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.UtilityReadingCreationRequest;
+import com.tpanh.backend.dto.UtilityReadingResponse;
+import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.service.UtilityReadingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,20 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.UtilityReadingCreationRequest;
-import com.tpanh.backend.dto.UtilityReadingResponse;
-import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.service.UtilityReadingService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/utility-readings")
@@ -162,8 +159,7 @@ public class UtilityReadingController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<List<UtilityReadingResponse>> getUtilityReadingsByBuildingAndMonth(
             @PathVariable final Integer buildingId,
-            @Parameter(description = "Tháng (VD: 2025-01)", example = "2025-01")
-                    @RequestParam
+            @Parameter(description = "Tháng (VD: 2025-01)", example = "2025-01") @RequestParam
                     final String month) {
         final var authentication = SecurityContextHolder.getContext().getAuthentication();
         final var currentUserId = authentication.getName();
@@ -171,8 +167,10 @@ public class UtilityReadingController {
         // Verify building belongs to current manager
         buildingRepository
                 .findByIdAndManagerId(buildingId, currentUserId)
-                .orElseThrow(() -> new com.tpanh.backend.exception.AppException(
-                        com.tpanh.backend.exception.ErrorCode.BUILDING_NOT_FOUND));
+                .orElseThrow(
+                        () ->
+                                new com.tpanh.backend.exception.AppException(
+                                        com.tpanh.backend.exception.ErrorCode.BUILDING_NOT_FOUND));
 
         final var response =
                 utilityReadingService.getUtilityReadingsByBuildingAndMonth(buildingId, month);

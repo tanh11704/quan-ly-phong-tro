@@ -10,20 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.dto.RoomUpdateRequest;
@@ -35,6 +21,18 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.RoomMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.RoomRepository;
+import java.util.Arrays;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class RoomServiceTest {
@@ -416,10 +414,13 @@ class RoomServiceTest {
         final var exception =
                 assertThrows(
                         AppException.class,
-                        () -> roomService.getRoomsByBuildingId(BUILDING_ID, STATUS_VACANT, pageable));
+                        () ->
+                                roomService.getRoomsByBuildingId(
+                                        BUILDING_ID, STATUS_VACANT, pageable));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
         verify(buildingRepository).findById(BUILDING_ID);
         verify(roomRepository, never())
-                .findByBuildingIdAndStatus(any(Integer.class), any(RoomStatus.class), any(Pageable.class));
+                .findByBuildingIdAndStatus(
+                        any(Integer.class), any(RoomStatus.class), any(Pageable.class));
     }
 }

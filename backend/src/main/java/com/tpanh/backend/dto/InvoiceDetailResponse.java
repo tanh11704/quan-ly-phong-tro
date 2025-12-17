@@ -1,10 +1,8 @@
 package com.tpanh.backend.dto;
 
+import com.tpanh.backend.enums.InvoiceStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-import com.tpanh.backend.enums.InvoiceStatus;
-
 import lombok.Data;
 
 @Data
