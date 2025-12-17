@@ -34,6 +34,9 @@ public enum ErrorCode {
     UTILITY_READING_NOT_FOUND(2009, "Không tìm thấy bản ghi chỉ số điện nước"),
     UTILITY_READING_EXISTED(2010, "Chỉ số điện nước cho phòng này trong tháng đã tồn tại"),
     UTILITY_READING_INVALID_INDEX(2011, "Chỉ số mới phải lớn hơn hoặc bằng chỉ số cũ"),
+    MISSING_PREVIOUS_UTILITY_READING(
+            2012,
+            "Thiếu chỉ số điện/nước tháng trước. Vui lòng kiểm tra và nhập bổ sung trước khi tạo hóa đơn"),
 
     // Nhóm lỗi Xác thực (30xx) - Authentication
     USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),

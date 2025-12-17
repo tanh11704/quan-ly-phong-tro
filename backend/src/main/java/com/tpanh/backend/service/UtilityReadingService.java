@@ -46,7 +46,12 @@ public class UtilityReadingService {
         }
 
         // Validate indices: new index must be >= previous month's index
-        validateIndices(request.getRoomId(), request.getMonth(), request.getElectricIndex(), request.getWaterIndex());
+        validateIndices(
+                request.getRoomId(),
+                request.getMonth(),
+                request.getElectricIndex(),
+                request.getWaterIndex(),
+                Boolean.TRUE.equals(request.getIsMeterReset()));
 
         final UtilityReading reading = new UtilityReading();
         reading.setRoom(room);
@@ -76,7 +81,12 @@ public class UtilityReadingService {
                 ? request.getWaterIndex() 
                 : reading.getWaterIndex();
 
-        validateIndices(reading.getRoom().getId(), reading.getMonth(), newElectricIndex, newWaterIndex);
+        validateIndices(
+                reading.getRoom().getId(),
+                reading.getMonth(),
+                newElectricIndex,
+                newWaterIndex,
+                Boolean.TRUE.equals(request.getIsMeterReset()));
 
         if (request.getElectricIndex() != null) {
             reading.setElectricIndex(request.getElectricIndex());
@@ -119,10 +129,15 @@ public class UtilityReadingService {
             final Integer roomId,
             final String month,
             final Integer electricIndex,
-            final Integer waterIndex) {
+            final Integer waterIndex,
+            final boolean isMeterReset) {
         final String previousMonth = getPreviousMonth(month);
         final Optional<UtilityReading> previousReading =
                 utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
+
+        if (isMeterReset) {
+            return;
+        }
 
         // Validate electricity index
         if (electricIndex != null && previousReading.isPresent()) {

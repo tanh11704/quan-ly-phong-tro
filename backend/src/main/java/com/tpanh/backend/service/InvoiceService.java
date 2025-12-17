@@ -103,7 +103,7 @@ public class InvoiceService {
 
             final int currentValue = currentReading.get().getElectricIndex();
             final int previousValue =
-                    previousReading.map(UtilityReading::getElectricIndex).orElse(0);
+                    resolvePreviousElectricIndexOrThrow(roomId, period, previousReading);
 
             final int usage = currentValue - previousValue;
             if (usage < 0) {
@@ -136,8 +136,7 @@ public class InvoiceService {
                     utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
 
             final int currentValue = currentReading.get().getWaterIndex();
-            final int previousValue =
-                    previousReading.map(UtilityReading::getWaterIndex).orElse(0);
+            final int previousValue = resolvePreviousWaterIndexOrThrow(roomId, period, previousReading);
 
             final int waterUsage = currentValue - previousValue;
             final int validUsage = waterUsage < 0 ? 0 : waterUsage; // Guard clause
@@ -235,11 +234,11 @@ public class InvoiceService {
             // Electricity
             if (currentReading.get().getElectricIndex() != null) {
                 final int currentValue = currentReading.get().getElectricIndex();
-                final int previousValue =
-                        previousReading.map(UtilityReading::getElectricIndex).orElse(0);
+                final Integer previousValue =
+                        resolvePreviousElectricIndexForDisplay(invoice.getRoom().getId(), invoice.getPeriod(), previousReading);
                 response.setElecPreviousValue(previousValue);
                 response.setElecCurrentValue(currentValue);
-                response.setElecUsage(currentValue - previousValue);
+                response.setElecUsage(previousValue != null ? currentValue - previousValue : null);
                 if (invoice.getRoom().getBuilding().getElecUnitPrice() != null) {
                     response.setElecUnitPrice(invoice.getRoom().getBuilding().getElecUnitPrice());
                 }
@@ -248,11 +247,11 @@ public class InvoiceService {
             // Water
             if (currentReading.get().getWaterIndex() != null) {
                 final int currentValue = currentReading.get().getWaterIndex();
-                final int previousValue =
-                        previousReading.map(UtilityReading::getWaterIndex).orElse(0);
+                final Integer previousValue =
+                        resolvePreviousWaterIndexForDisplay(invoice.getRoom().getId(), invoice.getPeriod(), previousReading);
                 response.setWaterPreviousValue(previousValue);
                 response.setWaterCurrentValue(currentValue);
-                response.setWaterUsage(currentValue - previousValue);
+                response.setWaterUsage(previousValue != null ? currentValue - previousValue : null);
                 if (invoice.getRoom().getBuilding().getWaterUnitPrice() != null) {
                     response.setWaterUnitPrice(invoice.getRoom().getBuilding().getWaterUnitPrice());
                 }
@@ -289,6 +288,62 @@ public class InvoiceService {
         }
 
         return response;
+    }
+
+    private int resolvePreviousElectricIndexOrThrow(
+            final Integer roomId,
+            final String period,
+            final Optional<UtilityReading> previousReading) {
+        if (previousReading.isPresent() && previousReading.get().getElectricIndex() != null) {
+            return previousReading.get().getElectricIndex();
+        }
+
+        final boolean hasHistoryBeforeCurrentMonth =
+                utilityReadingRepository.existsByRoomIdAndMonthLessThan(roomId, period);
+        if (hasHistoryBeforeCurrentMonth) {
+            throw new AppException(ErrorCode.MISSING_PREVIOUS_UTILITY_READING);
+        }
+        return 0;
+    }
+
+    private int resolvePreviousWaterIndexOrThrow(
+            final Integer roomId,
+            final String period,
+            final Optional<UtilityReading> previousReading) {
+        if (previousReading.isPresent() && previousReading.get().getWaterIndex() != null) {
+            return previousReading.get().getWaterIndex();
+        }
+
+        final boolean hasHistoryBeforeCurrentMonth =
+                utilityReadingRepository.existsByRoomIdAndMonthLessThan(roomId, period);
+        if (hasHistoryBeforeCurrentMonth) {
+            throw new AppException(ErrorCode.MISSING_PREVIOUS_UTILITY_READING);
+        }
+        return 0;
+    }
+
+    private Integer resolvePreviousElectricIndexForDisplay(
+            final Integer roomId,
+            final String period,
+            final Optional<UtilityReading> previousReading) {
+        if (previousReading.isPresent() && previousReading.get().getElectricIndex() != null) {
+            return previousReading.get().getElectricIndex();
+        }
+        final boolean hasHistoryBeforeCurrentMonth =
+                utilityReadingRepository.existsByRoomIdAndMonthLessThan(roomId, period);
+        return hasHistoryBeforeCurrentMonth ? null : 0;
+    }
+
+    private Integer resolvePreviousWaterIndexForDisplay(
+            final Integer roomId,
+            final String period,
+            final Optional<UtilityReading> previousReading) {
+        if (previousReading.isPresent() && previousReading.get().getWaterIndex() != null) {
+            return previousReading.get().getWaterIndex();
+        }
+        final boolean hasHistoryBeforeCurrentMonth =
+                utilityReadingRepository.existsByRoomIdAndMonthLessThan(roomId, period);
+        return hasHistoryBeforeCurrentMonth ? null : 0;
     }
 
     @Transactional

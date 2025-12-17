@@ -3,6 +3,7 @@ package com.tpanh.backend.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -631,6 +632,41 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void getInvoiceDetail_WithUtilityReadingMissingPreviousButHasHistory_ShouldReturnNullPreviousValues() {
+        final Invoice invoice = new Invoice();
+        invoice.setId(1);
+        invoice.setRoom(room1);
+        invoice.setTenant(tenant1);
+        invoice.setPeriod(PERIOD);
+        invoice.setStatus(InvoiceStatus.DRAFT);
+
+        final InvoiceDetailResponse detailResponse = new InvoiceDetailResponse();
+        detailResponse.setId(1);
+        detailResponse.setRoomNo(ROOM_NO_1);
+
+        final UtilityReading currentReading = new UtilityReading();
+        currentReading.setRoom(room1);
+        currentReading.setMonth(PERIOD);
+        currentReading.setElectricIndex(150);
+        currentReading.setWaterIndex(60);
+
+        when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
+        when(invoiceMapper.toDetailResponse(invoice)).thenReturn(detailResponse);
+        when(utilityReadingRepository.findByRoomIdAndMonth(ROOM_ID_1, PERIOD))
+                .thenReturn(Optional.of(currentReading));
+        when(utilityReadingRepository.findByRoomIdAndMonth(ROOM_ID_1, "2024-12"))
+                .thenReturn(Optional.empty());
+        when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(ROOM_ID_1, PERIOD)).thenReturn(true);
+
+        final var result = invoiceService.getInvoiceDetail(1);
+        assertNotNull(result);
+        assertNull(result.getElecPreviousValue());
+        assertNull(result.getElecUsage());
+        assertNull(result.getWaterPreviousValue());
+        assertNull(result.getWaterUsage());
+    }
+
+    @Test
     void getInvoiceDetail_WithMeterRecord_ShouldReturnMeterDetails() {
         // Given
         final Invoice invoice = new Invoice();
@@ -897,6 +933,28 @@ class InvoiceServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(150000, result.get(0).getElecAmount());
+    }
+
+    @Test
+    void createInvoice_WithUtilityReadingMissingPreviousButHasHistory_ShouldThrow() {
+        final UtilityReading currentReading = new UtilityReading();
+        currentReading.setRoom(room1);
+        currentReading.setMonth(PERIOD);
+        currentReading.setElectricIndex(150);
+
+        when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Arrays.asList(room1));
+        when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
+        when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
+                .thenReturn(Optional.of(tenant1));
+
+        when(utilityReadingRepository.findByRoomIdAndMonth(ROOM_ID_1, PERIOD))
+                .thenReturn(Optional.of(currentReading));
+        when(utilityReadingRepository.findByRoomIdAndMonth(ROOM_ID_1, "2024-12"))
+                .thenReturn(Optional.empty());
+        when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(ROOM_ID_1, PERIOD)).thenReturn(true);
+
+        final var ex = assertThrows(AppException.class, () -> invoiceService.createInvoice(building, PERIOD));
+        assertEquals(ErrorCode.MISSING_PREVIOUS_UTILITY_READING, ex.getErrorCode());
     }
 
     @Test

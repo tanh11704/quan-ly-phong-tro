@@ -121,6 +121,39 @@ class UtilityReadingServiceTest {
     }
 
     @Test
+    void createUtilityReading_whenMeterReset_shouldAllowNewIndexLessThanPrevious() {
+        final var req = new UtilityReadingCreationRequest();
+        req.setRoomId(room.getId());
+        req.setMonth("2025-02");
+        req.setElectricIndex(10); // < previous
+        req.setIsMeterReset(true);
+
+        when(roomRepository.findById(room.getId())).thenReturn(Optional.of(room));
+        when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-02"))
+                .thenReturn(Optional.empty());
+
+        final var prev = new UtilityReading();
+        prev.setRoom(room);
+        prev.setMonth("2025-01");
+        prev.setElectricIndex(100);
+        when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
+                .thenReturn(Optional.of(prev));
+
+        when(utilityReadingRepository.save(any(UtilityReading.class)))
+                .thenAnswer(
+                        invocation -> {
+                            final var r = invocation.getArgument(0, UtilityReading.class);
+                            r.setId(1);
+                            return r;
+                        });
+
+        final var res = utilityReadingService.createUtilityReading(req);
+        assertNotNull(res);
+        assertEquals(10, res.getElectricIndex());
+        verify(utilityReadingRepository).save(any(UtilityReading.class));
+    }
+
+    @Test
     void createUtilityReading_success_shouldSaveAndMap() {
         final var req = new UtilityReadingCreationRequest();
         req.setRoomId(room.getId());
@@ -184,6 +217,35 @@ class UtilityReadingServiceTest {
         final var ex =
                 assertThrows(AppException.class, () -> utilityReadingService.updateUtilityReading(5, req));
         assertEquals(ErrorCode.UTILITY_READING_INVALID_INDEX, ex.getErrorCode());
+    }
+
+    @Test
+    void updateUtilityReading_whenMeterReset_shouldAllowNewIndexLessThanPrevious() {
+        final var reading = new UtilityReading();
+        reading.setId(5);
+        reading.setRoom(room);
+        reading.setMonth("2025-02");
+        reading.setWaterIndex(200);
+
+        when(utilityReadingRepository.findById(5)).thenReturn(Optional.of(reading));
+
+        final var prev = new UtilityReading();
+        prev.setRoom(room);
+        prev.setMonth("2025-01");
+        prev.setWaterIndex(300);
+        when(utilityReadingRepository.findByRoomIdAndMonth(room.getId(), "2025-01"))
+                .thenReturn(Optional.of(prev));
+
+        when(utilityReadingRepository.save(any(UtilityReading.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        final var req = new UtilityReadingUpdateRequest();
+        req.setWaterIndex(250); // < 300
+        req.setIsMeterReset(true);
+
+        final var res = utilityReadingService.updateUtilityReading(5, req);
+        assertNotNull(res);
+        assertEquals(250, res.getWaterIndex());
+        verify(utilityReadingRepository).save(eq(reading));
     }
 
     @Test

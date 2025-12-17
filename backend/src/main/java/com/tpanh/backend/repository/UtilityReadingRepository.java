@@ -14,4 +14,6 @@ public interface UtilityReadingRepository extends JpaRepository<UtilityReading, 
     List<UtilityReading> findByRoomIdOrderByMonthDesc(Integer roomId);
 
     List<UtilityReading> findByRoomBuildingIdAndMonth(Integer buildingId, String month);
+
+    boolean existsByRoomIdAndMonthLessThan(Integer roomId, String month);
 }
