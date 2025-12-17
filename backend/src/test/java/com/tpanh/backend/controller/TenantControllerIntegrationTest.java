@@ -1,5 +1,6 @@
 package com.tpanh.backend.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -7,16 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tpanh.backend.dto.AuthenticationRequest;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.TenantCreationRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.WaterCalcMethod;
-import com.tpanh.backend.repository.UserRepository;
 import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +25,17 @@ import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpanh.backend.dto.AuthenticationRequest;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.TenantCreationRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.WaterCalcMethod;
+import com.tpanh.backend.repository.TenantRepository;
+import com.tpanh.backend.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -59,7 +63,7 @@ class TenantControllerIntegrationTest {
                                     .WRITE_DATES_AS_TIMESTAMPS);
 
     @Autowired private UserRepository userRepository;
-
+    @Autowired private TenantRepository tenantRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
     private static final String USERNAME = "testmanager";
@@ -199,7 +203,10 @@ class TenantControllerIntegrationTest {
 
     @Test
     void createTenant_WithVACANTRoom_ShouldUpdateRoomStatusToOCCUPIED() throws Exception {
-        // Given
+        // Given - Clean up existing tenants first
+        tenantRepository.deleteAll();
+        tenantRepository.flush();
+
         final var request = new TenantCreationRequest();
         request.setRoomId(roomId);
         request.setName("Nguyễn Văn A");
@@ -215,9 +222,11 @@ class TenantControllerIntegrationTest {
         // Then - Verify room status is updated
         mockMvc.perform(
                         get("/api/v1/rooms/" + roomId + "/tenants")
-                                .header("Authorization", "Bearer " + authToken))
+                                .with(user("testmanager").roles("MANAGER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result[0].name").value("Nguyễn Văn A"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.content[?(@.name == 'Nguyễn Văn A')]").exists());
     }
 
     @Test
@@ -259,7 +268,11 @@ class TenantControllerIntegrationTest {
 
     @Test
     void getTenantsByRoomId_WithValidRoomId_ShouldReturnTenantList() throws Exception {
-        // Given - Create tenants first
+        // Given - Clean up existing tenants first
+        tenantRepository.deleteAll();
+        tenantRepository.flush();
+
+        // Create tenants first
         final var tenant1Request = new TenantCreationRequest();
         tenant1Request.setRoomId(roomId);
         tenant1Request.setName("Nguyễn Văn A");
@@ -274,23 +287,25 @@ class TenantControllerIntegrationTest {
                 post("/api/v1/tenants")
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tenant1Request)));
+                        .content(objectMapper.writeValueAsString(tenant1Request)))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(
                 post("/api/v1/tenants")
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tenant2Request)));
+                        .content(objectMapper.writeValueAsString(tenant2Request)))
+                .andExpect(status().isCreated());
 
         // When & Then
         mockMvc.perform(
                         get("/api/v1/rooms/" + roomId + "/tenants")
-                                .header("Authorization", "Bearer " + authToken))
+                                .with(user("testmanager").roles("MANAGER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result").isArray())
-                .andExpect(jsonPath("$.result.length()").value(2))
-                .andExpect(jsonPath("$.result[0].name").value("Nguyễn Văn A"))
-                .andExpect(jsonPath("$.message").value("Lấy lịch sử khách thành công"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].name").value("Nguyễn Văn A")) // Sorted by startDate desc
+                .andExpect(jsonPath("$.message").value("Lấy danh sách khách thuê thành công"));
     }
 
     @Test

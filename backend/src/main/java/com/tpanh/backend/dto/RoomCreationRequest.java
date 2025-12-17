@@ -1,5 +1,7 @@
 package com.tpanh.backend.dto;
 
+import com.tpanh.backend.enums.RoomStatus;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +24,6 @@ public class RoomCreationRequest {
     @Schema(description = "Giá thuê (VNĐ/tháng)", example = "3000000")
     private Integer price;
 
-    @Schema(description = "Trạng thái phòng", example = "VACANT")
-    private String status;
+    @Schema(description = "Trạng thái phòng", example = "VACANT", allowableValues = {"VACANT", "OCCUPIED", "MAINTENANCE"})
+    private RoomStatus status;
 }

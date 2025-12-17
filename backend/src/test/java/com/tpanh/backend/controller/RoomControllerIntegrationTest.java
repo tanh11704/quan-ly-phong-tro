@@ -1,5 +1,6 @@
 package com.tpanh.backend.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -8,15 +9,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tpanh.backend.dto.AuthenticationRequest;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.RoomUpdateRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.WaterCalcMethod;
-import com.tpanh.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +24,17 @@ import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpanh.backend.dto.AuthenticationRequest;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomUpdateRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.enums.WaterCalcMethod;
+import com.tpanh.backend.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -126,7 +129,7 @@ class RoomControllerIntegrationTest {
         request.setBuildingId(buildingId);
         request.setRoomNo("P.101");
         request.setPrice(3000000);
-        request.setStatus("VACANT");
+        request.setStatus(RoomStatus.VACANT);
 
         // When & Then
         mockMvc.perform(
@@ -202,7 +205,7 @@ class RoomControllerIntegrationTest {
 
         final var updateRequest = new RoomUpdateRequest();
         updateRequest.setPrice(3500000);
-        updateRequest.setStatus("OCCUPIED");
+        updateRequest.setStatus(RoomStatus.OCCUPIED);
 
         // When & Then
         mockMvc.perform(
@@ -214,6 +217,50 @@ class RoomControllerIntegrationTest {
                 .andExpect(jsonPath("$.result.price").value(3500000))
                 .andExpect(jsonPath("$.result.status").value("OCCUPIED"))
                 .andExpect(jsonPath("$.message").value("Cập nhật phòng thành công"));
+    }
+
+    @Test
+    void getRoomById_WithValidId_ShouldReturnRoom() throws Exception {
+        // Given - Create room first
+        final var createRequest = new RoomCreationRequest();
+        createRequest.setBuildingId(buildingId);
+        createRequest.setRoomNo("P.101");
+        createRequest.setPrice(3000000);
+        createRequest.setStatus(RoomStatus.VACANT);
+
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/rooms")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(createRequest)))
+                        .andReturn();
+
+        final var createResponseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var roomId = createResponseJson.get("result").get("id").asInt();
+
+        // When & Then
+        mockMvc.perform(
+                        get("/api/v1/rooms/" + roomId)
+                                .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.id").value(roomId))
+                .andExpect(jsonPath("$.result.buildingId").value(buildingId))
+                .andExpect(jsonPath("$.result.roomNo").value("P.101"))
+                .andExpect(jsonPath("$.result.price").value(3000000))
+                .andExpect(jsonPath("$.result.status").value("VACANT"))
+                .andExpect(jsonPath("$.message").value("Lấy thông tin phòng thành công"));
+    }
+
+    @Test
+    void getRoomById_WithInvalidId_ShouldReturnNotFound() throws Exception {
+        // When & Then
+        mockMvc.perform(
+                        get("/api/v1/rooms/99999")
+                                .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").exists());
     }
 
     @Test
@@ -292,9 +339,68 @@ class RoomControllerIntegrationTest {
         // When & Then
         mockMvc.perform(
                         get("/api/v1/rooms/" + roomId + "/tenants")
+                                .with(user("testmanager").roles("MANAGER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.message").value("Lấy danh sách khách thuê thành công"));
+    }
+
+    @Test
+    void getRoomsByBuildingId_WithStatusFilter_ShouldReturnFilteredRooms() throws Exception {
+        // Given - Create rooms with different statuses
+        final var createRequest1 = new RoomCreationRequest();
+        createRequest1.setBuildingId(buildingId);
+        createRequest1.setRoomNo("P.101");
+        createRequest1.setPrice(3000000);
+        createRequest1.setStatus(RoomStatus.VACANT);
+
+        mockMvc.perform(
+                        post("/api/v1/rooms")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createRequest1)))
+                .andReturn();
+
+        final var createRequest2 = new RoomCreationRequest();
+        createRequest2.setBuildingId(buildingId);
+        createRequest2.setRoomNo("P.102");
+        createRequest2.setPrice(3500000);
+        createRequest2.setStatus(RoomStatus.OCCUPIED);
+
+        mockMvc.perform(
+                        post("/api/v1/rooms")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createRequest2)))
+                .andReturn();
+
+        // When & Then - Filter by VACANT
+        mockMvc.perform(
+                        get("/api/v1/buildings/" + buildingId + "/rooms")
+                                .param("status", "VACANT")
                                 .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result").isArray())
-                .andExpect(jsonPath("$.message").value("Lấy lịch sử khách thành công"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[?(@.status == 'VACANT')]").exists())
+                .andExpect(jsonPath("$.message").value("Lấy danh sách phòng thành công"));
+    }
+
+    @Test
+    void getRoomsByBuildingId_WithMAINTENANCEStatus_ShouldWork() throws Exception {
+        // Given - Create room with MAINTENANCE status
+        final var createRequest = new RoomCreationRequest();
+        createRequest.setBuildingId(buildingId);
+        createRequest.setRoomNo("P.103");
+        createRequest.setPrice(3000000);
+        createRequest.setStatus(RoomStatus.MAINTENANCE);
+
+        // When & Then
+        mockMvc.perform(
+                        post("/api/v1/rooms")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.result.status").value("MAINTENANCE"));
     }
 }

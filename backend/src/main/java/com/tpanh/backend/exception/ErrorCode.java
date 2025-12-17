@@ -26,8 +26,14 @@ public enum ErrorCode {
     BUILDING_NOT_FOUND(2001, "Không tìm thấy tòa nhà này trong hệ thống"),
     ROOM_NOT_FOUND(2002, "Không tìm thấy phòng trọ"),
     INVOICE_EXISTED(2003, "Hóa đơn cho phòng này trong tháng đã tồn tại"),
-    TENANT_NOT_FOUND(2004, "Không tìm thấy khách thuê"),
-    TENANT_CONTRACT_ALREADY_ENDED(2005, "Hợp đồng đã được kết thúc trước đó"),
+    INVOICE_NOT_FOUND(2004, "Không tìm thấy hóa đơn"),
+    INVOICE_ALREADY_PAID(2005, "Hóa đơn đã được thanh toán"),
+    INVOICE_CANNOT_BE_PAID(2006, "Hóa đơn không thể thanh toán ở trạng thái hiện tại"),
+    TENANT_NOT_FOUND(2007, "Không tìm thấy khách thuê"),
+    TENANT_CONTRACT_ALREADY_ENDED(2008, "Hợp đồng đã được kết thúc trước đó"),
+    UTILITY_READING_NOT_FOUND(2009, "Không tìm thấy bản ghi chỉ số điện nước"),
+    UTILITY_READING_EXISTED(2010, "Chỉ số điện nước cho phòng này trong tháng đã tồn tại"),
+    UTILITY_READING_INVALID_INDEX(2011, "Chỉ số mới phải lớn hơn hoặc bằng chỉ số cũ"),
 
     // Nhóm lỗi Xác thực (30xx) - Authentication
     USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),

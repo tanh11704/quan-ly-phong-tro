@@ -10,19 +10,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.dto.RoomUpdateRequest;
-import com.tpanh.backend.entity.Building;
-import com.tpanh.backend.entity.Room;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.mapper.RoomMapper;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.repository.RoomRepository;
 import java.util.Arrays;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +24,18 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.dto.RoomUpdateRequest;
+import com.tpanh.backend.entity.Building;
+import com.tpanh.backend.entity.Room;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.RoomMapper;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.repository.RoomRepository;
+
 @ExtendWith(MockitoExtension.class)
 class RoomServiceTest {
     private static final int BUILDING_ID = 1;
@@ -41,8 +43,8 @@ class RoomServiceTest {
     private static final String BUILDING_NAME = "Trọ Xanh";
     private static final String ROOM_NO = "P.101";
     private static final int ROOM_PRICE = 3000000;
-    private static final String STATUS_VACANT = "VACANT";
-    private static final String STATUS_OCCUPIED = "OCCUPIED";
+    private static final RoomStatus STATUS_VACANT = RoomStatus.VACANT;
+    private static final RoomStatus STATUS_OCCUPIED = RoomStatus.OCCUPIED;
 
     @Mock private RoomRepository roomRepository;
     @Mock private BuildingRepository buildingRepository;
@@ -341,5 +343,83 @@ class RoomServiceTest {
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
         verify(buildingRepository).findById(BUILDING_ID);
         verify(roomRepository, never()).findByBuildingId(any(Integer.class), any(Pageable.class));
+    }
+
+    @Test
+    void getRoomById_WithValidId_ShouldReturnRoomResponse() {
+        // Given
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+
+        // When
+        final var response = roomService.getRoomById(ROOM_ID);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(ROOM_ID, response.getId());
+        assertEquals(BUILDING_ID, response.getBuildingId());
+        assertEquals(BUILDING_NAME, response.getBuildingName());
+        assertEquals(ROOM_NO, response.getRoomNo());
+        assertEquals(ROOM_PRICE, response.getPrice());
+        assertEquals(STATUS_VACANT, response.getStatus());
+        verify(roomRepository).findById(ROOM_ID);
+    }
+
+    @Test
+    void getRoomById_WithInvalidId_ShouldThrowException() {
+        // Given
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
+
+        // When & Then
+        final var exception =
+                assertThrows(AppException.class, () -> roomService.getRoomById(ROOM_ID));
+        assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
+        verify(roomRepository).findById(ROOM_ID);
+    }
+
+    @Test
+    void getRoomsByBuildingId_WithStatusFilter_ShouldReturnFilteredRooms() {
+        // Given
+        final var room2 = new Room();
+        room2.setId(2);
+        room2.setBuilding(building);
+        room2.setRoomNo("P.102");
+        room2.setPrice(3500000);
+        room2.setStatus(STATUS_OCCUPIED);
+
+        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
+
+        final Pageable pageable = PageRequest.of(0, 10);
+        final Page<Room> page = new PageImpl<>(Arrays.asList(room), pageable, 1);
+
+        when(roomRepository.findByBuildingIdAndStatus(BUILDING_ID, STATUS_VACANT, pageable))
+                .thenReturn(page);
+
+        // When
+        final var response = roomService.getRoomsByBuildingId(BUILDING_ID, STATUS_VACANT, pageable);
+
+        // Then
+        assertNotNull(response);
+        assertNotNull(response.getContent());
+        assertEquals(1, response.getContent().size());
+        assertEquals(STATUS_VACANT, response.getContent().get(0).getStatus());
+        verify(buildingRepository).findById(BUILDING_ID);
+        verify(roomRepository).findByBuildingIdAndStatus(BUILDING_ID, STATUS_VACANT, pageable);
+    }
+
+    @Test
+    void getRoomsByBuildingId_WithStatusFilter_InvalidBuildingId_ShouldThrowException() {
+        // Given
+        final Pageable pageable = PageRequest.of(0, 10);
+        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.empty());
+
+        // When & Then
+        final var exception =
+                assertThrows(
+                        AppException.class,
+                        () -> roomService.getRoomsByBuildingId(BUILDING_ID, STATUS_VACANT, pageable));
+        assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
+        verify(buildingRepository).findById(BUILDING_ID);
+        verify(roomRepository, never())
+                .findByBuildingIdAndStatus(any(Integer.class), any(RoomStatus.class), any(Pageable.class));
     }
 }

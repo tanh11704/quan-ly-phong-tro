@@ -64,4 +64,63 @@ public class EmailService {
                 .replace("{{fullName}}", fullName)
                 .replace("{{activationLink}}", activationLink);
     }
+
+    public void sendInvoiceEmail(
+            final String email,
+            final String tenantName,
+            final String roomNo,
+            final String period,
+            final Integer totalAmount,
+            final java.time.LocalDate dueDate) {
+        if (email == null || email.isBlank()) {
+            log.warn("Cannot send invoice email: tenant email is missing");
+            return;
+        }
+
+        try {
+            final var subject = String.format("Hóa đơn phòng %s - Tháng %s", roomNo, period);
+            final var htmlContent = buildInvoiceEmailContent(tenantName, roomNo, period, totalAmount, dueDate);
+
+            final MimeMessage message = mailSender.createMimeMessage();
+            final MimeMessageHelper helper =
+                    new MimeMessageHelper(
+                            message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(fromEmail.isEmpty() ? "noreply@phongtro.com" : fromEmail);
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("Invoice email sent successfully to: {} for room: {}", email, roomNo);
+        } catch (final MessagingException e) {
+            log.error("Failed to send invoice email to: {}", email, e);
+            throw new RuntimeException("Failed to send invoice email", e);
+        }
+    }
+
+    private String buildInvoiceEmailContent(
+            final String tenantName,
+            final String roomNo,
+            final String period,
+            final Integer totalAmount,
+            final java.time.LocalDate dueDate) {
+        final var formattedAmount = String.format("%,d", totalAmount);
+        final var formattedDueDate = dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        return String.format(
+                """
+                <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <h2 style="color: #2c3e50;">Xin chào %s,</h2>
+                        <p>Hóa đơn phòng <strong>%s</strong> tháng <strong>%s</strong> của bạn là <strong style="color: #e74c3c; font-size: 1.2em;">%s VNĐ</strong>.</p>
+                        <p>Vui lòng thanh toán trước ngày <strong style="color: #e74c3c;">%s</strong>.</p>
+                        <p>Trân trọng,<br>Ban quản lý</p>
+                    </div>
+                </body>
+                </html>
+                """,
+                tenantName, roomNo, period, formattedAmount, formattedDueDate);
+    }
 }

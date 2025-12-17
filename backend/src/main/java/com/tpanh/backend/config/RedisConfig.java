@@ -40,7 +40,8 @@ public class RedisConfig {
                 .build();
     }
 
-    @Bean
+    @Bean(name = "customStringRedisTemplate")
+    @org.springframework.context.annotation.Primary
     public RedisTemplate<String, String> customStringRedisTemplate(
             final RedisConnectionFactory redisConnectionFactory) {
         final RedisTemplate<String, String> template = new RedisTemplate<>();

@@ -1,7 +1,11 @@
 package com.tpanh.backend.entity;
 
+import com.tpanh.backend.enums.RoomStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,5 +32,6 @@ public class Room {
 
     private Integer price; // Giá thuê
 
-    private String status; // 'VACANT', 'OCCUPIED'...
+    @Enumerated(EnumType.STRING)
+    private RoomStatus status; // VACANT, OCCUPIED, MAINTENANCE
 }

@@ -1,23 +1,27 @@
 package com.tpanh.backend.service;
 
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.dto.RoomUpdateRequest;
-import com.tpanh.backend.entity.Room;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.mapper.RoomMapper;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.repository.RoomRepository;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.dto.RoomUpdateRequest;
+import com.tpanh.backend.entity.Room;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.RoomMapper;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.repository.RoomRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +42,7 @@ public class RoomService {
         room.setBuilding(building);
         room.setRoomNo(request.getRoomNo());
         room.setPrice(request.getPrice());
-        room.setStatus(request.getStatus() != null ? request.getStatus() : "VACANT");
+        room.setStatus(request.getStatus() != null ? request.getStatus() : RoomStatus.VACANT);
 
         final var savedRoom = roomRepository.save(room);
         return roomMapper.toResponse(savedRoom);
@@ -92,14 +96,34 @@ public class RoomService {
         return rooms.stream().map(roomMapper::toResponse).toList();
     }
 
+    @Cacheable(value = "rooms", key = "#id")
+    public RoomResponse getRoomById(final Integer id) {
+        final var room =
+                roomRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+        return roomMapper.toResponse(room);
+    }
+
     public PageResponse<RoomResponse> getRoomsByBuildingId(
             final Integer buildingId, final Pageable pageable) {
+        return getRoomsByBuildingId(buildingId, null, pageable);
+    }
+
+    public PageResponse<RoomResponse> getRoomsByBuildingId(
+            final Integer buildingId, final RoomStatus status, final Pageable pageable) {
         final var building =
                 buildingRepository
                         .findById(buildingId)
                         .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
-        final var page = roomRepository.findByBuildingId(buildingId, pageable);
+        final Page<Room> page;
+        if (status != null) {
+            page = roomRepository.findByBuildingIdAndStatus(buildingId, status, pageable);
+        } else {
+            page = roomRepository.findByBuildingId(buildingId, pageable);
+        }
+
         final var content = page.getContent().stream().map(roomMapper::toResponse).toList();
 
         return PageResponse.<RoomResponse>builder()

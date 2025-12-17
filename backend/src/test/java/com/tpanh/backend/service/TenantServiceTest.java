@@ -10,19 +10,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.TenantCreationRequest;
-import com.tpanh.backend.dto.TenantResponse;
-import com.tpanh.backend.entity.Room;
-import com.tpanh.backend.entity.Tenant;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.mapper.TenantMapper;
-import com.tpanh.backend.repository.RoomRepository;
-import com.tpanh.backend.repository.TenantRepository;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +25,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.tpanh.backend.dto.TenantCreationRequest;
+import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.entity.Room;
+import com.tpanh.backend.entity.Tenant;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.TenantMapper;
+import com.tpanh.backend.repository.RoomRepository;
+import com.tpanh.backend.repository.TenantRepository;
+
 @ExtendWith(MockitoExtension.class)
 class TenantServiceTest {
     private static final int ROOM_ID = 1;
@@ -41,8 +43,8 @@ class TenantServiceTest {
     private static final String ROOM_NO = "P.101";
     private static final String TENANT_NAME = "Nguyễn Văn A";
     private static final String TENANT_PHONE = "0901234567";
-    private static final String STATUS_VACANT = "VACANT";
-    private static final String STATUS_OCCUPIED = "OCCUPIED";
+    private static final RoomStatus STATUS_VACANT = RoomStatus.VACANT;
+    private static final RoomStatus STATUS_OCCUPIED = RoomStatus.OCCUPIED;
 
     @Mock private TenantRepository tenantRepository;
     @Mock private RoomRepository roomRepository;

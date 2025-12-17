@@ -1,5 +1,7 @@
 package com.tpanh.backend.controller;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,14 +24,13 @@ import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.service.BuildingService;
 import com.tpanh.backend.service.RoomService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 
 @RestController
 @RequestMapping("${app.api-prefix}/buildings")
@@ -166,7 +168,7 @@ public class BuildingController {
             summary = "Danh sách phòng trong tòa nhà",
             description =
                     "Lấy danh sách tất cả phòng trong một tòa nhà (chỉ Manager, có phân trang). "
-                            + "Sử dụng query parameters: page, size, sort")
+                            + "Sử dụng query parameters: page, size, sort, status (lọc theo trạng thái: VACANT, OCCUPIED, MAINTENANCE)")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -183,9 +185,12 @@ public class BuildingController {
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public PageResponse<RoomResponse> getRoomsByBuildingId(
             @PathVariable final Integer id,
+            @Parameter(description = "Lọc theo trạng thái phòng", example = "VACANT")
+                    @RequestParam(required = false)
+                    final com.tpanh.backend.enums.RoomStatus status,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "roomNo")
                     final Pageable pageable) {
-        return roomService.getRoomsByBuildingId(id, pageable);
+        return roomService.getRoomsByBuildingId(id, status, pageable);
     }
 }

@@ -1,17 +1,8 @@
 package com.tpanh.backend.service;
 
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.TenantCreationRequest;
-import com.tpanh.backend.dto.TenantResponse;
-import com.tpanh.backend.entity.Tenant;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.mapper.TenantMapper;
-import com.tpanh.backend.repository.RoomRepository;
-import com.tpanh.backend.repository.TenantRepository;
 import java.time.LocalDate;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -19,6 +10,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.TenantCreationRequest;
+import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.entity.Tenant;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.mapper.TenantMapper;
+import com.tpanh.backend.repository.RoomRepository;
+import com.tpanh.backend.repository.TenantRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -45,8 +49,8 @@ public class TenantService {
 
         final var savedTenant = tenantRepository.save(tenant);
 
-        if (room.getStatus() == null || "VACANT".equals(room.getStatus())) {
-            room.setStatus("OCCUPIED");
+        if (room.getStatus() == null || room.getStatus() == RoomStatus.VACANT) {
+            room.setStatus(RoomStatus.OCCUPIED);
             roomRepository.save(room);
         }
 
@@ -135,7 +139,7 @@ public class TenantService {
                         .count();
 
         if (activeTenantsCount == 0) {
-            room.setStatus("VACANT");
+            room.setStatus(RoomStatus.VACANT);
             roomRepository.save(room);
         }
     }

@@ -1,21 +1,7 @@
 package com.tpanh.backend.controller;
 
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.dto.RoomUpdateRequest;
-import com.tpanh.backend.dto.TenantResponse;
-import com.tpanh.backend.service.RoomService;
-import com.tpanh.backend.service.TenantService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +14,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.dto.RoomUpdateRequest;
+import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.service.RoomService;
+import com.tpanh.backend.service.TenantService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/rooms")
@@ -113,6 +116,31 @@ public class RoomController {
     }
 
     @Operation(
+            summary = "Chi tiết phòng",
+            description = "Lấy thông tin chi tiết phòng (chỉ Manager hoặc Admin)")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Lấy thông tin thành công"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Không tìm thấy phòng"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "Không có quyền truy cập")
+            })
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    public ApiResponse<RoomResponse> getRoomById(@PathVariable final Integer id) {
+        final var response = roomService.getRoomById(id);
+        return ApiResponse.<RoomResponse>builder()
+                .result(response)
+                .message("Lấy thông tin phòng thành công")
+                .build();
+    }
+
+    @Operation(
             summary = "Lịch sử khách của phòng",
             description =
                     "Lấy danh sách lịch sử khách thuê của một phòng (chỉ Manager, có phân trang). "
@@ -134,7 +162,10 @@ public class RoomController {
     public PageResponse<TenantResponse> getTenantsByRoomId(
             @PathVariable final Integer roomId,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
-                    @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "startDate,desc")
+                    @PageableDefault(
+                            size = PaginationConfig.DEFAULT_PAGE_SIZE,
+                            sort = "startDate",
+                            direction = Sort.Direction.DESC)
                     final Pageable pageable) {
         return tenantService.getTenantsByRoomId(roomId, pageable);
     }
