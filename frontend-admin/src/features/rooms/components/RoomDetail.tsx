@@ -1,7 +1,8 @@
-import { BuildOutlined, DollarOutlined, HomeOutlined } from '@ant-design/icons';
-import { Descriptions, Empty, Modal, Spin, Tag } from 'antd';
+import { BuildOutlined, DollarOutlined, HistoryOutlined, HomeOutlined } from '@ant-design/icons';
+import { Descriptions, Empty, Modal, Spin, Tabs, Tag } from 'antd';
 import { useRoom } from '../api/roomsApi';
 import { RoomStatus } from '../types/rooms';
+import { RentalHistory } from './RentalHistory';
 
 interface RoomDetailProps {
   roomId: number | null;
@@ -71,36 +72,62 @@ export const RoomDetail = ({ roomId, open, onClose }: RoomDetailProps) => {
         <div className="flex justify-center items-center py-12">
           <Spin size="large" />
         </div>
-      ) : !room ? (
-        <Empty description="Không tìm thấy thông tin phòng" />
       ) : (
         <div className="mt-4">
-          <Descriptions bordered column={1} size="small">
-            <Descriptions.Item label="Số phòng">
-              <div className="flex items-center gap-2">
-                <HomeOutlined className="text-blue-500" />
-                <span className="font-semibold">{room.roomNo}</span>
-              </div>
-            </Descriptions.Item>
-            <Descriptions.Item label="Tòa nhà">
-              <div className="flex items-center gap-2">
-                <BuildOutlined className="text-gray-400" />
-                {room.buildingName}
-              </div>
-            </Descriptions.Item>
-            <Descriptions.Item label="Giá thuê">
-              <div className="flex items-center gap-2">
-                <DollarOutlined className="text-green-500" />
-                <span className="font-semibold">{formatPrice(room.price)}/tháng</span>
-              </div>
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color={getStatusColor(room.status)} className="text-base py-1 px-3">
-                {getStatusLabel(room.status)}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="ID">{room.id}</Descriptions.Item>
-          </Descriptions>
+          <Tabs
+            defaultActiveKey="info"
+            items={[
+              {
+                key: 'info',
+                label: (
+                  <span className="flex items-center gap-2">
+                    <HomeOutlined />
+                    Thông tin
+                  </span>
+                ),
+                children: !room ? (
+                  <Empty description="Không tìm thấy thông tin phòng" />
+                ) : (
+                  <Descriptions bordered column={1} size="small">
+                    <Descriptions.Item label="Số phòng">
+                      <div className="flex items-center gap-2">
+                        <HomeOutlined className="text-blue-500" />
+                        <span className="font-semibold">{room.roomNo}</span>
+                      </div>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tòa nhà">
+                      <div className="flex items-center gap-2">
+                        <BuildOutlined className="text-gray-400" />
+                        {room.buildingName}
+                      </div>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Giá thuê">
+                      <div className="flex items-center gap-2">
+                        <DollarOutlined className="text-green-500" />
+                        <span className="font-semibold">{formatPrice(room.price)}/tháng</span>
+                      </div>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái">
+                      <Tag color={getStatusColor(room.status)} className="text-base py-1 px-3">
+                        {getStatusLabel(room.status)}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="ID">{room.id}</Descriptions.Item>
+                  </Descriptions>
+                ),
+              },
+              {
+                key: 'history',
+                label: (
+                  <span className="flex items-center gap-2">
+                    <HistoryOutlined />
+                    Lịch sử thuê
+                  </span>
+                ),
+                children: <RentalHistory roomId={roomId} />,
+              },
+            ]}
+          />
         </div>
       )}
     </Modal>
