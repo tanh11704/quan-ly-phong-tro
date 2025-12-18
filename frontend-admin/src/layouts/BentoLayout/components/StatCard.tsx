@@ -8,7 +8,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   label,
   icon,
   gradientFrom,
-  gradientTo,
+  gradientTo: _gradientTo, // Keep for interface compatibility but not used
   textColor = 'white',
   delay = 0,
   enableCountUp = true,
@@ -21,9 +21,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   const isDark = textColor === 'dark';
   const textClass = isDark ? 'text-slate-900' : 'text-white';
   const labelClass = isDark ? 'text-slate-500' : `${gradientFrom.replace('from-', 'text-')}-100`;
-  const backgroundClass = isDark
-    ? 'border border-slate-100 bg-white'
-    : `bg-gradient-to-br ${gradientFrom} ${gradientTo}`;
+  // Extract base color from gradient (e.g., "from-blue-500" -> "blue-500")
+  const baseColor = gradientFrom.replace('from-', '');
+  const backgroundClass = isDark ? 'border border-slate-100 bg-white' : `bg-${baseColor}`;
 
   // Format large numbers with K, M, B suffixes
   const formatValue = useMemo(() => {

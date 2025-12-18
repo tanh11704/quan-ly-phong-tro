@@ -34,11 +34,13 @@ export type IntrospectResponse = z.infer<typeof IntrospectResponseSchema>;
 
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
+    code: z.number().optional(),
     result: dataSchema,
     message: z.string(),
   });
 
 export type ApiResponse<T> = {
+  code?: number;
   result: T;
   message: string;
 };

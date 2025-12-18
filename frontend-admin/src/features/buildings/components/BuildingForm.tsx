@@ -63,7 +63,7 @@ export const BuildingForm = ({
       width={600}
       title={
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white">
+          <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white">
             <BuildOutlined className="text-xl" />
           </div>
           <div>
@@ -163,7 +163,7 @@ export const BuildingForm = ({
               type="primary"
               htmlType="submit"
               size="large"
-              className="bg-linear-to-r from-blue-500 to-purple-600 border-0"
+              className="bg-blue-500 hover:bg-blue-600 border-0"
             >
               {isEdit ? 'Cập nhật' : 'Tạo mới'}
             </Button>

@@ -20,6 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   const getSelectedKey = () => {
     if (location.pathname === '/dashboard') return 'dashboard';
     if (location.pathname === '/buildings') return 'buildings';
+    if (location.pathname === '/rooms') return 'rooms';
     return 'dashboard';
   };
 
@@ -29,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
     const routeMap: Record<string, string> = {
       dashboard: '/dashboard',
       buildings: '/buildings',
+      rooms: '/rooms',
     };
     const route = routeMap[key] || '/dashboard';
     navigate(route);
@@ -69,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
               exit={{ opacity: 0 }}
               className="flex items-center gap-3"
             >
-              <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                 <HomeOutlined style={{ fontSize: 18, color: 'white' }} />
               </div>
               <span className="text-white font-semibold text-lg">Bento</span>
@@ -128,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
       {/* User Profile - Fixed ở dưới cùng - Padding giống phần trên */}
       <div className="shrink-0 px-6 py-6 border-t border-white/10">
         <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
-          <div className="w-10 h-10 bg-linear-to-br from-pink-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center text-white font-semibold">
             {role ? role.charAt(0) : 'U'}
           </div>
           <AnimatePresence>

@@ -11,6 +11,7 @@ const Register = lazy(() => import('./features/auth/pages/Register'));
 const Activate = lazy(() => import('./features/auth/pages/Activate'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Buildings = lazy(() => import('./features/buildings/pages/Buildings'));
+const Rooms = lazy(() => import('./features/rooms/pages/Rooms'));
 
 const App = () => {
   return (
@@ -37,6 +38,16 @@ const App = () => {
                 <ProtectedRoute>
                   <BentoLayout>
                     <Buildings />
+                  </BentoLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rooms"
+              element={
+                <ProtectedRoute>
+                  <BentoLayout>
+                    <Rooms />
                   </BentoLayout>
                 </ProtectedRoute>
               }

@@ -43,7 +43,7 @@ export const BuildingDetail = ({ buildingId, open, onClose }: BuildingDetailProp
       width={800}
       title={
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white">
+          <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white">
             <BuildOutlined className="text-xl" />
           </div>
           <div>

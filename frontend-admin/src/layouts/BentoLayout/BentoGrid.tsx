@@ -41,7 +41,7 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
             label="Tổng đơn hàng"
             icon={<ShoppingCartOutlined style={{ fontSize: 20, color: 'white' }} />}
             gradientFrom="from-blue-500"
-            gradientTo="to-blue-600"
+            gradientTo="to-blue-500"
             delay={0.2}
             duration={2}
             separator=","
@@ -51,8 +51,8 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
             value={8452}
             label="Khách hàng"
             icon={<UserOutlined style={{ fontSize: 20, color: 'white' }} />}
-            gradientFrom="from-purple-500"
-            gradientTo="to-purple-600"
+            gradientFrom="from-blue-500"
+            gradientTo="to-blue-500"
             delay={0.25}
             duration={2}
             separator=","

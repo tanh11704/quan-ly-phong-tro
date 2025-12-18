@@ -3,6 +3,7 @@ import {
   CalendarOutlined,
   DashboardOutlined,
   FileTextOutlined,
+  HomeOutlined,
   LockOutlined,
   MessageOutlined,
   SettingOutlined,
@@ -23,6 +24,12 @@ export const ALL_MENU_ITEMS: MenuItem[] = [
     key: 'buildings',
     icon: <FileTextOutlined style={{ fontSize: 20 }} />,
     label: 'Tòa nhà',
+    allowedRoles: [Role.MANAGER],
+  },
+  {
+    key: 'rooms',
+    icon: <HomeOutlined style={{ fontSize: 20 }} />,
+    label: 'Phòng',
     allowedRoles: [Role.MANAGER],
   },
   {

@@ -1,9 +1,9 @@
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Button, Result, Spin } from 'antd';
-import type { AxiosError } from 'axios';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getErrorMessage } from '../../../utils/errorUtils';
 import { useActivateAccount } from '../api/authApi';
 
 const Activate = () => {
@@ -25,7 +25,7 @@ const Activate = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -39,10 +39,7 @@ const Activate = () => {
   }
 
   if (isError || !token) {
-    const errorMessage =
-      error && 'response' in error
-        ? (error as AxiosError<{ message?: string }>).response?.data?.message
-        : undefined;
+    const errorMessage = error ? getErrorMessage(error) : undefined;
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50 p-4">
@@ -96,7 +93,7 @@ const Activate = () => {
                 type="primary"
                 key="login"
                 onClick={() => navigate('/login')}
-                className="bg-linear-to-r from-blue-500 to-purple-600 border-0"
+                className="bg-blue-500 hover:bg-blue-600 border-0"
               >
                 Đăng nhập ngay
               </Button>,

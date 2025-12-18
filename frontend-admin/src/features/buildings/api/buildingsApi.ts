@@ -41,15 +41,16 @@ export const useBuildings = (page: number = 0, size: number = 20, sort?: string)
   });
 };
 
-// Get rooms by building ID with pagination
+// Get rooms by building ID with pagination and status filter
 export const useBuildingRooms = (
   buildingId: number | null,
   page: number = 0,
   size: number = 20,
   sort?: string,
+  status?: string | null,
 ) => {
   return useQuery({
-    queryKey: ['buildings', buildingId, 'rooms', page, size, sort],
+    queryKey: ['buildings', buildingId, 'rooms', page, size, sort, status],
     queryFn: async (): Promise<PageResponse<RoomResponse>> => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -57,6 +58,9 @@ export const useBuildingRooms = (
       });
       if (sort) {
         params.append('sort', sort);
+      }
+      if (status) {
+        params.append('status', status);
       }
       const response = await axiosInstance.get<PageResponse<RoomResponse>>(
         `/buildings/${buildingId}/rooms?${params.toString()}`,

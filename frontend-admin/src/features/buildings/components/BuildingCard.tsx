@@ -56,7 +56,7 @@ export const BuildingCard = ({ building, onClick, onEdit, onDelete }: BuildingCa
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white">
+              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-white">
                 <BuildOutlined className="text-xl" />
               </div>
               <div className="flex-1 min-w-0">

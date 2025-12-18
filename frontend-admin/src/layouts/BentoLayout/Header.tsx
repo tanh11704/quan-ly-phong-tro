@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-105 transition-transform">
+        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-blue-600 transition-colors">
           A
         </div>
       </div>

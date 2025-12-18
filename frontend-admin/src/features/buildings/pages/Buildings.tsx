@@ -2,6 +2,7 @@ import { BuildOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Empty, Input, Pagination, Spin, message } from 'antd';
 import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
+import { getErrorMessage } from '../../../utils/errorUtils';
 import {
   useBuildings,
   useCreateBuilding,
@@ -54,10 +55,11 @@ const Buildings = () => {
       setFormOpen(false);
       setEditBuilding(null);
     } catch (error) {
-      const axiosError = error as { response?: { data?: { message?: string } } };
       message.error(
-        axiosError.response?.data?.message ||
-          (editBuilding ? 'Cập nhật tòa nhà thất bại' : 'Tạo tòa nhà thất bại. Vui lòng thử lại.'),
+        getErrorMessage(
+          error,
+          editBuilding ? 'Cập nhật tòa nhà thất bại' : 'Tạo tòa nhà thất bại. Vui lòng thử lại.',
+        ),
       );
     }
   };
@@ -72,10 +74,7 @@ const Buildings = () => {
       const response = await deleteBuilding(id);
       message.success(response.message || 'Xóa tòa nhà thành công!');
     } catch (error) {
-      const axiosError = error as { response?: { data?: { message?: string } } };
-      message.error(
-        axiosError.response?.data?.message || 'Xóa tòa nhà thất bại. Vui lòng thử lại.',
-      );
+      message.error(getErrorMessage(error, 'Xóa tòa nhà thất bại. Vui lòng thử lại.'));
     }
   };
 
@@ -90,7 +89,7 @@ const Buildings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -101,7 +100,7 @@ const Buildings = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
                   <BuildOutlined className="text-3xl text-white" />
                 </div>
                 <div>
@@ -114,7 +113,7 @@ const Buildings = () => {
                 icon={<PlusOutlined />}
                 onClick={() => setFormOpen(true)}
                 size="large"
-                className="bg-linear-to-r from-blue-500 to-purple-600 border-0"
+                className="bg-blue-500 hover:bg-blue-600 border-0"
               >
                 Tạo tòa nhà mới
               </Button>
@@ -154,7 +153,7 @@ const Buildings = () => {
                     icon={<PlusOutlined />}
                     onClick={() => setFormOpen(true)}
                     size="large"
-                    className="bg-linear-to-r from-blue-500 to-purple-600 border-0"
+                    className="bg-blue-500 hover:bg-blue-600 border-0"
                   >
                     Tạo tòa nhà đầu tiên
                   </Button>

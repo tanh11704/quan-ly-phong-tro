@@ -1,8 +1,8 @@
 import { IdcardOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input, message } from 'antd';
-import type { AxiosError } from 'axios';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getErrorMessage } from '../../../utils/errorUtils';
 import { useRegisterMutation } from '../api/authApi';
 import { RegistrationRequestSchema, type RegistrationRequest } from '../types/auth';
 
@@ -25,16 +25,13 @@ const Register = () => {
         navigate('/login', { replace: true });
       }, 2000);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const errorMessage =
-        axiosError.response?.data?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
-      message.error(errorMessage);
+      message.error(getErrorMessage(error, 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.'));
       console.error('Register error:', error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -58,7 +55,7 @@ const Register = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', delay: 0.4 }}
-              className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             >
               <IdcardOutlined className="text-2xl text-white" />
             </motion.div>
@@ -172,7 +169,7 @@ const Register = () => {
                   htmlType="submit"
                   loading={isLoading}
                   block
-                  className="h-12 rounded-lg text-base font-semibold bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="h-12 rounded-lg text-base font-semibold bg-blue-500 hover:bg-blue-600 border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Đăng ký
                 </Button>
