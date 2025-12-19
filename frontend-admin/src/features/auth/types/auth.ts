@@ -70,3 +70,6 @@ export const RegistrationResponseSchema = z.object({
 });
 
 export type RegistrationResponse = z.infer<typeof RegistrationResponseSchema>;
+
+// Re-export UserDTO for convenience
+export type { UserDTO } from './users';

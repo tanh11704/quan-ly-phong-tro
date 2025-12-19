@@ -1,12 +1,60 @@
-import { BellOutlined, MenuOutlined, SearchOutlined } from '@ant-design/icons';
+import { BellOutlined, MenuOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
+import { Dropdown, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import React from 'react';
+import { useMyInfo } from '../../features/auth/api/usersApi';
+import { useAuth } from '../../features/auth/context';
 
 interface HeaderProps {
   onMenuClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const { logout } = useAuth();
+  const { data: user, isLoading } = useMyInfo();
+
+  const getInitials = (name: string | null | undefined): string => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
+  const userMenuItems = [
+    {
+      key: 'profile',
+      label: (
+        <div className="py-2">
+          <div className="font-semibold text-gray-800">{user?.fullName || 'Người dùng'}</div>
+          <div className="text-sm text-gray-500">{user?.username || 'Chưa có username'}</div>
+          <div className="text-xs text-gray-400 mt-1">
+            {user?.role === 'ADMIN'
+              ? 'Quản trị viên'
+              : user?.role === 'MANAGER'
+                ? 'Quản lý'
+                : 'Khách thuê'}
+          </div>
+        </div>
+      ),
+      disabled: true,
+    },
+    {
+      type: 'divider' as const,
+    },
+    {
+      key: 'logout',
+      label: 'Đăng xuất',
+      danger: true,
+      icon: <UserOutlined />,
+      onClick: () => {
+        logout();
+        window.location.href = '/login';
+      },
+    },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -45,9 +93,17 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-blue-600 transition-colors">
-          A
-        </div>
+        {isLoading ? (
+          <div className="w-10 h-10 flex items-center justify-center">
+            <Spin size="small" />
+          </div>
+        ) : (
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-blue-600 transition-colors">
+              {getInitials(user?.fullName)}
+            </div>
+          </Dropdown>
+        )}
       </div>
     </motion.div>
   );
