@@ -71,7 +71,7 @@ public class AdminController {
             })
     @PutMapping("/users/{userId}/toggle-active")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<UserDTO> toggleUserActive(@PathVariable final String userId) {
+    public ApiResponse<UserDTO> toggleUserActive(@PathVariable("userId") final String userId) {
         final var userDTO = userService.toggleUserActive(userId);
         return ApiResponse.<UserDTO>builder()
                 .result(userDTO)

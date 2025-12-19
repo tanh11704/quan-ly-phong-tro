@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-17T20:11:45+0700",
+    date = "2025-12-19T08:55:53+0700",
     comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
@@ -27,14 +27,14 @@ public class InvoiceMapperImpl implements InvoiceMapper {
 
         invoiceResponse.setRoomNo( invoiceRoomRoomNo( invoice ) );
         invoiceResponse.setTenantName( invoiceTenantName( invoice ) );
+        invoiceResponse.setDueDate( invoice.getDueDate() );
+        invoiceResponse.setElecAmount( invoice.getElecAmount() );
         invoiceResponse.setId( invoice.getId() );
         invoiceResponse.setPeriod( invoice.getPeriod() );
         invoiceResponse.setRoomPrice( invoice.getRoomPrice() );
-        invoiceResponse.setElecAmount( invoice.getElecAmount() );
-        invoiceResponse.setWaterAmount( invoice.getWaterAmount() );
-        invoiceResponse.setTotalAmount( invoice.getTotalAmount() );
         invoiceResponse.setStatus( invoice.getStatus() );
-        invoiceResponse.setDueDate( invoice.getDueDate() );
+        invoiceResponse.setTotalAmount( invoice.getTotalAmount() );
+        invoiceResponse.setWaterAmount( invoice.getWaterAmount() );
 
         return invoiceResponse;
     }

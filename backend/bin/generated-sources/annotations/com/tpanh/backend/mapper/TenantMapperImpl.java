@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-17T17:55:32+0700",
+    date = "2025-12-19T08:55:53+0700",
     comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
@@ -20,18 +20,18 @@ public class TenantMapperImpl implements TenantMapper {
             return null;
         }
 
-        TenantResponse tenantResponse = new TenantResponse();
+        TenantResponse.TenantResponseBuilder tenantResponse = TenantResponse.builder();
 
-        tenantResponse.setRoomId( tenantRoomId( tenant ) );
-        tenantResponse.setRoomNo( tenantRoomRoomNo( tenant ) );
-        tenantResponse.setId( tenant.getId() );
-        tenantResponse.setName( tenant.getName() );
-        tenantResponse.setPhone( tenant.getPhone() );
-        tenantResponse.setIsContractHolder( tenant.getIsContractHolder() );
-        tenantResponse.setStartDate( tenant.getStartDate() );
-        tenantResponse.setEndDate( tenant.getEndDate() );
+        tenantResponse.roomId( tenantRoomId( tenant ) );
+        tenantResponse.roomNo( tenantRoomRoomNo( tenant ) );
+        tenantResponse.endDate( tenant.getEndDate() );
+        tenantResponse.id( tenant.getId() );
+        tenantResponse.isContractHolder( tenant.getIsContractHolder() );
+        tenantResponse.name( tenant.getName() );
+        tenantResponse.phone( tenant.getPhone() );
+        tenantResponse.startDate( tenant.getStartDate() );
 
-        return tenantResponse;
+        return tenantResponse.build();
     }
 
     private Integer tenantRoomId(Tenant tenant) {

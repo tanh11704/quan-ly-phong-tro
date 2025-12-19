@@ -16,6 +16,24 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import com.tpanh.backend.dto.InvoiceDetailResponse;
 import com.tpanh.backend.dto.InvoiceResponse;
 import com.tpanh.backend.entity.Building;
@@ -36,22 +54,6 @@ import com.tpanh.backend.repository.MeterRecordRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceServiceTest {
@@ -158,6 +160,9 @@ class InvoiceServiceTest {
         lenient()
                 .when(utilityReadingRepository.findByRoomIdAndMonth(anyInt(), any(String.class)))
                 .thenReturn(Optional.empty());
+        lenient()
+                .when(utilityReadingRepository.existsByRoomIdAndMonthLessThan(anyInt(), anyString()))
+                .thenReturn(false);
     }
 
     @Test
@@ -1168,12 +1173,15 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(false);
         when(tenantRepository.findByRoomIdAndIsContractHolderTrue(ROOM_ID_1))
                 .thenReturn(Optional.of(tenant1));
-        // Fallback to MeterRecord for electricity (also null elecUnitPrice -> returns 0)
-        when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
+        // When elecUnitPrice is null, calculateElectricityCost returns 0 immediately
+        // and calculateWaterCost is still called, so we need to mock water meter record
+        lenient()
+                .when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.ELEC))
                 .thenReturn(Optional.of(elecRecord));
         when(meterRecordRepository.findByRoomIdAndPeriodAndType(ROOM_ID_1, PERIOD, MeterType.WATER))
                 .thenReturn(Optional.empty());
         when(tenantRepository.countByRoomId(ROOM_ID_1)).thenReturn(1);
+        // UtilityReadingRepository is not called when elecUnitPrice is null, but lenient mock in setUp handles it
 
         final Invoice savedInvoice = new Invoice();
         savedInvoice.setId(1);

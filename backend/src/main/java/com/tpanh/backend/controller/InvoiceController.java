@@ -1,24 +1,7 @@
 package com.tpanh.backend.controller;
 
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.InvoiceCreationRequest;
-import com.tpanh.backend.dto.InvoiceDetailResponse;
-import com.tpanh.backend.dto.InvoiceResponse;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.entity.Building;
-import com.tpanh.backend.enums.InvoiceStatus;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.service.InvoiceService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -32,6 +15,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.InvoiceCreationRequest;
+import com.tpanh.backend.dto.InvoiceDetailResponse;
+import com.tpanh.backend.dto.InvoiceResponse;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.entity.Building;
+import com.tpanh.backend.enums.InvoiceStatus;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.service.InvoiceService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/invoices")
@@ -107,13 +110,13 @@ public class InvoiceController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<InvoiceResponse> getInvoices(
-            @Parameter(description = "ID tòa nhà", required = true) @RequestParam
+            @Parameter(description = "ID tòa nhà", required = true) @RequestParam("buildingId")
                     final Integer buildingId,
             @Parameter(description = "Kỳ thanh toán (VD: 2025-01)", example = "2025-01")
-                    @RequestParam(required = false)
+                    @RequestParam(value = "period", required = false)
                     final String period,
             @Parameter(description = "Trạng thái hóa đơn", example = "UNPAID")
-                    @RequestParam(required = false)
+                    @RequestParam(value = "status", required = false)
                     final InvoiceStatus status,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(
@@ -151,7 +154,7 @@ public class InvoiceController {
             })
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ApiResponse<InvoiceDetailResponse> getInvoiceDetail(@PathVariable final Integer id) {
+    public ApiResponse<InvoiceDetailResponse> getInvoiceDetail(@PathVariable("id") final Integer id) {
         final var response = invoiceService.getInvoiceDetail(id);
         return ApiResponse.<InvoiceDetailResponse>builder()
                 .result(response)
@@ -181,7 +184,7 @@ public class InvoiceController {
             })
     @PutMapping("/{id}/pay")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<InvoiceResponse> payInvoice(@PathVariable final Integer id) {
+    public ApiResponse<InvoiceResponse> payInvoice(@PathVariable("id") final Integer id) {
         final var response = invoiceService.payInvoice(id);
         return ApiResponse.<InvoiceResponse>builder()
                 .result(response)
@@ -211,7 +214,7 @@ public class InvoiceController {
             })
     @PostMapping("/{id}/send-email")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<String> sendInvoiceEmail(@PathVariable final Integer id) {
+    public ApiResponse<String> sendInvoiceEmail(@PathVariable("id") final Integer id) {
         invoiceService.sendInvoiceEmail(id);
         return ApiResponse.<String>builder()
                 .result("Email đã được gửi thành công")

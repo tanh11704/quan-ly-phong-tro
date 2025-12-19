@@ -1,10 +1,16 @@
 import { ConfigProvider } from 'antd';
+import viVN from 'antd/locale/vi_VN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { themeConfig } from './config/themeConfig';
 import { AuthInit } from './features/auth/components/AuthInit';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
 import { BentoLayout } from './layouts';
+
+// Cấu hình dayjs locale tiếng Việt
+dayjs.locale('vi');
 
 const Login = lazy(() => import('./features/auth/pages/Login'));
 const Register = lazy(() => import('./features/auth/pages/Register'));
@@ -15,7 +21,7 @@ const Rooms = lazy(() => import('./features/rooms/pages/Rooms'));
 
 const App = () => {
   return (
-    <ConfigProvider theme={themeConfig}>
+    <ConfigProvider theme={themeConfig} locale={viVN}>
       <AuthInit>
         <Suspense
           fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}

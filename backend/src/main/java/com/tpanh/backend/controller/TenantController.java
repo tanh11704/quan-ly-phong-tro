@@ -74,7 +74,7 @@ public class TenantController {
             })
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ApiResponse<TenantResponse> getTenantById(@PathVariable final Integer id) {
+    public ApiResponse<TenantResponse> getTenantById(@PathVariable("id") final Integer id) {
         final var response = tenantService.getTenantById(id);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
@@ -102,7 +102,7 @@ public class TenantController {
             })
     @PutMapping("/{id}/end")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<TenantResponse> endTenantContract(@PathVariable final Integer id) {
+    public ApiResponse<TenantResponse> endTenantContract(@PathVariable("id") final Integer id) {
         final var response = tenantService.endTenantContract(id);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)

@@ -1,20 +1,5 @@
 package com.tpanh.backend.controller;
 
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.BuildingResponse;
-import com.tpanh.backend.dto.BuildingUpdateRequest;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.service.BuildingService;
-import com.tpanh.backend.service.RoomService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -29,6 +14,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.BuildingResponse;
+import com.tpanh.backend.dto.BuildingUpdateRequest;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.service.BuildingService;
+import com.tpanh.backend.service.RoomService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/buildings")
@@ -103,7 +105,7 @@ public class BuildingController {
             })
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ApiResponse<BuildingResponse> getBuildingById(@PathVariable final Integer id) {
+    public ApiResponse<BuildingResponse> getBuildingById(@PathVariable("id") final Integer id) {
         final var response = buildingService.getBuildingById(id);
         return ApiResponse.<BuildingResponse>builder()
                 .result(response)
@@ -129,7 +131,7 @@ public class BuildingController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> updateBuilding(
-            @PathVariable final Integer id,
+            @PathVariable("id") final Integer id,
             @RequestBody @Valid final BuildingUpdateRequest request) {
         final var response = buildingService.updateBuilding(id, request);
         return ApiResponse.<BuildingResponse>builder()
@@ -153,7 +155,7 @@ public class BuildingController {
             })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<Void> deleteBuilding(@PathVariable final Integer id) {
+    public ApiResponse<Void> deleteBuilding(@PathVariable("id") final Integer id) {
         buildingService.deleteBuilding(id);
         return ApiResponse.<Void>builder().message("Xóa tòa nhà thành công").build();
     }
@@ -178,9 +180,9 @@ public class BuildingController {
     @GetMapping("/{id}/rooms")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public PageResponse<RoomResponse> getRoomsByBuildingId(
-            @PathVariable final Integer id,
+            @PathVariable("id") final Integer id,
             @Parameter(description = "Lọc theo trạng thái phòng", example = "VACANT")
-                    @RequestParam(required = false)
+                    @RequestParam(value = "status", required = false)
                     final com.tpanh.backend.enums.RoomStatus status,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "roomNo")

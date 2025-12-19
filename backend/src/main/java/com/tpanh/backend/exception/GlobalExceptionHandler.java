@@ -1,12 +1,14 @@
 package com.tpanh.backend.exception;
 
-import com.tpanh.backend.dto.ApiResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import com.tpanh.backend.dto.ApiResponse;
+
+import lombok.extern.slf4j.Slf4j;
 
 @ControllerAdvice
 @io.swagger.v3.oas.annotations.Hidden
@@ -17,7 +19,11 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> handlingAppException(final AppException exception) {
         final ErrorCode errorCode = exception.getErrorCode();
 
-        log.warn("AppException: {} - {}", errorCode.name(), errorCode.getMessage(), exception);
+        if (errorCode == ErrorCode.INVALID_CREDENTIALS) {
+            log.info("Authentication failed: {}", errorCode.getMessage());
+        } else {
+            log.warn("AppException: {} - {}", errorCode.name(), errorCode.getMessage());
+        }
 
         final ApiResponse<Void> apiResponse = buildErrorResponse(errorCode);
         return buildResponseEntity(errorCode, apiResponse);

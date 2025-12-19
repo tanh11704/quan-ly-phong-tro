@@ -1,20 +1,5 @@
 package com.tpanh.backend.controller;
 
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomCreationRequest;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.dto.RoomUpdateRequest;
-import com.tpanh.backend.dto.TenantResponse;
-import com.tpanh.backend.service.RoomService;
-import com.tpanh.backend.service.TenantService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -29,6 +14,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.RoomCreationRequest;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.dto.RoomUpdateRequest;
+import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.service.RoomService;
+import com.tpanh.backend.service.TenantService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/rooms")
@@ -85,7 +87,7 @@ public class RoomController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<RoomResponse> updateRoom(
-            @PathVariable final Integer id, @RequestBody @Valid final RoomUpdateRequest request) {
+            @PathVariable("id") final Integer id, @RequestBody @Valid final RoomUpdateRequest request) {
         final var response = roomService.updateRoom(id, request);
         return ApiResponse.<RoomResponse>builder()
                 .result(response)
@@ -109,7 +111,7 @@ public class RoomController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('MANAGER')")
-    public void deleteRoom(@PathVariable final Integer id) {
+    public void deleteRoom(@PathVariable("id") final Integer id) {
         roomService.deleteRoom(id);
     }
 
@@ -130,7 +132,7 @@ public class RoomController {
             })
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ApiResponse<RoomResponse> getRoomById(@PathVariable final Integer id) {
+    public ApiResponse<RoomResponse> getRoomById(@PathVariable("id") final Integer id) {
         final var response = roomService.getRoomById(id);
         return ApiResponse.<RoomResponse>builder()
                 .result(response)
@@ -158,7 +160,7 @@ public class RoomController {
     @GetMapping("/{roomId}/tenants")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public PageResponse<TenantResponse> getTenantsByRoomId(
-            @PathVariable final Integer roomId,
+            @PathVariable("roomId") final Integer roomId,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(
                             size = PaginationConfig.DEFAULT_PAGE_SIZE,

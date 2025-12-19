@@ -4,11 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
+@Schema(description = "Yêu cầu cập nhật chỉ số điện nước")
 public class UtilityReadingUpdateRequest {
-    @Schema(example = "1234")
+    @Schema(description = "Chỉ số điện (kWh)", example = "1234")
     private Integer electricIndex;
 
-    @Schema(example = "56")
+    @Schema(description = "Chỉ số nước (m³)", example = "56")
     private Integer waterIndex;
 
     @Schema(
@@ -18,6 +19,6 @@ public class UtilityReadingUpdateRequest {
             example = "false")
     private Boolean isMeterReset;
 
-    @Schema(example = "http://img")
+    @Schema(description = "URL ảnh chứng cứ đồng hồ", example = "http://example.com/image.jpg")
     private String imageEvidence;
 }

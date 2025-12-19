@@ -1,18 +1,7 @@
 package com.tpanh.backend.controller;
 
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.UtilityReadingCreationRequest;
-import com.tpanh.backend.dto.UtilityReadingResponse;
-import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.service.UtilityReadingService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +14,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.UtilityReadingCreationRequest;
+import com.tpanh.backend.dto.UtilityReadingResponse;
+import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.service.UtilityReadingService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/utility-readings")
@@ -86,7 +89,7 @@ public class UtilityReadingController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<UtilityReadingResponse> updateUtilityReading(
-            @PathVariable final Integer id,
+            @PathVariable("id") final Integer id,
             @RequestBody @Valid final UtilityReadingUpdateRequest request) {
         final var response = utilityReadingService.updateUtilityReading(id, request);
         return ApiResponse.<UtilityReadingResponse>builder()
@@ -110,7 +113,7 @@ public class UtilityReadingController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ApiResponse<UtilityReadingResponse> getUtilityReadingById(
-            @PathVariable final Integer id) {
+            @PathVariable("id") final Integer id) {
         final var response = utilityReadingService.getUtilityReadingById(id);
         return ApiResponse.<UtilityReadingResponse>builder()
                 .result(response)
@@ -130,7 +133,7 @@ public class UtilityReadingController {
     @GetMapping("/rooms/{roomId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ApiResponse<List<UtilityReadingResponse>> getUtilityReadingsByRoomId(
-            @PathVariable final Integer roomId) {
+            @PathVariable("roomId") final Integer roomId) {
         final var response = utilityReadingService.getUtilityReadingsByRoomId(roomId);
         return ApiResponse.<List<UtilityReadingResponse>>builder()
                 .result(response)
@@ -158,8 +161,8 @@ public class UtilityReadingController {
     @GetMapping("/buildings/{buildingId}")
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<List<UtilityReadingResponse>> getUtilityReadingsByBuildingAndMonth(
-            @PathVariable final Integer buildingId,
-            @Parameter(description = "Tháng (VD: 2025-01)", example = "2025-01") @RequestParam
+            @PathVariable("buildingId") final Integer buildingId,
+            @Parameter(description = "Tháng (VD: 2025-01)", example = "2025-01") @RequestParam("month")
                     final String month) {
         final var authentication = SecurityContextHolder.getContext().getAuthentication();
         final var currentUserId = authentication.getName();

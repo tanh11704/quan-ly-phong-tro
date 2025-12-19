@@ -1,6 +1,5 @@
 package com.tpanh.backend.config;
 
-import com.tpanh.backend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.tpanh.backend.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -33,6 +35,20 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        // No-op implementation to prevent Spring Security from auto-generating password
+        // This app uses JWT authentication, not UserDetailsService
+        // Return a disabled user that will never be used
+        return username ->
+                org.springframework.security.core.userdetails.User.builder()
+                        .username(username)
+                        .password("")
+                        .authorities(java.util.Collections.emptyList())
+                        .disabled(true)
+                        .build();
     }
 
     @Bean

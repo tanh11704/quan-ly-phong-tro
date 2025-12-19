@@ -6,19 +6,20 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
+@Schema(description = "Yêu cầu ghi chỉ số điện nước")
 public class UtilityReadingCreationRequest {
-    @Schema(example = "10")
+    @Schema(description = "ID phòng", example = "10")
     @NotNull(message = "ROOM_ID_REQUIRED")
     private Integer roomId;
 
-    @Schema(example = "2025-01")
+    @Schema(description = "Tháng ghi chỉ số (định dạng YYYY-MM)", example = "2025-01")
     @NotBlank(message = "INVALID_PERIOD")
     private String month; // Format: 'YYYY-MM'
 
-    @Schema(example = "1234")
+    @Schema(description = "Chỉ số điện (kWh)", example = "1234")
     private Integer electricIndex;
 
-    @Schema(example = "56")
+    @Schema(description = "Chỉ số nước (m³)", example = "56")
     private Integer waterIndex;
 
     @Schema(
@@ -28,6 +29,6 @@ public class UtilityReadingCreationRequest {
             example = "false")
     private Boolean isMeterReset;
 
-    @Schema(example = "http://img")
+    @Schema(description = "URL ảnh chứng cứ đồng hồ", example = "http://example.com/image.jpg")
     private String imageEvidence; // URL or path to image
 }

@@ -1,5 +1,12 @@
-import { BuildOutlined, DollarOutlined, HistoryOutlined, HomeOutlined } from '@ant-design/icons';
+import {
+  BuildOutlined,
+  DollarOutlined,
+  HistoryOutlined,
+  HomeOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
 import { Descriptions, Empty, Modal, Spin, Tabs, Tag } from 'antd';
+import { UtilityReadingList } from '../../utility-readings/components/UtilityReadingList';
 import { useRoom } from '../api/roomsApi';
 import { RoomStatus } from '../types/rooms';
 import { RentalHistory } from './RentalHistory';
@@ -125,6 +132,16 @@ export const RoomDetail = ({ roomId, open, onClose }: RoomDetailProps) => {
                   </span>
                 ),
                 children: <RentalHistory roomId={roomId} />,
+              },
+              {
+                key: 'utility',
+                label: (
+                  <span className="flex items-center gap-2">
+                    <ThunderboltOutlined />
+                    Chỉ số điện nước
+                  </span>
+                ),
+                children: <UtilityReadingList roomId={roomId} />,
               },
             ]}
           />

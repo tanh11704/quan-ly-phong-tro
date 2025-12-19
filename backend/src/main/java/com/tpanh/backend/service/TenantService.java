@@ -1,5 +1,16 @@
 package com.tpanh.backend.service;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
@@ -10,16 +21,8 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.TenantMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
-import java.time.LocalDate;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,7 +58,7 @@ public class TenantService {
         return tenantMapper.toResponse(savedTenant);
     }
 
-    @Cacheable(value = "tenants", key = "#id")
+    @Cacheable(value = "tenants", key = "#p0")
     public TenantResponse getTenantById(final Integer id) {
         final var tenant =
                 tenantRepository
@@ -64,7 +67,7 @@ public class TenantService {
         return tenantMapper.toResponse(tenant);
     }
 
-    @Cacheable(value = "tenantsByRoom", key = "#roomId")
+    @Cacheable(value = "tenantsByRoom", key = "#p0")
     public List<TenantResponse> getTenantsByRoomId(final Integer roomId) {
         if (!roomRepository.existsById(roomId)) {
             throw new AppException(ErrorCode.ROOM_NOT_FOUND);
@@ -143,8 +146,8 @@ public class TenantService {
 
     @Caching(
             evict = {
-                @CacheEvict(value = "tenants", key = "#tenantId"),
-                @CacheEvict(value = "tenantsByRoom", key = "#roomId")
+                @CacheEvict(value = "tenants", key = "#p1"),
+                @CacheEvict(value = "tenantsByRoom", key = "#p0")
             })
     private void evictTenantCaches(final Integer roomId, final Integer tenantId) {
         // Method chỉ để evict cache, không có logic gì

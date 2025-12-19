@@ -7,17 +7,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.tpanh.backend.dto.RegistrationRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.UserStatus;
-import com.tpanh.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,10 +29,35 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.tpanh.backend.dto.RegistrationRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.UserStatus;
+import com.tpanh.backend.repository.UserRepository;
+import com.tpanh.backend.service.EmailService;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @Transactional
 class RegistrationControllerIntegrationTest {
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public EmailService emailService() {
+            return new EmailService(
+                    org.mockito.Mockito.mock(
+                            org.springframework.mail.javamail.JavaMailSender.class)) {
+                @Override
+                public void sendActivationEmail(
+                        final String email, final String fullName, final String token) {
+                }
+            };
+        }
+    }
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -224,14 +245,12 @@ class RegistrationControllerIntegrationTest {
                                 post("/api/v1/auth/register")
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk())
                         .andReturn();
 
-        final var userId =
-                objectMapper
-                        .readTree(registerResponse.getResponse().getContentAsString())
-                        .get("result")
-                        .get("userId")
-                        .asText();
+        final var responseContent = registerResponse.getResponse().getContentAsString();
+        final var responseJson = objectMapper.readTree(responseContent);
+        final var userId = responseJson.get("result").get("userId").asText();
 
         // Get activation token from Redis
         final var tokenKey = "activation:user:" + userId;
