@@ -54,7 +54,7 @@ public class InvoiceService {
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(value = "rooms", key = "#building.id"),
+                @CacheEvict(value = "rooms", key = "#p0.id"),
                 @CacheEvict(value = "tenantsByRoom", allEntries = true)
             })
     public List<InvoiceResponse> createInvoice(final Building building, final String period) {

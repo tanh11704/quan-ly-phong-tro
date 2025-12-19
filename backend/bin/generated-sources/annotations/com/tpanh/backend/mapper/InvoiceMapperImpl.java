@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-19T08:55:53+0700",
+    date = "2025-12-19T09:02:04+0700",
     comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
@@ -27,14 +27,14 @@ public class InvoiceMapperImpl implements InvoiceMapper {
 
         invoiceResponse.setRoomNo( invoiceRoomRoomNo( invoice ) );
         invoiceResponse.setTenantName( invoiceTenantName( invoice ) );
-        invoiceResponse.setDueDate( invoice.getDueDate() );
-        invoiceResponse.setElecAmount( invoice.getElecAmount() );
         invoiceResponse.setId( invoice.getId() );
         invoiceResponse.setPeriod( invoice.getPeriod() );
         invoiceResponse.setRoomPrice( invoice.getRoomPrice() );
-        invoiceResponse.setStatus( invoice.getStatus() );
-        invoiceResponse.setTotalAmount( invoice.getTotalAmount() );
+        invoiceResponse.setElecAmount( invoice.getElecAmount() );
         invoiceResponse.setWaterAmount( invoice.getWaterAmount() );
+        invoiceResponse.setTotalAmount( invoice.getTotalAmount() );
+        invoiceResponse.setStatus( invoice.getStatus() );
+        invoiceResponse.setDueDate( invoice.getDueDate() );
 
         return invoiceResponse;
     }
@@ -54,16 +54,16 @@ public class InvoiceMapperImpl implements InvoiceMapper {
         invoiceDetailResponse.setTenantName( invoiceTenantName( invoice ) );
         invoiceDetailResponse.setTenantPhone( invoiceTenantPhone( invoice ) );
         invoiceDetailResponse.setTenantId( invoiceTenantId( invoice ) );
-        invoiceDetailResponse.setCreatedAt( invoice.getCreatedAt() );
-        invoiceDetailResponse.setDueDate( invoice.getDueDate() );
-        invoiceDetailResponse.setElecAmount( invoice.getElecAmount() );
         invoiceDetailResponse.setId( invoice.getId() );
-        invoiceDetailResponse.setPaidAt( invoice.getPaidAt() );
         invoiceDetailResponse.setPeriod( invoice.getPeriod() );
-        invoiceDetailResponse.setRoomPrice( invoice.getRoomPrice() );
-        invoiceDetailResponse.setStatus( invoice.getStatus() );
-        invoiceDetailResponse.setTotalAmount( invoice.getTotalAmount() );
+        invoiceDetailResponse.setElecAmount( invoice.getElecAmount() );
         invoiceDetailResponse.setWaterAmount( invoice.getWaterAmount() );
+        invoiceDetailResponse.setRoomPrice( invoice.getRoomPrice() );
+        invoiceDetailResponse.setTotalAmount( invoice.getTotalAmount() );
+        invoiceDetailResponse.setStatus( invoice.getStatus() );
+        invoiceDetailResponse.setDueDate( invoice.getDueDate() );
+        invoiceDetailResponse.setPaidAt( invoice.getPaidAt() );
+        invoiceDetailResponse.setCreatedAt( invoice.getCreatedAt() );
 
         return invoiceDetailResponse;
     }

@@ -31,7 +31,7 @@ public class RoomService {
     private final RoomMapper roomMapper;
 
     @Transactional
-    @CacheEvict(value = "rooms", key = "#request.buildingId")
+    @CacheEvict(value = "rooms", key = "#p0.buildingId")
     public RoomResponse createRoom(final RoomCreationRequest request) {
         final var building =
                 buildingRepository

@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
     if (location.pathname === '/dashboard') return 'dashboard';
     if (location.pathname === '/buildings') return 'buildings';
     if (location.pathname === '/rooms') return 'rooms';
+    if (location.pathname === '/invoices') return 'invoices';
     return 'dashboard';
   };
 
@@ -31,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
       dashboard: '/dashboard',
       buildings: '/buildings',
       rooms: '/rooms',
+      invoices: '/invoices',
     };
     const route = routeMap[key] || '/dashboard';
     navigate(route);
