@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.dto.TenantUpdateRequest;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.entity.Tenant;
 import com.tpanh.backend.enums.RoomStatus;
@@ -453,5 +454,80 @@ class TenantServiceTest {
         verify(roomRepository).existsById(ROOM_ID);
         verify(tenantRepository, never())
                 .findByRoomIdOrderByStartDateDesc(any(Integer.class), any(Pageable.class));
+    }
+
+    @Test
+    void createTenant_WithExistingActiveContractHolder_ShouldThrowException() {
+        // Given
+        final var existingContractHolder = new Tenant();
+        existingContractHolder.setId(99);
+        existingContractHolder.setRoom(room);
+        existingContractHolder.setIsContractHolder(true);
+        existingContractHolder.setEndDate(null); // Active
+
+        final var request = new TenantCreationRequest();
+        request.setRoomId(ROOM_ID);
+        request.setName("New Tenant");
+        request.setIsContractHolder(true);
+
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(tenantRepository.findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(ROOM_ID))
+                .thenReturn(Optional.of(existingContractHolder));
+
+        // When & Then
+        final var exception =
+                assertThrows(AppException.class, () -> tenantService.createTenant(request));
+        assertEquals(ErrorCode.CONTRACT_HOLDER_ALREADY_EXISTS, exception.getErrorCode());
+        verify(tenantRepository, never()).save(any(Tenant.class));
+    }
+
+    @Test
+    void createTenant_WithExpiredContractHolder_ShouldSucceed() {
+        // Given - existing contract holder has ended their contract
+        final var request = new TenantCreationRequest();
+        request.setRoomId(ROOM_ID);
+        request.setName(TENANT_NAME);
+        request.setIsContractHolder(true);
+
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(tenantRepository.findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(ROOM_ID))
+                .thenReturn(Optional.empty()); // No active contract holder
+        when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
+        when(roomRepository.save(any(Room.class))).thenReturn(room);
+
+        // When
+        final var response = tenantService.createTenant(request);
+
+        // Then
+        assertNotNull(response);
+        verify(tenantRepository).save(any(Tenant.class));
+    }
+
+    @Test
+    void updateTenant_SetContractHolderWhenExisting_ShouldThrowException() {
+        // Given
+        final var existingContractHolder = new Tenant();
+        existingContractHolder.setId(99);
+        existingContractHolder.setRoom(room);
+        existingContractHolder.setIsContractHolder(true);
+        existingContractHolder.setEndDate(null); // Active
+
+        // Current tenant is NOT a contract holder
+        tenant.setIsContractHolder(false);
+        tenant.setEndDate(null); // Still active
+
+        final var request = new TenantUpdateRequest();
+        request.setIsContractHolder(true); // Trying to become contract holder
+
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(ROOM_ID))
+                .thenReturn(Optional.of(existingContractHolder));
+
+        // When & Then
+        final var exception =
+                assertThrows(
+                        AppException.class, () -> tenantService.updateTenant(TENANT_ID, request));
+        assertEquals(ErrorCode.CONTRACT_HOLDER_ALREADY_EXISTS, exception.getErrorCode());
+        verify(tenantRepository, never()).save(any(Tenant.class));
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.dto.TenantUpdateRequest;
 import com.tpanh.backend.entity.Tenant;
 import com.tpanh.backend.enums.RoomStatus;
 import com.tpanh.backend.exception.AppException;
@@ -38,14 +39,22 @@ public class TenantService {
                         .findById(request.getRoomId())
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
+        final boolean isContractHolder =
+                request.getIsContractHolder() != null && request.getIsContractHolder();
+        if (isContractHolder) {
+            validateNoActiveContractHolder(request.getRoomId(), null);
+        }
+
         final var tenant = new Tenant();
         tenant.setRoom(room);
         tenant.setName(request.getName());
         tenant.setPhone(request.getPhone());
-        tenant.setIsContractHolder(
-                request.getIsContractHolder() != null ? request.getIsContractHolder() : false);
+        tenant.setEmail(request.getEmail());
+        tenant.setIsContractHolder(isContractHolder);
         tenant.setStartDate(
                 request.getStartDate() != null ? request.getStartDate() : LocalDate.now());
+        tenant.setContractEndDate(request.getContractEndDate()); // Ngày hết hạn dự kiến (có thể null)
+        tenant.setEndDate(null); // Luôn null khi mới tạo - chỉ set khi dọn đi
 
         final var savedTenant = tenantRepository.save(tenant);
 
@@ -142,6 +151,77 @@ public class TenantService {
             room.setStatus(RoomStatus.VACANT);
             roomRepository.save(room);
         }
+    }
+
+    @Transactional
+    @CacheEvict(value = "tenants", key = "#p0")
+    public TenantResponse updateTenant(final Integer id, final TenantUpdateRequest request) {
+        final var tenant =
+                tenantRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(request.getIsContractHolder())
+                && !Boolean.TRUE.equals(tenant.getIsContractHolder())
+                && tenant.getRoom() != null
+                && tenant.getEndDate() == null) {
+            validateNoActiveContractHolder(tenant.getRoom().getId(), id);
+        }
+
+        if (request.getName() != null) {
+            tenant.setName(request.getName());
+        }
+        if (request.getPhone() != null) {
+            tenant.setPhone(request.getPhone());
+        }
+        if (request.getEmail() != null) {
+            tenant.setEmail(request.getEmail());
+        }
+        if (request.getIsContractHolder() != null) {
+            tenant.setIsContractHolder(request.getIsContractHolder());
+        }
+
+        final var updatedTenant = tenantRepository.save(tenant);
+        final var roomId = tenant.getRoom() != null ? tenant.getRoom().getId() : null;
+        if (roomId != null) {
+            evictTenantCaches(roomId, id);
+        }
+        return tenantMapper.toResponse(updatedTenant);
+    }
+
+    public PageResponse<TenantResponse> getTenants(
+            final Integer buildingId,
+            final Integer roomId,
+            final Boolean active,
+            final Pageable pageable) {
+        final Page<Tenant> page;
+        if (buildingId != null) {
+            page = tenantRepository.findByRoomBuildingId(buildingId, roomId, active, pageable);
+        } else if (roomId != null) {
+            page = tenantRepository.findByRoomIdWithFilter(roomId, active, pageable);
+        } else {
+            page = tenantRepository.findAllWithFilter(active, pageable);
+        }
+
+        final var content = page.getContent().stream().map(tenantMapper::toResponse).toList();
+
+        return PageResponse.<TenantResponse>builder()
+                .content(content)
+                .page(buildPageInfo(page))
+                .message("Lấy danh sách khách thuê thành công")
+                .build();
+    }
+
+    private void validateNoActiveContractHolder(final Integer roomId, final Integer excludeTenantId) {
+        tenantRepository
+                .findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(roomId)
+                .ifPresent(
+                        existingHolder -> {
+                            if (excludeTenantId == null
+                                    || !excludeTenantId.equals(existingHolder.getId())) {
+                                throw new AppException(ErrorCode.CONTRACT_HOLDER_ALREADY_EXISTS);
+                            }
+                        });
     }
 
     @Caching(

@@ -1,4 +1,4 @@
-import { CalendarOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+import { CalendarOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import { Descriptions, Empty, Modal, Spin, Tag } from 'antd';
 import { useTenant } from '../api/tenantsApi';
 
@@ -66,6 +66,12 @@ export const TenantDetail = ({ tenantId, open, onClose }: TenantDetailProps) => 
               <div className="flex items-center gap-2">
                 <PhoneOutlined className="text-gray-400" />
                 {tenant.phone || 'Chưa cập nhật'}
+              </div>
+            </Descriptions.Item>
+            <Descriptions.Item label="Email">
+              <div className="flex items-center gap-2">
+                <MailOutlined className="text-gray-400" />
+                {tenant.email || 'Chưa cập nhật'}
               </div>
             </Descriptions.Item>
             <Descriptions.Item label="Số phòng">

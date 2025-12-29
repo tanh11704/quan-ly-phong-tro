@@ -24,12 +24,15 @@ import com.tpanh.backend.security.JwtAuthenticationFilter;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    private static final long CORS_MAX_AGE_SECONDS = 3600L;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorsProperties corsProperties;
 
-    public SecurityConfig(final JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            final JwtAuthenticationFilter jwtAuthenticationFilter,
+            final CorsProperties corsProperties) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.corsProperties = corsProperties;
     }
 
     @Bean
@@ -39,9 +42,6 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // No-op implementation to prevent Spring Security from auto-generating password
-        // This app uses JWT authentication, not UserDetailsService
-        // Return a disabled user that will never be used
         return username ->
                 org.springframework.security.core.userdetails.User.builder()
                         .username(username)
@@ -54,14 +54,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final var configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(
-                java.util.Arrays.asList(
-                        "http://localhost:*", "https://*.zalo.me", "https://*.zaloapp.com"));
-        configuration.setAllowedMethods(
-                java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(CORS_MAX_AGE_SECONDS);
+
+        final var origins = corsProperties.getAllowedOrigins();
+        if (origins != null && !origins.isEmpty()) {
+            if (origins.size() == 1 && "*".equals(origins.get(0))) {
+                configuration.setAllowedOriginPatterns(java.util.List.of("*"));
+            } else {
+                configuration.setAllowedOriginPatterns(origins);
+            }
+        }
+
+        configuration.setAllowedMethods(corsProperties.getAllowedMethods());
+        configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
+        configuration.setAllowCredentials(corsProperties.isAllowCredentials());
+        configuration.setMaxAge(corsProperties.getMaxAge());
 
         final var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);

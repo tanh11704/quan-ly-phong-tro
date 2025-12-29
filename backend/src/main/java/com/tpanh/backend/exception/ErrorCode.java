@@ -37,6 +37,7 @@ public enum ErrorCode {
     MISSING_PREVIOUS_UTILITY_READING(
             2012,
             "Thiếu chỉ số điện/nước tháng trước. Vui lòng kiểm tra và nhập bổ sung trước khi tạo hóa đơn"),
+    CONTRACT_HOLDER_ALREADY_EXISTS(2013, "Phòng đã có người đại diện hợp đồng đang hoạt động"),
 
     // Nhóm lỗi Xác thực (30xx) - Authentication
     USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),

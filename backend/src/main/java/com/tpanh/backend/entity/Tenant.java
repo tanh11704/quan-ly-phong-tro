@@ -34,6 +34,9 @@ public class Tenant {
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @Column(name = "contract_end_date")
+    private LocalDate contractEndDate; // Ngày hết hạn hợp đồng dự kiến (null = vô thời hạn)
+
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private LocalDate endDate; // Ngày thực sự dọn đi (set khi gọi endTenantContract)
 }

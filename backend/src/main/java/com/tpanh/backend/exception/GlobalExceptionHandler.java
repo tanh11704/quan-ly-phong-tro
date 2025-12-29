@@ -2,6 +2,7 @@ package com.tpanh.backend.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -89,6 +90,26 @@ public class GlobalExceptionHandler {
         apiResponse.setMessage(errorMessage);
 
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(value = HttpRequestMethodNotSupportedException.class)
+    ResponseEntity<ApiResponse<Void>> handlingHttpRequestMethodNotSupported(
+            final HttpRequestMethodNotSupportedException exception) {
+        log.warn(
+                "HTTP method not supported: {} for URL. Supported methods: {}",
+                exception.getMethod(),
+                exception.getSupportedHttpMethods());
+
+        final ApiResponse<Void> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.INVALID_KEY.getCode());
+        apiResponse.setMessage(
+                String.format(
+                        "Phương thức HTTP '%s' không được hỗ trợ cho endpoint này. "
+                                + "Các phương thức được hỗ trợ: %s",
+                        exception.getMethod(), exception.getSupportedHttpMethods()));
+
+        return ResponseEntity.status(org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED)
+                .body(apiResponse);
     }
 
     private ErrorCode extractErrorCodeFromValidation(

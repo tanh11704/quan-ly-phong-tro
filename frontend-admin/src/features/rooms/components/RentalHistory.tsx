@@ -53,6 +53,7 @@ export const RentalHistory = ({ roomId }: RentalHistoryProps) => {
   const [formOpen, setFormOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState<number | null>(null);
+  const [editTenant, setEditTenant] = useState<TenantResponse | null>(null);
 
   const { data: tenantsData, isLoading } = useRoomTenants(roomId, page, pageSize);
   const { mutateAsync: endContract, isPending: isEndingContract } = useEndTenantContract();
@@ -69,6 +70,7 @@ export const RentalHistory = ({ roomId }: RentalHistoryProps) => {
   }
 
   const handleAddTenant = () => {
+    setEditTenant(null);
     setFormOpen(true);
   };
 
@@ -76,6 +78,7 @@ export const RentalHistory = ({ roomId }: RentalHistoryProps) => {
     // Form đã tự gọi API và invalidate queries
     // Chỉ cần đóng form
     setFormOpen(false);
+    setEditTenant(null);
   };
 
   const handleEndContract = async (id: number) => {
@@ -163,6 +166,17 @@ export const RentalHistory = ({ roomId }: RentalHistoryProps) => {
       key: 'actions',
       render: (_: unknown, record: TenantResponse) => (
         <div className="flex gap-2">
+          <Button
+            type="link"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditTenant(record);
+              setFormOpen(true);
+            }}
+          >
+            Chỉnh sửa
+          </Button>
           {!record.endDate && (
             <Popconfirm
               title="Kết thúc hợp đồng"
@@ -274,9 +288,15 @@ export const RentalHistory = ({ roomId }: RentalHistoryProps) => {
       {/* Tenant Form Modal */}
       <TenantForm
         open={formOpen}
-        onClose={() => setFormOpen(false)}
+        onClose={() => {
+          setFormOpen(false);
+          setEditTenant(null);
+        }}
         onSubmit={handleCreateTenant}
         roomId={roomId}
+        isEdit={!!editTenant}
+        tenantId={editTenant?.id}
+        initialValues={editTenant || undefined}
       />
 
       {/* Tenant Detail Modal */}

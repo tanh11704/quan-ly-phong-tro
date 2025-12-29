@@ -18,6 +18,7 @@ const Activate = lazy(() => import('./features/auth/pages/Activate'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Buildings = lazy(() => import('./features/buildings/pages/Buildings'));
 const Rooms = lazy(() => import('./features/rooms/pages/Rooms'));
+const Tenants = lazy(() => import('./features/tenants/pages/Tenants'));
 const Invoices = lazy(() => import('./features/invoices/pages/Invoices'));
 
 const App = () => {
@@ -55,6 +56,16 @@ const App = () => {
                 <ProtectedRoute>
                   <BentoLayout>
                     <Rooms />
+                  </BentoLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tenants"
+              element={
+                <ProtectedRoute>
+                  <BentoLayout>
+                    <Tenants />
                   </BentoLayout>
                 </ProtectedRoute>
               }
