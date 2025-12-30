@@ -67,12 +67,13 @@ public class AuthenticationService {
     }
 
     private void validateUserCanLogin(final User user) {
-        if (!Boolean.TRUE.equals(user.getActive()) || !user.isLoginAllowed()) {
-            throw new AppException(ErrorCode.USER_INACTIVE);
-        }
         if (user.getStatus() == UserStatus.PENDING) {
             throw new AppException(ErrorCode.USER_PENDING_ACTIVATION);
         }
+        if (!Boolean.TRUE.equals(user.getActive()) || !user.isLoginAllowed()) {
+            throw new AppException(ErrorCode.USER_INACTIVE);
+        }
+        
     }
 
     private AuthenticationResponse generateAuthResponse(final User user) {
