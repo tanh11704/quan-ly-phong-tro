@@ -22,6 +22,7 @@ public class RegistrationService {
     private static final String ACTIVATION_TOKEN_PREFIX = "activation:token:";
     private static final String TOKEN_USER_PREFIX = "activation:user:";
     private static final long TOKEN_EXPIRATION_SECONDS = 86400L; // 24 hours
+    private static final Role DEFAULT_REGISTRATION_ROLE = Role.MANAGER;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -106,7 +107,7 @@ public class RegistrationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .email(request.getEmail())
-                .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
+                .roles(new java.util.HashSet<>(java.util.Set.of(DEFAULT_REGISTRATION_ROLE)))
                 .status(UserStatus.PENDING)
                 .active(false)
                 .build();

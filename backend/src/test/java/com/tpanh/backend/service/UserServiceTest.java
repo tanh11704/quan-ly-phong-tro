@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -84,8 +83,7 @@ class UserServiceTest {
 
     @Test
     void getCurrentUser_WithValidAuthentication_ShouldReturnUserDTO() {
-        // Given
-        when(authentication.isAuthenticated()).thenReturn(true);
+
         when(authentication.getName()).thenReturn(USER_ID);
         final var securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
@@ -106,36 +104,9 @@ class UserServiceTest {
     }
 
     @Test
-    void getCurrentUser_WithNullAuthentication_ShouldThrowException() {
-        // Given
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(null);
-        SecurityContextHolder.setContext(securityContext);
-
-        // When & Then
-        final var exception = assertThrows(AppException.class, () -> userService.getCurrentUser());
-        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
-        verify(userRepository, never()).findById(anyString());
-    }
-
-    @Test
-    void getCurrentUser_WithNotAuthenticated_ShouldThrowException() {
-        // Given
-        when(authentication.isAuthenticated()).thenReturn(false);
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
-        // When & Then
-        final var exception = assertThrows(AppException.class, () -> userService.getCurrentUser());
-        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
-        verify(userRepository, never()).findById(anyString());
-    }
-
-    @Test
     void getCurrentUser_WithUserNotFound_ShouldThrowException() {
         // Given
-        when(authentication.isAuthenticated()).thenReturn(true);
+
         when(authentication.getName()).thenReturn(USER_ID);
         final var securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
@@ -160,7 +131,6 @@ class UserServiceTest {
                         .active(true)
                         .build();
 
-        when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn(USER_ID);
         final var securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
@@ -182,7 +152,6 @@ class UserServiceTest {
 
     @Test
     void getAllUsers_ShouldReturnAllUsers() {
-        // Given
         final var user1 =
                 User.builder()
                         .id("user-1")
@@ -209,10 +178,8 @@ class UserServiceTest {
 
         when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2, user3));
 
-        // When
         final var result = userService.getAllUsers();
 
-        // Then
         assertNotNull(result);
         assertEquals(3, result.size());
         assertEquals("user-1", result.get(0).getId());
@@ -229,13 +196,10 @@ class UserServiceTest {
 
     @Test
     void getAllUsers_WithEmptyList_ShouldReturnEmptyList() {
-        // Given
         when(userRepository.findAll()).thenReturn(List.of());
 
-        // When
         final var result = userService.getAllUsers();
 
-        // Then
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(userRepository).findAll();
@@ -243,7 +207,6 @@ class UserServiceTest {
 
     @Test
     void toggleUserActive_WithActiveUser_ShouldDeactivate() {
-        // Given
         final var activeUser =
                 User.builder()
                         .id(USER_ID)
@@ -256,10 +219,8 @@ class UserServiceTest {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(activeUser));
         when(userRepository.save(activeUser)).thenReturn(activeUser);
 
-        // When
         final var result = userService.toggleUserActive(USER_ID);
 
-        // Then
         assertNotNull(result);
         assertFalse(result.getActive());
         assertEquals(USER_ID, result.getId());
@@ -269,7 +230,6 @@ class UserServiceTest {
 
     @Test
     void toggleUserActive_WithInactiveUser_ShouldActivate() {
-        // Given
         final var inactiveUser =
                 User.builder()
                         .id(USER_ID)
@@ -282,10 +242,8 @@ class UserServiceTest {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(inactiveUser));
         when(userRepository.save(inactiveUser)).thenReturn(inactiveUser);
 
-        // When
         final var result = userService.toggleUserActive(USER_ID);
 
-        // Then
         assertNotNull(result);
         assertTrue(result.getActive());
         assertEquals(USER_ID, result.getId());
@@ -295,10 +253,8 @@ class UserServiceTest {
 
     @Test
     void toggleUserActive_WithUserNotFound_ShouldThrowException() {
-        // Given
         when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
-        // When & Then
         final var exception =
                 assertThrows(AppException.class, () -> userService.toggleUserActive(USER_ID));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
@@ -308,7 +264,6 @@ class UserServiceTest {
 
     @Test
     void getAllUsers_WithPageable_ShouldReturnPageResponse() {
-        // Given
         final var user1 =
                 User.builder()
                         .id("user-1")
@@ -331,10 +286,8 @@ class UserServiceTest {
 
         when(userRepository.findAll(pageable)).thenReturn(page);
 
-        // When
         final var response = userService.getAllUsers(pageable);
 
-        // Then
         assertNotNull(response);
         assertNotNull(response.getContent());
         assertEquals(2, response.getContent().size());

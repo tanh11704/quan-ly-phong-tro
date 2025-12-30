@@ -22,12 +22,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public UserDTO getCurrentUser() {
         final var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
-
         final var userId = authentication.getName();
         final var user =
                 userRepository
