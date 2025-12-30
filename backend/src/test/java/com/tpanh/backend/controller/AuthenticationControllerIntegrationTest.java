@@ -79,7 +79,7 @@ class AuthenticationControllerIntegrationTest {
                         .username(USERNAME)
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName(FULL_NAME)
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
         userRepository.save(user);
@@ -97,7 +97,7 @@ class AuthenticationControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.token").exists())
-                .andExpect(jsonPath("$.result.role").value("ADMIN"))
+                .andExpect(jsonPath("$.result.roles[0]").value("ADMIN"))
                 .andExpect(jsonPath("$.message").value("Đăng nhập thành công"));
     }
 
@@ -195,7 +195,7 @@ class AuthenticationControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.token").exists())
-                .andExpect(jsonPath("$.result.role").value("TENANT"))
+                .andExpect(jsonPath("$.result.roles[0]").value("TENANT"))
                 .andExpect(jsonPath("$.message").value("Xác thực Zalo thành công"));
     }
 
@@ -207,7 +207,7 @@ class AuthenticationControllerIntegrationTest {
                 User.builder()
                         .zaloId(zaloId)
                         .fullName("Existing Zalo User")
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(true)
                         .build();
         userRepository.save(existingUser);
@@ -229,7 +229,7 @@ class AuthenticationControllerIntegrationTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.token").exists())
-                .andExpect(jsonPath("$.result.role").value("TENANT"))
+                .andExpect(jsonPath("$.result.roles[0]").value("TENANT"))
                 .andExpect(jsonPath("$.message").value("Xác thực Zalo thành công"));
     }
 
@@ -241,7 +241,7 @@ class AuthenticationControllerIntegrationTest {
                 User.builder()
                         .zaloId(zaloId)
                         .fullName("Inactive Zalo User")
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(false)
                         .build();
         userRepository.save(inactiveUser);

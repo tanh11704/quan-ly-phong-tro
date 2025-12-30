@@ -9,15 +9,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.tpanh.backend.enums.Role;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class JwtServiceTest {
     private static final String TEST_SECRET_KEY = "test-secret-key-minimum-32-characters-long";
     private static final String USER_ID = "test-user-id-123";
-    private static final String ROLE = "ROLE_ADMIN";
+    private static final Set<Role> ROLES = new HashSet<>(Set.of(Role.ADMIN));
 
     private JwtService jwtService;
 
@@ -29,7 +33,7 @@ class JwtServiceTest {
     @Test
     void generateToken_ShouldReturnValidToken() {
         // When
-        final var token = jwtService.generateToken(USER_ID, ROLE);
+        final var token = jwtService.generateToken(USER_ID, ROLES);
 
         // Then
         assertNotNull(token);
@@ -39,7 +43,7 @@ class JwtServiceTest {
     @Test
     void verifyToken_WithValidToken_ShouldReturnTrue() {
         // Given
-        final var token = jwtService.generateToken(USER_ID, ROLE);
+        final var token = jwtService.generateToken(USER_ID, ROLES);
 
         // When
         final var isValid = jwtService.verifyToken(token);
@@ -63,7 +67,7 @@ class JwtServiceTest {
     @Test
     void extractUserId_WithValidToken_ShouldReturnUserId() {
         // Given
-        final var token = jwtService.generateToken(USER_ID, ROLE);
+        final var token = jwtService.generateToken(USER_ID, ROLES);
 
         // When
         final var extractedUserId = jwtService.extractUserId(token);
@@ -73,15 +77,31 @@ class JwtServiceTest {
     }
 
     @Test
-    void extractRole_WithValidToken_ShouldReturnRole() {
+    void extractRoles_WithValidToken_ShouldReturnRoles() {
         // Given
-        final var token = jwtService.generateToken(USER_ID, ROLE);
+        final var token = jwtService.generateToken(USER_ID, ROLES);
 
         // When
-        final var extractedRole = jwtService.extractRole(token);
+        final List<String> extractedRoles = jwtService.extractRoles(token);
 
         // Then
-        assertEquals(ROLE, extractedRole);
+        assertEquals(1, extractedRoles.size());
+        assertTrue(extractedRoles.contains("ROLE_ADMIN"));
+    }
+
+    @Test
+    void extractRoles_WithMultipleRoles_ShouldReturnAllRoles() {
+        // Given
+        final Set<Role> multipleRoles = new HashSet<>(Set.of(Role.ADMIN, Role.MANAGER));
+        final var token = jwtService.generateToken(USER_ID, multipleRoles);
+
+        // When
+        final List<String> extractedRoles = jwtService.extractRoles(token);
+
+        // Then
+        assertEquals(2, extractedRoles.size());
+        assertTrue(extractedRoles.contains("ROLE_ADMIN"));
+        assertTrue(extractedRoles.contains("ROLE_MANAGER"));
     }
 
     @Test
@@ -94,12 +114,12 @@ class JwtServiceTest {
     }
 
     @Test
-    void extractRole_WithInvalidToken_ShouldThrowException() {
+    void extractRoles_WithInvalidToken_ShouldThrowException() {
         // Given
         final var invalidToken = "invalid.token.here";
 
         // When & Then
-        assertThrows(RuntimeException.class, () -> jwtService.extractRole(invalidToken));
+        assertThrows(RuntimeException.class, () -> jwtService.extractRoles(invalidToken));
     }
 
     @Test
@@ -112,7 +132,7 @@ class JwtServiceTest {
                 new JWTClaimsSet.Builder()
                         .issuer("com.tpanh.server")
                         .subject(USER_ID)
-                        .claim("scope", ROLE)
+                        .claim("roles", List.of("ROLE_ADMIN"))
                         .issueTime(Date.from(expiredTime))
                         .expirationTime(Date.from(expiredTime.plusSeconds(86400L)))
                         .build();
@@ -136,7 +156,7 @@ class JwtServiceTest {
         // Given - Create token with different secret
         final var differentSecret = "different-secret-key-minimum-32-characters-long";
         final var differentJwtService = new JwtService(differentSecret);
-        final var tokenFromDifferentSecret = differentJwtService.generateToken(USER_ID, ROLE);
+        final var tokenFromDifferentSecret = differentJwtService.generateToken(USER_ID, ROLES);
 
         // When - Verify with original secret
         final var isValid = jwtService.verifyToken(tokenFromDifferentSecret);
@@ -170,9 +190,9 @@ class JwtServiceTest {
     }
 
     @Test
-    void extractRole_WithNullToken_ShouldThrowException() {
+    void extractRoles_WithNullToken_ShouldThrowException() {
         // When & Then
-        assertThrows(RuntimeException.class, () -> jwtService.extractRole(null));
+        assertThrows(RuntimeException.class, () -> jwtService.extractRoles(null));
     }
 
     @Test
@@ -182,9 +202,9 @@ class JwtServiceTest {
     }
 
     @Test
-    void extractRole_WithEmptyToken_ShouldThrowException() {
+    void extractRoles_WithEmptyToken_ShouldThrowException() {
         // When & Then
-        assertThrows(RuntimeException.class, () -> jwtService.extractRole(""));
+        assertThrows(RuntimeException.class, () -> jwtService.extractRoles(""));
     }
 
     @Test
@@ -195,7 +215,7 @@ class JwtServiceTest {
                 new JWTClaimsSet.Builder()
                         .issuer("com.tpanh.server")
                         .subject(USER_ID)
-                        .claim("scope", ROLE)
+                        .claim("roles", List.of("ROLE_ADMIN"))
                         .issueTime(Date.from(now))
                         .build(); // No expiration time
 

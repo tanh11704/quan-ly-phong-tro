@@ -106,7 +106,7 @@ public class RegistrationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .email(request.getEmail())
-                .roles(Role.MANAGER)
+                .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                 .status(UserStatus.PENDING)
                 .active(false)
                 .build();

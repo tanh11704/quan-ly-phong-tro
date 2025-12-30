@@ -78,7 +78,7 @@ class BuildingControllerIntegrationTest {
                         .username(USERNAME)
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName("Test Manager")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
         userRepository.save(user);
@@ -145,7 +145,7 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void createBuilding_WithoutAuth_ShouldReturnForbidden() throws Exception {
+    void createBuilding_WithoutAuth_ShouldReturnUnauthorized() throws Exception {
         // Given
         final var request = new BuildingCreationRequest();
         request.setName("Trọ Xanh");
@@ -156,7 +156,7 @@ class BuildingControllerIntegrationTest {
                         post("/api/v1/buildings")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -275,8 +275,8 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void getBuildings_WithoutAuth_ShouldReturnForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/buildings")).andExpect(status().isForbidden());
+    void getBuildings_WithoutAuth_ShouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/buildings")).andExpect(status().isUnauthorized());
     }
 
     // ===== Tests for updateBuilding endpoint =====
@@ -337,7 +337,7 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void updateBuilding_WithoutAuth_ShouldReturnForbidden() throws Exception {
+    void updateBuilding_WithoutAuth_ShouldReturnUnauthorized() throws Exception {
         final var updateRequest = new BuildingUpdateRequest();
         updateRequest.setName("Trọ Mới");
 
@@ -345,7 +345,7 @@ class BuildingControllerIntegrationTest {
                         put("/api/v1/buildings/1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ===== Tests for deleteBuilding endpoint =====
@@ -392,8 +392,8 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void deleteBuilding_WithoutAuth_ShouldReturnForbidden() throws Exception {
-        mockMvc.perform(delete("/api/v1/buildings/1")).andExpect(status().isForbidden());
+    void deleteBuilding_WithoutAuth_ShouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(delete("/api/v1/buildings/1")).andExpect(status().isUnauthorized());
     }
 
     // ===== Tests for getRoomsByBuildingId with status filter =====

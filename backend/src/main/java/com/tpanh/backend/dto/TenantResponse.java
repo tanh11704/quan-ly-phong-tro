@@ -1,8 +1,7 @@
 package com.tpanh.backend.dto;
 
-import java.time.LocalDate;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,7 +37,9 @@ public class TenantResponse {
     @Schema(description = "Ngày bắt đầu hợp đồng", example = "2025-01-01")
     private LocalDate startDate;
 
-    @Schema(description = "Ngày hết hạn hợp đồng dự kiến (null = vô thời hạn)", example = "2025-12-31")
+    @Schema(
+            description = "Ngày hết hạn hợp đồng dự kiến (null = vô thời hạn)",
+            example = "2025-12-31")
     private LocalDate contractEndDate;
 
     @Schema(description = "Ngày thực sự dọn đi (null = đang ở)", example = "2025-06-15")

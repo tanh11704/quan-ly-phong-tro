@@ -83,7 +83,7 @@ class RoomControllerIntegrationTest {
                         .username(USERNAME)
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName("Test Manager")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
         userRepository.save(user);

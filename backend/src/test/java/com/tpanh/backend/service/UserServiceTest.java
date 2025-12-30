@@ -57,7 +57,7 @@ class UserServiceTest {
                         .id(USER_ID)
                         .username(USERNAME)
                         .fullName(FULL_NAME)
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
 
@@ -71,7 +71,7 @@ class UserServiceTest {
                                     .id(u.getId())
                                     .username(u.getUsername())
                                     .fullName(u.getFullName())
-                                    .role(u.getRoles())
+                                    .roles(u.getRoles())
                                     .active(u.getActive())
                                     .build();
                         });
@@ -101,7 +101,7 @@ class UserServiceTest {
         assertEquals(USER_ID, result.getId());
         assertEquals(USERNAME, result.getUsername());
         assertEquals(FULL_NAME, result.getFullName());
-        assertEquals(Role.ADMIN, result.getRole());
+        assertTrue(result.getRoles().contains(Role.ADMIN));
         verify(userRepository).findById(USER_ID);
     }
 
@@ -156,7 +156,7 @@ class UserServiceTest {
                 User.builder()
                         .id(USER_ID)
                         .fullName("Tenant User")
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(true)
                         .build();
 
@@ -175,7 +175,7 @@ class UserServiceTest {
         assertNotNull(result);
         assertEquals(USER_ID, result.getId());
         assertEquals("Tenant User", result.getFullName());
-        assertEquals(Role.TENANT, result.getRole());
+        assertTrue(result.getRoles().contains(Role.TENANT));
         assertEquals(null, result.getUsername()); // Tenant có thể không có username
         verify(userRepository).findById(USER_ID);
     }
@@ -188,7 +188,7 @@ class UserServiceTest {
                         .id("user-1")
                         .username("user1")
                         .fullName("User 1")
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
         final var user2 =
@@ -196,14 +196,14 @@ class UserServiceTest {
                         .id("user-2")
                         .username("user2")
                         .fullName("User 2")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
         final var user3 =
                 User.builder()
                         .id("user-3")
                         .fullName("User 3")
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(false)
                         .build();
 
@@ -218,9 +218,9 @@ class UserServiceTest {
         assertEquals("user-1", result.get(0).getId());
         assertEquals("user-2", result.get(1).getId());
         assertEquals("user-3", result.get(2).getId());
-        assertEquals(Role.ADMIN, result.get(0).getRole());
-        assertEquals(Role.MANAGER, result.get(1).getRole());
-        assertEquals(Role.TENANT, result.get(2).getRole());
+        assertTrue(result.get(0).getRoles().contains(Role.ADMIN));
+        assertTrue(result.get(1).getRoles().contains(Role.MANAGER));
+        assertTrue(result.get(2).getRoles().contains(Role.TENANT));
         assertTrue(result.get(0).getActive());
         assertTrue(result.get(1).getActive());
         assertFalse(result.get(2).getActive());
@@ -249,7 +249,7 @@ class UserServiceTest {
                         .id(USER_ID)
                         .username(USERNAME)
                         .fullName(FULL_NAME)
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
 
@@ -275,7 +275,7 @@ class UserServiceTest {
                         .id(USER_ID)
                         .username(USERNAME)
                         .fullName(FULL_NAME)
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(false)
                         .build();
 
@@ -314,7 +314,7 @@ class UserServiceTest {
                         .id("user-1")
                         .username("user1")
                         .fullName("User 1")
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
         final var user2 =
@@ -322,7 +322,7 @@ class UserServiceTest {
                         .id("user-2")
                         .username("user2")
                         .fullName("User 2")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
 

@@ -2,6 +2,7 @@ package com.tpanh.backend.dto;
 
 import com.tpanh.backend.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,8 +23,8 @@ public class UserDTO {
     @Schema(description = "Tên đầy đủ", example = "Nguyễn Văn A")
     private String fullName;
 
-    @Schema(description = "Role của người dùng", example = "ADMIN")
-    private Role role;
+    @Schema(description = "Roles của người dùng", example = "[\"ADMIN\"]")
+    private Set<Role> roles;
 
     @Schema(description = "Trạng thái hoạt động của tài khoản", example = "true")
     private Boolean active;

@@ -3,6 +3,8 @@ package com.tpanh.backend.config;
 import com.tpanh.backend.entity.User;
 import com.tpanh.backend.enums.Role;
 import com.tpanh.backend.repository.UserRepository;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -36,7 +38,7 @@ public class ApplicationInitConfig {
                         .username(adminProperties.getUsername())
                         .password(passwordEncoder.encode(adminProperties.getPassword()))
                         .fullName(adminProperties.getFullName())
-                        .roles(Role.ADMIN)
+                        .roles(new HashSet<>(Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
 

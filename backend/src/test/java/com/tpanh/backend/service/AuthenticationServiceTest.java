@@ -3,6 +3,7 @@ package com.tpanh.backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -55,7 +56,7 @@ class AuthenticationServiceTest {
                         .username(USERNAME)
                         .password(HASHED_PASSWORD)
                         .fullName("Test User")
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
 
@@ -65,7 +66,7 @@ class AuthenticationServiceTest {
                         .username(USERNAME)
                         .password(HASHED_PASSWORD)
                         .fullName("Test User")
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(false)
                         .build();
     }
@@ -79,7 +80,7 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
         when(passwordEncoder.matches(PASSWORD, HASHED_PASSWORD)).thenReturn(true);
-        when(jwtService.generateToken(USER_ID, "ROLE_ADMIN")).thenReturn("jwt-token");
+        when(jwtService.generateToken(eq(USER_ID), any())).thenReturn("jwt-token");
 
         // When
         final var response = authenticationService.authenticate(request);
@@ -87,10 +88,10 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
-        assertEquals(Role.ADMIN, response.getRole());
+        assertTrue(response.getRoles().contains(Role.ADMIN));
         verify(userRepository).findByUsername(USERNAME);
         verify(passwordEncoder).matches(PASSWORD, HASHED_PASSWORD);
-        verify(jwtService).generateToken(USER_ID, "ROLE_ADMIN");
+        verify(jwtService).generateToken(eq(USER_ID), any());
     }
 
     @Test
@@ -166,7 +167,7 @@ class AuthenticationServiceTest {
                             }
                             return user;
                         });
-        when(jwtService.generateToken(anyString(), eq("ROLE_TENANT"))).thenReturn("jwt-token");
+        when(jwtService.generateToken(anyString(), any())).thenReturn("jwt-token");
 
         // When
         final var response = authenticationService.outboundAuthenticate(request);
@@ -174,11 +175,11 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
-        assertEquals(Role.TENANT, response.getRole());
+        assertTrue(response.getRoles().contains(Role.TENANT));
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
         verify(userRepository).save(any(User.class));
-        verify(jwtService).generateToken(anyString(), eq("ROLE_TENANT"));
+        verify(jwtService).generateToken(anyString(), any());
     }
 
     @Test
@@ -196,13 +197,13 @@ class AuthenticationServiceTest {
                         .id(USER_ID)
                         .zaloId(ZALO_ID)
                         .fullName(ZALO_NAME)
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(true)
                         .build();
 
         when(zaloIdentityClient.getUserInfo(ZALO_TOKEN)).thenReturn(zaloUserInfo);
         when(userRepository.findByZaloId(ZALO_ID)).thenReturn(Optional.of(existingUser));
-        when(jwtService.generateToken(USER_ID, "ROLE_TENANT")).thenReturn("jwt-token");
+        when(jwtService.generateToken(eq(USER_ID), any())).thenReturn("jwt-token");
 
         // When
         final var response = authenticationService.outboundAuthenticate(request);
@@ -210,11 +211,11 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
-        assertEquals(Role.TENANT, response.getRole());
+        assertTrue(response.getRoles().contains(Role.TENANT));
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
         verify(userRepository, never()).save(any(User.class));
-        verify(jwtService).generateToken(USER_ID, "ROLE_TENANT");
+        verify(jwtService).generateToken(eq(USER_ID), any());
     }
 
     @Test
@@ -232,7 +233,7 @@ class AuthenticationServiceTest {
                         .id(USER_ID)
                         .zaloId(ZALO_ID)
                         .fullName(ZALO_NAME)
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(false)
                         .build();
 

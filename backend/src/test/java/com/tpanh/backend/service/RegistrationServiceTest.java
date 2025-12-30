@@ -3,6 +3,7 @@ package com.tpanh.backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -91,7 +92,7 @@ class RegistrationServiceTest {
         assertEquals(HASHED_PASSWORD, savedUser.getPassword());
         assertEquals(FULL_NAME, savedUser.getFullName());
         assertEquals(EMAIL, savedUser.getEmail());
-        assertEquals(Role.MANAGER, savedUser.getRoles());
+        assertTrue(savedUser.getRoles().contains(Role.MANAGER));
         assertEquals(UserStatus.PENDING, savedUser.getStatus());
         assertEquals(false, savedUser.getActive());
 
@@ -142,7 +143,7 @@ class RegistrationServiceTest {
                         .username(USERNAME)
                         .email(EMAIL)
                         .fullName(FULL_NAME)
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .status(UserStatus.PENDING)
                         .active(false)
                         .build();
@@ -187,7 +188,7 @@ class RegistrationServiceTest {
                         .id(USER_ID)
                         .username(USERNAME)
                         .email(EMAIL)
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .status(UserStatus.ACTIVE)
                         .active(true)
                         .build();

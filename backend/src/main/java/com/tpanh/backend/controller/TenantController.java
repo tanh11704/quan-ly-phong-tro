@@ -1,5 +1,19 @@
 package com.tpanh.backend.controller;
 
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.TenantCreationRequest;
+import com.tpanh.backend.dto.TenantResponse;
+import com.tpanh.backend.dto.TenantUpdateRequest;
+import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.service.TenantService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -15,22 +29,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.TenantCreationRequest;
-import com.tpanh.backend.dto.TenantResponse;
-import com.tpanh.backend.dto.TenantUpdateRequest;
-import com.tpanh.backend.repository.BuildingRepository;
-import com.tpanh.backend.service.TenantService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/tenants")
@@ -97,7 +95,10 @@ public class TenantController {
             @Parameter(description = "ID phòng", example = "1")
                     @RequestParam(value = "roomId", required = false)
                     final Integer roomId,
-            @Parameter(description = "Lọc theo trạng thái hợp đồng (true = đang thuê, false = đã kết thúc)", example = "true")
+            @Parameter(
+                            description =
+                                    "Lọc theo trạng thái hợp đồng (true = đang thuê, false = đã kết thúc)",
+                            example = "true")
                     @RequestParam(value = "active", required = false)
                     final Boolean active,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
@@ -116,7 +117,8 @@ public class TenantController {
                     .orElseThrow(
                             () ->
                                     new com.tpanh.backend.exception.AppException(
-                                            com.tpanh.backend.exception.ErrorCode.BUILDING_NOT_FOUND));
+                                            com.tpanh.backend.exception.ErrorCode
+                                                    .BUILDING_NOT_FOUND));
         }
 
         return tenantService.getTenants(buildingId, roomId, active, pageable);
@@ -149,7 +151,8 @@ public class TenantController {
 
     @Operation(
             summary = "Cập nhật thông tin khách thuê",
-            description = "Cập nhật thông tin khách thuê (tên, số điện thoại, email, người đại diện) - chỉ Manager")
+            description =
+                    "Cập nhật thông tin khách thuê (tên, số điện thoại, email, người đại diện) - chỉ Manager")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -20,4 +20,3 @@ public class TenantUpdateRequest {
     @Schema(description = "Có phải người đại diện hợp đồng không", example = "true")
     private Boolean isContractHolder;
 }
-

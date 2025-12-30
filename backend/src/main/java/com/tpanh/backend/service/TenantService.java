@@ -1,16 +1,5 @@
 package com.tpanh.backend.service;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
@@ -22,8 +11,16 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.TenantMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
-
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,12 +36,22 @@ public class TenantService {
                         .findById(request.getRoomId())
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
-        final boolean isContractHolder =
-                request.getIsContractHolder() != null && request.getIsContractHolder();
+        final boolean isContractHolder = Boolean.TRUE.equals(request.getIsContractHolder());
         if (isContractHolder) {
             validateNoActiveContractHolder(request.getRoomId(), null);
         }
 
+        final var tenant = buildTenantFromRequest(request, room, isContractHolder);
+        final var savedTenant = tenantRepository.save(tenant);
+        updateRoomToOccupiedIfNeeded(room);
+        evictTenantCaches(request.getRoomId(), savedTenant.getId());
+        return tenantMapper.toResponse(savedTenant);
+    }
+
+    private Tenant buildTenantFromRequest(
+            final TenantCreationRequest request,
+            final com.tpanh.backend.entity.Room room,
+            final boolean isContractHolder) {
         final var tenant = new Tenant();
         tenant.setRoom(room);
         tenant.setName(request.getName());
@@ -53,18 +60,16 @@ public class TenantService {
         tenant.setIsContractHolder(isContractHolder);
         tenant.setStartDate(
                 request.getStartDate() != null ? request.getStartDate() : LocalDate.now());
-        tenant.setContractEndDate(request.getContractEndDate()); // Ngày hết hạn dự kiến (có thể null)
-        tenant.setEndDate(null); // Luôn null khi mới tạo - chỉ set khi dọn đi
+        tenant.setContractEndDate(request.getContractEndDate());
+        tenant.setEndDate(null);
+        return tenant;
+    }
 
-        final var savedTenant = tenantRepository.save(tenant);
-
+    private void updateRoomToOccupiedIfNeeded(final com.tpanh.backend.entity.Room room) {
         if (room.getStatus() == null || room.getStatus() == RoomStatus.VACANT) {
             room.setStatus(RoomStatus.OCCUPIED);
             roomRepository.save(room);
         }
-
-        evictTenantCaches(request.getRoomId(), savedTenant.getId());
-        return tenantMapper.toResponse(savedTenant);
     }
 
     @Cacheable(value = "tenants", key = "#p0")
@@ -161,13 +166,24 @@ public class TenantService {
                         .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
 
-        if (Boolean.TRUE.equals(request.getIsContractHolder())
+        validateContractHolderChange(tenant, request);
+        applyTenantUpdates(tenant, request);
+
+        final var updatedTenant = tenantRepository.save(tenant);
+        evictCachesIfRoomExists(tenant, id);
+        return tenantMapper.toResponse(updatedTenant);
+    }
+
+    private void validateContractHolderChange(final Tenant tenant, final TenantUpdateRequest req) {
+        if (Boolean.TRUE.equals(req.getIsContractHolder())
                 && !Boolean.TRUE.equals(tenant.getIsContractHolder())
                 && tenant.getRoom() != null
                 && tenant.getEndDate() == null) {
-            validateNoActiveContractHolder(tenant.getRoom().getId(), id);
+            validateNoActiveContractHolder(tenant.getRoom().getId(), tenant.getId());
         }
+    }
 
+    private void applyTenantUpdates(final Tenant tenant, final TenantUpdateRequest request) {
         if (request.getName() != null) {
             tenant.setName(request.getName());
         }
@@ -180,13 +196,13 @@ public class TenantService {
         if (request.getIsContractHolder() != null) {
             tenant.setIsContractHolder(request.getIsContractHolder());
         }
+    }
 
-        final var updatedTenant = tenantRepository.save(tenant);
+    private void evictCachesIfRoomExists(final Tenant tenant, final Integer tenantId) {
         final var roomId = tenant.getRoom() != null ? tenant.getRoom().getId() : null;
         if (roomId != null) {
-            evictTenantCaches(roomId, id);
+            evictTenantCaches(roomId, tenantId);
         }
-        return tenantMapper.toResponse(updatedTenant);
     }
 
     public PageResponse<TenantResponse> getTenants(
@@ -212,7 +228,8 @@ public class TenantService {
                 .build();
     }
 
-    private void validateNoActiveContractHolder(final Integer roomId, final Integer excludeTenantId) {
+    private void validateNoActiveContractHolder(
+            final Integer roomId, final Integer excludeTenantId) {
         tenantRepository
                 .findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(roomId)
                 .ifPresent(

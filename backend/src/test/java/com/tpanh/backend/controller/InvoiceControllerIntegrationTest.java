@@ -106,7 +106,7 @@ class InvoiceControllerIntegrationTest {
                         .username(USERNAME)
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName("Test Manager")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
         userRepository.save(user);
@@ -439,8 +439,7 @@ class InvoiceControllerIntegrationTest {
                         post("/api/v1/invoices/generate")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden()); // 403 when no authentication (Spring Security
-        // behavior)
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

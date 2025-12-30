@@ -2,6 +2,8 @@ package com.tpanh.backend.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tpanh.backend.exception.AppException;
+import com.tpanh.backend.exception.ErrorCode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,16 +29,27 @@ public class ZaloIdentityClient {
                     restTemplate.getForEntity(url, ZaloUserInfo.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return response.getBody();
+                final var userInfo = response.getBody();
+                // Validate required fields
+                if (userInfo.getId() == null || userInfo.getId().isBlank()) {
+                    log.warn("Zalo API trả về user info thiếu ID");
+                    throw new AppException(ErrorCode.ZALO_AUTH_FAILED);
+                }
+                return userInfo;
             }
 
             log.warn(
                     "Không thể lấy thông tin người dùng từ Zalo. Status: {}",
                     response.getStatusCode());
-            throw new RuntimeException("Không thể lấy thông tin người dùng từ Zalo");
+            throw new AppException(ErrorCode.ZALO_AUTH_FAILED);
+        } catch (final AppException e) {
+            throw e; // Re-throw AppException as-is
         } catch (final RestClientException e) {
             log.error("Lỗi khi gọi API Zalo Graph", e);
-            throw new RuntimeException("Xác thực với Zalo thất bại", e);
+            throw new AppException(ErrorCode.ZALO_AUTH_FAILED);
+        } catch (final Exception e) {
+            log.error("Lỗi không xác định khi xác thực Zalo", e);
+            throw new AppException(ErrorCode.ZALO_AUTH_FAILED);
         }
     }
 

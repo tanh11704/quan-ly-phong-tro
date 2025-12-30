@@ -9,8 +9,13 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.tpanh.backend.dto.JwtPayload;
+import com.tpanh.backend.enums.Role;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,16 +39,18 @@ public class JwtService {
         this.verifier = new MACVerifier(secretKey);
     }
 
-    public String generateToken(final String userId, final String role) {
+    public String generateToken(final String userId, final Set<Role> roles) {
         try {
             final var now = Instant.now();
             final var expiration = now.plusSeconds(EXPIRATION_TIME_SECONDS);
+
+            final List<String> roleStrings = roles.stream().map(r -> "ROLE_" + r.name()).toList();
 
             final var claimsSet =
                     new JWTClaimsSet.Builder()
                             .issuer(ISSUER)
                             .subject(userId)
-                            .claim("scope", role)
+                            .claim("roles", roleStrings)
                             .issueTime(Date.from(now))
                             .expirationTime(Date.from(expiration))
                             .build();
@@ -78,18 +85,60 @@ public class JwtService {
         }
     }
 
-    public String extractRole(final String token) {
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(final String token) {
         try {
             final var signedJWT = SignedJWT.parse(token);
-            return signedJWT.getJWTClaimsSet().getStringClaim("scope");
+            final var rawRoles = signedJWT.getJWTClaimsSet().getClaim("roles");
+
+            if (!(rawRoles instanceof List<?>)) {
+                log.warn("Invalid roles claim in token");
+                return List.of();
+            }
+
+            return (List<String>) rawRoles;
         } catch (final Exception e) {
-            log.error("Error extracting role from token", e);
-            throw new RuntimeException("Failed to extract role", e);
+            log.error("Error extracting roles from token", e);
+            throw new RuntimeException("Failed to extract roles", e);
         }
     }
 
     private boolean isExpired(final JWTClaimsSet claimsSet) {
         final var expirationTime = claimsSet.getExpirationTime();
         return expirationTime != null && expirationTime.before(new Date());
+    }
+
+    public Optional<JwtPayload> parseAndValidate(final String token) {
+        try {
+            final var signedJWT = SignedJWT.parse(token);
+            if (!signedJWT.verify(verifier)) {
+                log.debug("Token signature verification failed");
+                return Optional.empty();
+            }
+            final var claimsSet = signedJWT.getJWTClaimsSet();
+            if (isExpired(claimsSet)) {
+                log.debug("Token has expired");
+                return Optional.empty();
+            }
+            return Optional.of(extractPayload(claimsSet));
+        } catch (final Exception e) {
+            log.debug("Token parsing failed: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private JwtPayload extractPayload(final JWTClaimsSet claimsSet) {
+        final var userId = claimsSet.getSubject();
+        final var rawRoles = claimsSet.getClaim("roles");
+        final List<String> roles =
+                (rawRoles instanceof List<?>) ? (List<String>) rawRoles : List.of();
+        final var issuedAt =
+                claimsSet.getIssueTime() != null ? claimsSet.getIssueTime().toInstant() : null;
+        final var expiresAt =
+                claimsSet.getExpirationTime() != null
+                        ? claimsSet.getExpirationTime().toInstant()
+                        : null;
+        return new JwtPayload(userId, roles, issuedAt, expiresAt);
     }
 }

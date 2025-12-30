@@ -71,7 +71,7 @@ class UserControllerIntegrationTest {
                         .username(USERNAME)
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName(FULL_NAME)
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
         userRepository.save(user);
@@ -105,23 +105,23 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.result.id").exists())
                 .andExpect(jsonPath("$.result.username").value(USERNAME))
                 .andExpect(jsonPath("$.result.fullName").value(FULL_NAME))
-                .andExpect(jsonPath("$.result.role").value("ADMIN"))
+                .andExpect(jsonPath("$.result.roles[0]").value("ADMIN"))
                 .andExpect(jsonPath("$.message").value("Lấy thông tin người dùng thành công"));
     }
 
     @Test
-    void getMyInfo_WithoutToken_ShouldReturnForbidden() throws Exception {
+    void getMyInfo_WithoutToken_ShouldReturnUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/users/my-info").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void getMyInfo_WithInvalidToken_ShouldReturnForbidden() throws Exception {
+    void getMyInfo_WithInvalidToken_ShouldReturnUnauthorized() throws Exception {
         mockMvc.perform(
                         get("/api/v1/users/my-info")
                                 .header("Authorization", "Bearer invalid-token")
                                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -131,7 +131,7 @@ class UserControllerIntegrationTest {
                 User.builder()
                         .zaloId("zalo-id-123")
                         .fullName("Tenant User")
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(true)
                         .build();
         final var savedTenant = userRepository.save(tenantUser);
@@ -143,7 +143,7 @@ class UserControllerIntegrationTest {
                         .username("tenantuser")
                         .password(passwordEncoder.encode("tenantpass"))
                         .fullName("Tenant User")
-                        .roles(Role.TENANT)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
                         .active(true)
                         .build();
         userRepository.save(tempUser);
@@ -173,7 +173,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.result.id").exists())
                 .andExpect(jsonPath("$.result.username").value("tenantuser"))
                 .andExpect(jsonPath("$.result.fullName").value("Tenant User"))
-                .andExpect(jsonPath("$.result.role").value("TENANT"))
+                .andExpect(jsonPath("$.result.roles[0]").value("TENANT"))
                 .andExpect(jsonPath("$.message").value("Lấy thông tin người dùng thành công"));
     }
 }

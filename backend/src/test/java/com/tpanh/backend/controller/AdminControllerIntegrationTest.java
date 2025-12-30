@@ -79,7 +79,7 @@ class AdminControllerIntegrationTest {
                         .username(ADMIN_USERNAME)
                         .password(passwordEncoder.encode(ADMIN_PASSWORD))
                         .fullName("Test Admin")
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
         userRepository.save(adminUser);
@@ -90,7 +90,7 @@ class AdminControllerIntegrationTest {
                         .username(MANAGER_USERNAME)
                         .password(passwordEncoder.encode(MANAGER_PASSWORD))
                         .fullName("Test Manager")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
         final var savedManager = userRepository.save(managerUser);
@@ -128,15 +128,15 @@ class AdminControllerIntegrationTest {
                                 .value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)))
                 .andExpect(jsonPath("$.content[0].id").exists())
                 .andExpect(jsonPath("$.content[0].fullName").exists())
-                .andExpect(jsonPath("$.content[0].role").exists())
+                .andExpect(jsonPath("$.content[0].roles").exists())
                 .andExpect(jsonPath("$.content[0].active").exists())
                 .andExpect(jsonPath("$.message").value("Lấy danh sách người dùng thành công"));
     }
 
     @Test
-    void getAllUsers_WithoutToken_ShouldReturnForbidden() throws Exception {
+    void getAllUsers_WithoutToken_ShouldReturnUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/admin/users").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -211,11 +211,11 @@ class AdminControllerIntegrationTest {
     }
 
     @Test
-    void toggleUserActive_WithoutToken_ShouldReturnForbidden() throws Exception {
+    void toggleUserActive_WithoutToken_ShouldReturnUnauthorized() throws Exception {
         mockMvc.perform(
                         put("/api/v1/admin/users/" + managerId + "/toggle-active")
                                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

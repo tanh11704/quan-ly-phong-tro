@@ -10,6 +10,8 @@ import com.tpanh.backend.enums.UserStatus;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.repository.UserRepository;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,23 +33,14 @@ public class AuthenticationService {
                         .findByUsername(request.getUsername())
                         .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
 
-        if (!user.getActive()) {
-            throw new AppException(ErrorCode.USER_INACTIVE);
-        }
-
-        if (user.getStatus() == UserStatus.PENDING) {
-            throw new AppException(ErrorCode.USER_PENDING_ACTIVATION);
-        }
+        validateUserCanLogin(user);
 
         if (user.getPassword() == null
                 || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        final var role = "ROLE_" + user.getRoles().name();
-        final var token = jwtService.generateToken(user.getId(), role);
-
-        return new AuthenticationResponse(token, user.getRoles());
+        return generateAuthResponse(user);
     }
 
     @Transactional
@@ -60,11 +53,9 @@ public class AuthenticationService {
 
         final User user;
         if (existingUserOpt.isPresent()) {
-            // Trường hợp 1: Đã từng vào -> Lấy User ra
+            // Trường hợp 1: Đã từng vào -> Lấy User ra và validate
             user = existingUserOpt.get();
-            if (!user.getActive()) {
-                throw new AppException(ErrorCode.USER_INACTIVE);
-            }
+            validateUserCanLogin(user);
         } else {
             // Trường hợp 2: Lần đầu vào -> Tự động INSERT user mới
             user = createNewZaloUser(zaloUserInfo);
@@ -72,9 +63,24 @@ public class AuthenticationService {
             log.info("Đã tạo user mới từ Zalo: {}", user.getId());
         }
 
-        final var role = "ROLE_" + user.getRoles().name();
-        final var token = jwtService.generateToken(user.getId(), role);
+        return generateAuthResponse(user);
+    }
 
+    private void validateUserCanLogin(final User user) {
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new AppException(ErrorCode.USER_INACTIVE);
+        }
+        if (user.getStatus() == UserStatus.PENDING) {
+            throw new AppException(ErrorCode.USER_PENDING_ACTIVATION);
+        }
+        // Uses isLoginAllowed() for additional future checks if needed
+        if (!user.isLoginAllowed()) {
+            throw new AppException(ErrorCode.USER_INACTIVE);
+        }
+    }
+
+    private AuthenticationResponse generateAuthResponse(final User user) {
+        final var token = jwtService.generateToken(user.getId(), user.getRoles());
         return new AuthenticationResponse(token, user.getRoles());
     }
 
@@ -82,7 +88,7 @@ public class AuthenticationService {
         return User.builder()
                 .zaloId(zaloUserInfo.getId())
                 .fullName(zaloUserInfo.getName())
-                .roles(Role.TENANT)
+                .roles(new HashSet<>(Set.of(Role.TENANT)))
                 .status(UserStatus.ACTIVE)
                 .active(true)
                 .build();

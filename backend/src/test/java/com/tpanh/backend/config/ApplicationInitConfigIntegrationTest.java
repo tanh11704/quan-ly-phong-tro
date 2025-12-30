@@ -48,7 +48,7 @@ class ApplicationInitConfigIntegrationTest {
         final var admin = adminOpt.get();
         assertEquals("testadmin", admin.getUsername());
         assertEquals("Test Admin", admin.getFullName());
-        assertEquals(Role.ADMIN, admin.getRoles());
+        assertTrue(admin.getRoles().contains(Role.ADMIN));
         assertTrue(admin.getActive());
         assertNotNull(admin.getPassword()); // Password đã được hash
     }
@@ -65,7 +65,7 @@ class ApplicationInitConfigIntegrationTest {
                         .username("testadmin")
                         .password("$2a$10$existing")
                         .fullName("Existing Admin")
-                        .roles(Role.ADMIN)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.ADMIN)))
                         .active(true)
                         .build();
         userRepository.saveAndFlush(existingAdmin);

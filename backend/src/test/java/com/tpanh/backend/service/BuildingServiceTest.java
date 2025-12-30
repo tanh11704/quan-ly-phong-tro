@@ -107,7 +107,11 @@ class BuildingServiceTest {
     @Test
     void createBuilding_WithAllFields_ShouldReturnBuildingResponse() {
         // Given
-        final var manager = User.builder().id(MANAGER_ID).roles(Role.MANAGER).build();
+        final var manager =
+                User.builder()
+                        .id(MANAGER_ID)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
+                        .build();
         final var authentication = org.mockito.Mockito.mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn(MANAGER_ID);
@@ -145,7 +149,11 @@ class BuildingServiceTest {
     @Test
     void createBuilding_WithDefaultPrices_ShouldUseDefaultValues() {
         // Given
-        final var manager = User.builder().id(MANAGER_ID).roles(Role.MANAGER).build();
+        final var manager =
+                User.builder()
+                        .id(MANAGER_ID)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
+                        .build();
         final var authentication = org.mockito.Mockito.mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn(MANAGER_ID);

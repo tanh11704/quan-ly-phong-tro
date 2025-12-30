@@ -1,12 +1,21 @@
 package com.tpanh.backend.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.tpanh.backend.dto.RegistrationRequest;
+import com.tpanh.backend.entity.User;
+import com.tpanh.backend.enums.Role;
+import com.tpanh.backend.enums.UserStatus;
+import com.tpanh.backend.repository.UserRepository;
+import com.tpanh.backend.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,15 +38,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.tpanh.backend.dto.RegistrationRequest;
-import com.tpanh.backend.entity.User;
-import com.tpanh.backend.enums.Role;
-import com.tpanh.backend.enums.UserStatus;
-import com.tpanh.backend.repository.UserRepository;
-import com.tpanh.backend.service.EmailService;
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @Transactional
@@ -53,8 +53,7 @@ class RegistrationControllerIntegrationTest {
                             org.springframework.mail.javamail.JavaMailSender.class)) {
                 @Override
                 public void sendActivationEmail(
-                        final String email, final String fullName, final String token) {
-                }
+                        final String email, final String fullName, final String token) {}
             };
         }
     }
@@ -134,7 +133,7 @@ class RegistrationControllerIntegrationTest {
         assert savedUser.isPresent();
         assertEquals(UserStatus.PENDING, savedUser.get().getStatus());
         assertEquals(false, savedUser.get().getActive());
-        assertEquals(Role.MANAGER, savedUser.get().getRoles());
+        assertTrue(savedUser.get().getRoles().contains(Role.MANAGER));
     }
 
     @Test
@@ -146,7 +145,7 @@ class RegistrationControllerIntegrationTest {
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName("Existing User")
                         .email("existing@example.com")
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .status(UserStatus.ACTIVE)
                         .active(true)
                         .build();
@@ -164,7 +163,7 @@ class RegistrationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(3011)); // USERNAME_ALREADY_EXISTS
+                .andExpect(jsonPath("$.code").value(3012)); // USERNAME_ALREADY_EXISTS
     }
 
     @Test
@@ -176,7 +175,7 @@ class RegistrationControllerIntegrationTest {
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName("Existing User")
                         .email(EMAIL)
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .status(UserStatus.ACTIVE)
                         .active(true)
                         .build();
@@ -194,7 +193,7 @@ class RegistrationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(3012)); // EMAIL_ALREADY_EXISTS
+                .andExpect(jsonPath("$.code").value(3013)); // EMAIL_ALREADY_EXISTS
     }
 
     @Test
@@ -286,7 +285,7 @@ class RegistrationControllerIntegrationTest {
                         .password(passwordEncoder.encode(PASSWORD))
                         .fullName(FULL_NAME)
                         .email(EMAIL)
-                        .roles(Role.MANAGER)
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .status(UserStatus.ACTIVE)
                         .active(true)
                         .build();
@@ -299,6 +298,6 @@ class RegistrationControllerIntegrationTest {
         // When & Then
         mockMvc.perform(get("/api/v1/auth/activate").param("token", fakeToken))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(3019)); // USER_ALREADY_ACTIVE
+                .andExpect(jsonPath("$.code").value(3020)); // USER_ALREADY_ACTIVE
     }
 }
