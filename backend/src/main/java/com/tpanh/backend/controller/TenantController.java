@@ -7,6 +7,7 @@ import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.dto.TenantUpdateRequest;
 import com.tpanh.backend.repository.BuildingRepository;
+import com.tpanh.backend.security.UserPrincipal;
 import com.tpanh.backend.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,8 +61,9 @@ public class TenantController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<TenantResponse> createTenant(
+            @AuthenticationPrincipal final UserPrincipal principal,
             @RequestBody @Valid final TenantCreationRequest request) {
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(principal.getUserId(), request);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
                 .message("Thêm khách thuê thành công")
@@ -89,6 +91,7 @@ public class TenantController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<TenantResponse> getTenants(
+            @AuthenticationPrincipal final UserPrincipal principal,
             @Parameter(description = "ID tòa nhà", example = "1")
                     @RequestParam(value = "buildingId", required = false)
                     final Integer buildingId,
@@ -107,13 +110,11 @@ public class TenantController {
                             sort = "startDate",
                             direction = Sort.Direction.DESC)
                     final Pageable pageable) {
-        final var authentication = SecurityContextHolder.getContext().getAuthentication();
-        final var currentUserId = authentication.getName();
 
         // Verify building belongs to current manager if buildingId is provided
         if (buildingId != null) {
             buildingRepository
-                    .findByIdAndManagerId(buildingId, currentUserId)
+                    .findByIdAndManagerId(buildingId, principal.getUserId())
                     .orElseThrow(
                             () ->
                                     new com.tpanh.backend.exception.AppException(
@@ -171,9 +172,10 @@ public class TenantController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<TenantResponse> updateTenant(
+            @AuthenticationPrincipal final UserPrincipal principal,
             @PathVariable("id") final Integer id,
             @RequestBody @Valid final TenantUpdateRequest request) {
-        final var response = tenantService.updateTenant(id, request);
+        final var response = tenantService.updateTenant(id, principal.getUserId(), request);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
                 .message("Cập nhật thông tin khách thuê thành công")
@@ -200,8 +202,10 @@ public class TenantController {
             })
     @PutMapping("/{id}/end")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<TenantResponse> endTenantContract(@PathVariable("id") final Integer id) {
-        final var response = tenantService.endTenantContract(id);
+    public ApiResponse<TenantResponse> endTenantContract(
+            @AuthenticationPrincipal final UserPrincipal principal,
+            @PathVariable("id") final Integer id) {
+        final var response = tenantService.endTenantContract(id, principal.getUserId());
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
                 .message("Kết thúc hợp đồng thành công")

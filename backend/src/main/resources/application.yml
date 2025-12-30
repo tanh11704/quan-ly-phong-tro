@@ -56,6 +56,9 @@ app:
     allowed-headers: "*"
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:false}
     max-age: 3600
+  building:
+    default-elec-unit-price: ${BUILDING_DEFAULT_ELEC_UNIT_PRICE:3500}
+    default-water-unit-price: ${BUILDING_DEFAULT_WATER_UNIT_PRICE:20000}
 
 springdoc:
   api-docs:

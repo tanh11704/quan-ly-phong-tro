@@ -3,11 +3,22 @@ package com.tpanh.backend.repository;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.enums.RoomStatus;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RoomRepository extends JpaRepository<Room, Integer> {
+
+    Optional<Room> findByIdAndBuildingManagerId(Integer id, String managerId);
+
+    List<Room> findByBuildingIdAndBuildingManagerId(Integer buildingId, String managerId);
+
+    Page<Room> findByBuildingIdAndBuildingManagerId(
+            Integer buildingId, String managerId, Pageable pageable);
+
+    Page<Room> findByBuildingIdAndStatusAndBuildingManagerId(
+            Integer buildingId, RoomStatus status, String managerId, Pageable pageable);
 
     List<Room> findByBuildingId(Integer buildingId);
 

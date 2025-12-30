@@ -1,24 +1,10 @@
 package com.tpanh.backend.controller;
 
-import com.tpanh.backend.config.PaginationConfig;
-import com.tpanh.backend.dto.ApiResponse;
-import com.tpanh.backend.dto.BuildingCreationRequest;
-import com.tpanh.backend.dto.BuildingResponse;
-import com.tpanh.backend.dto.BuildingUpdateRequest;
-import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.dto.RoomResponse;
-import com.tpanh.backend.service.BuildingService;
-import com.tpanh.backend.service.RoomService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +15,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tpanh.backend.config.PaginationConfig;
+import com.tpanh.backend.dto.ApiResponse;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.BuildingResponse;
+import com.tpanh.backend.dto.BuildingUpdateRequest;
+import com.tpanh.backend.dto.PageResponse;
+import com.tpanh.backend.dto.RoomResponse;
+import com.tpanh.backend.enums.RoomStatus;
+import com.tpanh.backend.security.UserPrincipal;
+import com.tpanh.backend.service.BuildingService;
+import com.tpanh.backend.service.RoomService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("${app.api-prefix}/buildings")
@@ -55,7 +60,8 @@ public class BuildingController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> createBuilding(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
+            @AuthenticationPrincipal
+                    final UserPrincipal principal,
             @RequestBody @Valid final BuildingCreationRequest request) {
         final var response = buildingService.createBuilding(principal.getUserId(), request);
         return ApiResponse.<BuildingResponse>builder()
@@ -81,7 +87,8 @@ public class BuildingController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<BuildingResponse> getBuildings(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
+            @AuthenticationPrincipal
+                    final UserPrincipal principal,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "id")
                     final Pageable pageable) {
@@ -132,7 +139,8 @@ public class BuildingController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> updateBuilding(
             @PathVariable("id") final Integer id,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
+            @AuthenticationPrincipal
+                    final UserPrincipal principal,
             @RequestBody @Valid final BuildingUpdateRequest request) {
         final var response = buildingService.updateBuilding(id, principal.getUserId(), request);
         return ApiResponse.<BuildingResponse>builder()
@@ -158,7 +166,8 @@ public class BuildingController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<Void> deleteBuilding(
             @PathVariable("id") final Integer id,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal) {
+            @AuthenticationPrincipal
+                    final UserPrincipal principal) {
         buildingService.deleteBuilding(id, principal.getUserId());
         return ApiResponse.<Void>builder().message("Xóa tòa nhà thành công").build();
     }
@@ -184,12 +193,17 @@ public class BuildingController {
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public PageResponse<RoomResponse> getRoomsByBuildingId(
             @PathVariable("id") final Integer id,
+            @AuthenticationPrincipal
+                    final UserPrincipal principal,
             @Parameter(description = "Lọc theo trạng thái phòng", example = "VACANT")
                     @RequestParam(value = "status", required = false)
-                    final com.tpanh.backend.enums.RoomStatus status,
+                    final RoomStatus status,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "roomNo")
                     final Pageable pageable) {
-        return roomService.getRoomsByBuildingId(id, status, pageable);
+        if (principal.hasRole("ADMIN")) {
+            return roomService.getRoomsByBuildingId(id, status, pageable);
+        }
+        return roomService.getRoomsByBuildingId(id, status, principal.getUserId(), pageable);
     }
 }

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tpanh.backend.config.BuildingProperties;
 import com.tpanh.backend.dto.BuildingCreationRequest;
 import com.tpanh.backend.dto.BuildingResponse;
 import com.tpanh.backend.dto.BuildingUpdateRequest;
@@ -23,7 +24,6 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.BuildingMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.UserRepository;
-import com.tpanh.backend.config.BuildingProperties;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,8 +39,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class BuildingServiceTest {
@@ -92,7 +90,8 @@ class BuildingServiceTest {
 
     @AfterEach
     void tearDown() {
-        // No SecurityContextHolder.clearContext() needed as SecurityContextHolder is no longer mocked
+        // No SecurityContextHolder.clearContext() needed as SecurityContextHolder is no longer
+        // mocked
     }
 
     @Test
@@ -392,7 +391,8 @@ class BuildingServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> buildingService.deleteBuilding(999, MANAGER_ID));
+                assertThrows(
+                        AppException.class, () -> buildingService.deleteBuilding(999, MANAGER_ID));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -409,7 +409,9 @@ class BuildingServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> buildingService.createBuilding(MANAGER_ID, request));
+                assertThrows(
+                        AppException.class,
+                        () -> buildingService.createBuilding(MANAGER_ID, request));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
     }
 

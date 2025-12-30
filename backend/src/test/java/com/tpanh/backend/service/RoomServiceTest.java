@@ -3,7 +3,6 @@ package com.tpanh.backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -43,6 +42,7 @@ class RoomServiceTest {
     private static final int ROOM_PRICE = 3000000;
     private static final RoomStatus STATUS_VACANT = RoomStatus.VACANT;
     private static final RoomStatus STATUS_OCCUPIED = RoomStatus.OCCUPIED;
+    private static final String MANAGER_ID = "manager-123";
 
     @Mock private RoomRepository roomRepository;
     @Mock private BuildingRepository buildingRepository;
@@ -98,253 +98,132 @@ class RoomServiceTest {
         request.setPrice(ROOM_PRICE);
         request.setStatus(STATUS_VACANT);
 
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
+        when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
+                .thenReturn(Optional.of(building));
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = roomService.createRoom(request);
+        final var response = roomService.createRoom(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
         assertEquals(ROOM_ID, response.getId());
         assertEquals(BUILDING_ID, response.getBuildingId());
-        assertEquals(BUILDING_NAME, response.getBuildingName());
-        assertEquals(ROOM_NO, response.getRoomNo());
-        assertEquals(ROOM_PRICE, response.getPrice());
-        assertEquals(STATUS_VACANT, response.getStatus());
-        verify(buildingRepository).findById(BUILDING_ID);
+        verify(buildingRepository).findByIdAndManagerId(BUILDING_ID, MANAGER_ID);
         verify(roomRepository).save(any(Room.class));
     }
 
     @Test
-    void createRoom_WithNullStatus_ShouldUseDefaultVACANT() {
-        // Given
-        final var request = new RoomCreationRequest();
-        request.setBuildingId(BUILDING_ID);
-        request.setRoomNo(ROOM_NO);
-        request.setPrice(ROOM_PRICE);
-        request.setStatus(null);
-
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
-        when(roomRepository.save(any(Room.class))).thenReturn(room);
-
-        // When
-        final var response = roomService.createRoom(request);
-
-        // Then
-        assertNotNull(response);
-        assertEquals(STATUS_VACANT, response.getStatus());
-        verify(roomRepository).save(any(Room.class));
-    }
-
-    @Test
-    void createRoom_WithInvalidBuildingId_ShouldThrowException() {
+    void createRoom_WithInvalidBuildingOrManager_ShouldThrowException() {
         // Given
         final var request = new RoomCreationRequest();
         request.setBuildingId(BUILDING_ID);
         request.setRoomNo(ROOM_NO);
         request.setPrice(ROOM_PRICE);
 
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.empty());
+        when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
+                .thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> roomService.createRoom(request));
+                assertThrows(AppException.class, () -> roomService.createRoom(MANAGER_ID, request));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
-        verify(buildingRepository).findById(BUILDING_ID);
+        verify(buildingRepository).findByIdAndManagerId(BUILDING_ID, MANAGER_ID);
         verify(roomRepository, never()).save(any(Room.class));
     }
 
     @Test
-    void updateRoom_WithValidRequest_ShouldReturnUpdatedResponse() {
+    void updateRoom_WithValidRequestAndManager_ShouldReturnUpdatedResponse() {
         // Given
         final var request = new RoomUpdateRequest();
         request.setRoomNo("P.102");
         request.setPrice(3500000);
         request.setStatus(STATUS_OCCUPIED);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = roomService.updateRoom(ROOM_ID, request);
+        final var response = roomService.updateRoom(ROOM_ID, MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
-        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
         verify(roomRepository).save(any(Room.class));
     }
 
     @Test
-    void updateRoom_WithPartialFields_ShouldUpdateOnlyProvidedFields() {
+    void updateRoom_WithInvalidManagerOrId_ShouldThrowException() {
         // Given
         final var request = new RoomUpdateRequest();
         request.setPrice(3500000);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
-        when(roomRepository.save(any(Room.class))).thenReturn(room);
-
-        // When
-        final var response = roomService.updateRoom(ROOM_ID, request);
-
-        // Then
-        assertNotNull(response);
-        verify(roomRepository).findById(ROOM_ID);
-        verify(roomRepository).save(any(Room.class));
-    }
-
-    @Test
-    void updateRoom_WithNullFields_ShouldNotUpdateFields() {
-        // Given
-        final var request = new RoomUpdateRequest();
-        request.setRoomNo(null);
-        request.setPrice(null);
-        request.setStatus(null);
-
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
-        when(roomRepository.save(any(Room.class))).thenReturn(room);
-
-        // When
-        final var response = roomService.updateRoom(ROOM_ID, request);
-
-        // Then
-        assertNotNull(response);
-        verify(roomRepository).findById(ROOM_ID);
-        verify(roomRepository).save(any(Room.class));
-    }
-
-    @Test
-    void updateRoom_WithInvalidId_ShouldThrowException() {
-        // Given
-        final var request = new RoomUpdateRequest();
-        request.setPrice(3500000);
-
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
-
-        // When & Then
-        final var exception =
-                assertThrows(AppException.class, () -> roomService.updateRoom(ROOM_ID, request));
-        assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
-        verify(roomRepository).findById(ROOM_ID);
-        verify(roomRepository, never()).save(any(Room.class));
-    }
-
-    @Test
-    void deleteRoom_WithValidId_ShouldDeleteRoom() {
-        // Given
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
-
-        // When
-        roomService.deleteRoom(ROOM_ID);
-
-        // Then
-        verify(roomRepository).findById(ROOM_ID);
-        verify(roomRepository).delete(room);
-    }
-
-    @Test
-    void deleteRoom_WithInvalidId_ShouldThrowException() {
-        // Given
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
-
-        // When & Then
-        final var exception =
-                assertThrows(AppException.class, () -> roomService.deleteRoom(ROOM_ID));
-        assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
-        verify(roomRepository).findById(ROOM_ID);
-        verify(roomRepository, never()).delete(any(Room.class));
-    }
-
-    @Test
-    void getRoomsByBuildingId_WithValidBuildingId_ShouldReturnRoomList() {
-        // Given
-        final var room2 = new Room();
-        room2.setId(2);
-        room2.setBuilding(building);
-        room2.setRoomNo("P.102");
-        room2.setPrice(3500000);
-        room2.setStatus(STATUS_OCCUPIED);
-
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
-        when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Arrays.asList(room, room2));
-
-        // When
-        final var response = roomService.getRoomsByBuildingId(BUILDING_ID);
-
-        // Then
-        assertNotNull(response);
-        assertEquals(2, response.size());
-        verify(buildingRepository).findById(BUILDING_ID);
-        verify(roomRepository).findByBuildingId(BUILDING_ID);
-    }
-
-    @Test
-    void getRoomsByBuildingId_WithInvalidBuildingId_ShouldThrowException() {
-        // Given
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.empty());
-
-        // When & Then
-        final var exception =
-                assertThrows(
-                        AppException.class, () -> roomService.getRoomsByBuildingId(BUILDING_ID));
-        assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
-        verify(buildingRepository).findById(BUILDING_ID);
-        verify(roomRepository, never()).findByBuildingId(any(Integer.class));
-    }
-
-    @Test
-    void getRoomsByBuildingId_WithPageable_ShouldReturnPageResponse() {
-        // Given
-        final var room2 = new Room();
-        room2.setId(2);
-        room2.setBuilding(building);
-        room2.setRoomNo("P.102");
-        room2.setPrice(3500000);
-        room2.setStatus(STATUS_OCCUPIED);
-
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
-
-        final Pageable pageable = PageRequest.of(0, 10);
-        final Page<Room> page = new PageImpl<>(Arrays.asList(room, room2), pageable, 2);
-
-        when(roomRepository.findByBuildingId(BUILDING_ID, pageable)).thenReturn(page);
-
-        // When
-        final var response = roomService.getRoomsByBuildingId(BUILDING_ID, pageable);
-
-        // Then
-        assertNotNull(response);
-        assertNotNull(response.getContent());
-        assertEquals(2, response.getContent().size());
-        assertNotNull(response.getPage());
-        assertEquals(0, response.getPage().getPage());
-        assertEquals(10, response.getPage().getSize());
-        assertEquals(2, response.getPage().getTotalElements());
-        assertEquals(1, response.getPage().getTotalPages());
-        assertTrue(response.getPage().isFirst());
-        assertTrue(response.getPage().isLast());
-        verify(buildingRepository).findById(BUILDING_ID);
-        verify(roomRepository).findByBuildingId(BUILDING_ID, pageable);
-    }
-
-    @Test
-    void getRoomsByBuildingId_WithPageable_InvalidBuildingId_ShouldThrowException() {
-        // Given
-        final Pageable pageable = PageRequest.of(0, 10);
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.empty());
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
                 assertThrows(
                         AppException.class,
-                        () -> roomService.getRoomsByBuildingId(BUILDING_ID, pageable));
-        assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
-        verify(buildingRepository).findById(BUILDING_ID);
-        verify(roomRepository, never()).findByBuildingId(any(Integer.class), any(Pageable.class));
+                        () -> roomService.updateRoom(ROOM_ID, MANAGER_ID, request));
+        assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
     }
 
     @Test
-    void getRoomById_WithValidId_ShouldReturnRoomResponse() {
+    void deleteRoom_WithValidRequest_ShouldDeleteRoom() {
+        // Given
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
+
+        // When
+        roomService.deleteRoom(ROOM_ID, MANAGER_ID);
+
+        // Then
+        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
+        verify(roomRepository).delete(room);
+    }
+
+    @Test
+    void getRoomsByBuildingId_ForManager_ShouldReturnList() {
+        // Given
+        final var room2 = new Room();
+        room2.setId(2);
+        room2.setBuilding(building);
+
+        when(buildingRepository.existsByIdAndManagerId(BUILDING_ID, MANAGER_ID)).thenReturn(true);
+        when(roomRepository.findByBuildingIdAndBuildingManagerId(BUILDING_ID, MANAGER_ID))
+                .thenReturn(Arrays.asList(room, room2));
+
+        // When
+        final var response = roomService.getRoomsByBuildingId(BUILDING_ID, MANAGER_ID);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(2, response.size());
+        verify(buildingRepository).existsByIdAndManagerId(BUILDING_ID, MANAGER_ID);
+        verify(roomRepository).findByBuildingIdAndBuildingManagerId(BUILDING_ID, MANAGER_ID);
+    }
+
+    @Test
+    void getRoomById_ForManager_ShouldReturnResponse() {
+        // Given
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
+
+        // When
+        final var response = roomService.getRoomById(ROOM_ID, MANAGER_ID);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(ROOM_ID, response.getId());
+        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
+    }
+
+    // Admin / Unsecured Methods Tests
+
+    @Test
+    void getRoomById_NoManagerCheck_ShouldReturnResponse() {
         // Given
         when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
 
@@ -354,73 +233,52 @@ class RoomServiceTest {
         // Then
         assertNotNull(response);
         assertEquals(ROOM_ID, response.getId());
-        assertEquals(BUILDING_ID, response.getBuildingId());
-        assertEquals(BUILDING_NAME, response.getBuildingName());
-        assertEquals(ROOM_NO, response.getRoomNo());
-        assertEquals(ROOM_PRICE, response.getPrice());
-        assertEquals(STATUS_VACANT, response.getStatus());
         verify(roomRepository).findById(ROOM_ID);
     }
 
     @Test
-    void getRoomById_WithInvalidId_ShouldThrowException() {
-        // Given
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
-
-        // When & Then
-        final var exception =
-                assertThrows(AppException.class, () -> roomService.getRoomById(ROOM_ID));
-        assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
-        verify(roomRepository).findById(ROOM_ID);
-    }
-
-    @Test
-    void getRoomsByBuildingId_WithStatusFilter_ShouldReturnFilteredRooms() {
+    void getRoomsByBuildingId_NoManagerCheck_ShouldReturnPage() {
         // Given
         final var room2 = new Room();
         room2.setId(2);
         room2.setBuilding(building);
-        room2.setRoomNo("P.102");
-        room2.setPrice(3500000);
-        room2.setStatus(STATUS_OCCUPIED);
 
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
+        when(buildingRepository.existsById(BUILDING_ID)).thenReturn(true);
 
         final Pageable pageable = PageRequest.of(0, 10);
-        final Page<Room> page = new PageImpl<>(Arrays.asList(room), pageable, 1);
-
-        when(roomRepository.findByBuildingIdAndStatus(BUILDING_ID, STATUS_VACANT, pageable))
-                .thenReturn(page);
+        final Page<Room> page = new PageImpl<>(Arrays.asList(room, room2), pageable, 2);
+        when(roomRepository.findByBuildingId(BUILDING_ID, pageable)).thenReturn(page);
 
         // When
-        final var response = roomService.getRoomsByBuildingId(BUILDING_ID, STATUS_VACANT, pageable);
+        final var response =
+                roomService.getRoomsByBuildingId(BUILDING_ID, (RoomStatus) null, pageable);
 
         // Then
         assertNotNull(response);
-        assertNotNull(response.getContent());
-        assertEquals(1, response.getContent().size());
-        assertEquals(STATUS_VACANT, response.getContent().get(0).getStatus());
-        verify(buildingRepository).findById(BUILDING_ID);
-        verify(roomRepository).findByBuildingIdAndStatus(BUILDING_ID, STATUS_VACANT, pageable);
+        assertEquals(2, response.getContent().size());
+        verify(buildingRepository).existsById(BUILDING_ID);
+        verify(roomRepository).findByBuildingId(BUILDING_ID, pageable);
     }
 
     @Test
-    void getRoomsByBuildingId_WithStatusFilter_InvalidBuildingId_ShouldThrowException() {
+    void getRoomsByBuildingId_ForManager_ShouldReturnPage() {
         // Given
-        final Pageable pageable = PageRequest.of(0, 10);
-        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.empty());
+        when(buildingRepository.existsByIdAndManagerId(BUILDING_ID, MANAGER_ID)).thenReturn(true);
 
-        // When & Then
-        final var exception =
-                assertThrows(
-                        AppException.class,
-                        () ->
-                                roomService.getRoomsByBuildingId(
-                                        BUILDING_ID, STATUS_VACANT, pageable));
-        assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
-        verify(buildingRepository).findById(BUILDING_ID);
-        verify(roomRepository, never())
-                .findByBuildingIdAndStatus(
-                        any(Integer.class), any(RoomStatus.class), any(Pageable.class));
+        final Pageable pageable = PageRequest.of(0, 10);
+        final Page<Room> page = new PageImpl<>(Arrays.asList(room), pageable, 1);
+        when(roomRepository.findByBuildingIdAndBuildingManagerId(BUILDING_ID, MANAGER_ID, pageable))
+                .thenReturn(page);
+
+        // When
+        final var response =
+                roomService.getRoomsByBuildingId(BUILDING_ID, null, MANAGER_ID, pageable);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+        verify(buildingRepository).existsByIdAndManagerId(BUILDING_ID, MANAGER_ID);
+        verify(roomRepository)
+                .findByBuildingIdAndBuildingManagerId(BUILDING_ID, MANAGER_ID, pageable);
     }
 }

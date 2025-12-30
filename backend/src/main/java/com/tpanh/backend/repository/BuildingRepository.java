@@ -13,4 +13,6 @@ public interface BuildingRepository extends JpaRepository<Building, Integer> {
     Page<Building> findByManagerId(String managerId, Pageable pageable);
 
     Optional<Building> findByIdAndManagerId(Integer id, String managerId);
+
+    boolean existsByIdAndManagerId(Integer id, String managerId);
 }

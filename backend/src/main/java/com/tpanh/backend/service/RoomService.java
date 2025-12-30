@@ -15,6 +15,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,11 +29,11 @@ public class RoomService {
     private final RoomMapper roomMapper;
 
     @Transactional
-    @CacheEvict(value = "rooms", key = "#p0.buildingId")
-    public RoomResponse createRoom(final RoomCreationRequest request) {
+    @CacheEvict(value = "roomsByBuilding", key = "#request.buildingId")
+    public RoomResponse createRoom(final String managerId, final RoomCreationRequest request) {
         final var building =
                 buildingRepository
-                        .findById(request.getBuildingId())
+                        .findByIdAndManagerId(request.getBuildingId(), managerId)
                         .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
         final var room = new Room();
@@ -46,10 +47,16 @@ public class RoomService {
     }
 
     @Transactional
-    public RoomResponse updateRoom(final Integer id, final RoomUpdateRequest request) {
+    @Caching(
+            evict = {
+                @CacheEvict(value = "roomById", key = "#id"),
+                @CacheEvict(value = "roomsByBuilding", allEntries = true)
+            })
+    public RoomResponse updateRoom(
+            final Integer id, final String managerId, final RoomUpdateRequest request) {
         final var room =
                 roomRepository
-                        .findById(id)
+                        .findByIdAndBuildingManagerId(id, managerId)
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
         if (request.getRoomNo() != null) {
@@ -63,37 +70,44 @@ public class RoomService {
         }
 
         final var updatedRoom = roomRepository.save(room);
-        final var buildingId = updatedRoom.getBuilding().getId();
-        evictRoomsCache(buildingId);
         return roomMapper.toResponse(updatedRoom);
     }
 
     @Transactional
-    public void deleteRoom(final Integer id) {
+    @Caching(
+            evict = {
+                @CacheEvict(value = "roomById", key = "#id"),
+                @CacheEvict(value = "roomsByBuilding", allEntries = true)
+            })
+    public void deleteRoom(final Integer id, final String managerId) {
         final var room =
                 roomRepository
-                        .findById(id)
+                        .findByIdAndBuildingManagerId(id, managerId)
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
-        final var buildingId = room.getBuilding().getId();
         roomRepository.delete(room);
-        evictRoomsCache(buildingId);
     }
 
-    @CacheEvict(value = "rooms", key = "#p0")
-    private void evictRoomsCache(final Integer buildingId) {}
-
-    @Cacheable(value = "rooms", key = "#p0")
-    public List<RoomResponse> getRoomsByBuildingId(final Integer buildingId) {
-        final var building =
-                buildingRepository
-                        .findById(buildingId)
-                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
-
-        final var rooms = roomRepository.findByBuildingId(buildingId);
+    @Cacheable(value = "roomsByBuilding", key = "#buildingId")
+    public List<RoomResponse> getRoomsByBuildingId(
+            final Integer buildingId, final String managerId) {
+        if (!buildingRepository.existsByIdAndManagerId(buildingId, managerId)) {
+            throw new AppException(ErrorCode.BUILDING_NOT_FOUND);
+        }
+        final var rooms =
+                roomRepository.findByBuildingIdAndBuildingManagerId(buildingId, managerId);
         return rooms.stream().map(roomMapper::toResponse).toList();
     }
 
-    @Cacheable(value = "rooms", key = "#p0")
+    @Cacheable(value = "roomById", key = "#id")
+    public RoomResponse getRoomById(final Integer id, final String managerId) {
+        final var room =
+                roomRepository
+                        .findByIdAndBuildingManagerId(id, managerId)
+                        .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+        return roomMapper.toResponse(room);
+    }
+
+    @Cacheable(value = "roomById", key = "#id")
     public RoomResponse getRoomById(final Integer id) {
         final var room =
                 roomRepository
@@ -103,16 +117,38 @@ public class RoomService {
     }
 
     public PageResponse<RoomResponse> getRoomsByBuildingId(
-            final Integer buildingId, final Pageable pageable) {
-        return getRoomsByBuildingId(buildingId, null, pageable);
+            final Integer buildingId, final String managerId, final Pageable pageable) {
+        return getRoomsByBuildingId(buildingId, null, managerId, pageable);
+    }
+
+    public PageResponse<RoomResponse> getRoomsByBuildingId(
+            final Integer buildingId,
+            final RoomStatus status,
+            final String managerId,
+            final Pageable pageable) {
+        if (!buildingRepository.existsByIdAndManagerId(buildingId, managerId)) {
+            throw new AppException(ErrorCode.BUILDING_NOT_FOUND);
+        }
+
+        final Page<Room> page;
+        if (status != null) {
+            page =
+                    roomRepository.findByBuildingIdAndStatusAndBuildingManagerId(
+                            buildingId, status, managerId, pageable);
+        } else {
+            page =
+                    roomRepository.findByBuildingIdAndBuildingManagerId(
+                            buildingId, managerId, pageable);
+        }
+
+        return buildPageResponse(page);
     }
 
     public PageResponse<RoomResponse> getRoomsByBuildingId(
             final Integer buildingId, final RoomStatus status, final Pageable pageable) {
-        final var building =
-                buildingRepository
-                        .findById(buildingId)
-                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
+        if (!buildingRepository.existsById(buildingId)) {
+            throw new AppException(ErrorCode.BUILDING_NOT_FOUND);
+        }
 
         final Page<Room> page;
         if (status != null) {
@@ -121,8 +157,11 @@ public class RoomService {
             page = roomRepository.findByBuildingId(buildingId, pageable);
         }
 
-        final var content = page.getContent().stream().map(roomMapper::toResponse).toList();
+        return buildPageResponse(page);
+    }
 
+    private PageResponse<RoomResponse> buildPageResponse(final Page<Room> page) {
+        final var content = page.getContent().stream().map(roomMapper::toResponse).toList();
         return PageResponse.<RoomResponse>builder()
                 .content(content)
                 .page(buildPageInfo(page))

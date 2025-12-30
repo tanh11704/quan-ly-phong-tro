@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TenantRepository extends JpaRepository<Tenant, Integer> {
+    Optional<Tenant> findByIdAndRoomBuildingManagerId(Integer id, String managerId);
 
     Optional<Tenant> findByRoomIdAndIsContractHolderTrue(Integer roomId);
 

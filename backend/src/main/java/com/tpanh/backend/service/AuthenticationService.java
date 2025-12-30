@@ -73,7 +73,6 @@ public class AuthenticationService {
         if (!Boolean.TRUE.equals(user.getActive()) || !user.isLoginAllowed()) {
             throw new AppException(ErrorCode.USER_INACTIVE);
         }
-        
     }
 
     private AuthenticationResponse generateAuthResponse(final User user) {

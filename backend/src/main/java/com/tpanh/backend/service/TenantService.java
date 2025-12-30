@@ -30,10 +30,11 @@ public class TenantService {
     private final TenantMapper tenantMapper;
 
     @Transactional
-    public TenantResponse createTenant(final TenantCreationRequest request) {
+    public TenantResponse createTenant(
+            final String managerId, final TenantCreationRequest request) {
         final var room =
                 roomRepository
-                        .findById(request.getRoomId())
+                        .findByIdAndBuildingManagerId(request.getRoomId(), managerId)
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
         final boolean isContractHolder = Boolean.TRUE.equals(request.getIsContractHolder());
@@ -119,10 +120,10 @@ public class TenantService {
     }
 
     @Transactional
-    public TenantResponse endTenantContract(final Integer id) {
+    public TenantResponse endTenantContract(final Integer id, final String managerId) {
         final var tenant =
                 tenantRepository
-                        .findById(id)
+                        .findByIdAndRoomBuildingManagerId(id, managerId)
                         .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
 
         if (tenant.getEndDate() != null) {
@@ -159,11 +160,12 @@ public class TenantService {
     }
 
     @Transactional
-    @CacheEvict(value = "tenants", key = "#p0")
-    public TenantResponse updateTenant(final Integer id, final TenantUpdateRequest request) {
+    @CacheEvict(value = "tenants", key = "#id")
+    public TenantResponse updateTenant(
+            final Integer id, final String managerId, final TenantUpdateRequest request) {
         final var tenant =
                 tenantRepository
-                        .findById(id)
+                        .findByIdAndRoomBuildingManagerId(id, managerId)
                         .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
 
         validateContractHolderChange(tenant, request);

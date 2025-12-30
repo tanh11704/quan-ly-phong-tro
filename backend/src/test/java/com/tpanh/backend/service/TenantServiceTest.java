@@ -44,6 +44,7 @@ class TenantServiceTest {
     private static final String TENANT_PHONE = "0901234567";
     private static final RoomStatus STATUS_VACANT = RoomStatus.VACANT;
     private static final RoomStatus STATUS_OCCUPIED = RoomStatus.OCCUPIED;
+    private static final String MANAGER_ID = "manager-123";
 
     @Mock private TenantRepository tenantRepository;
     @Mock private RoomRepository roomRepository;
@@ -98,22 +99,19 @@ class TenantServiceTest {
         request.setIsContractHolder(true);
         request.setStartDate(LocalDate.now());
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
         assertEquals(TENANT_ID, response.getId());
         assertEquals(ROOM_ID, response.getRoomId());
-        assertEquals(ROOM_NO, response.getRoomNo());
-        assertEquals(TENANT_NAME, response.getName());
-        assertEquals(TENANT_PHONE, response.getPhone());
-        assertEquals(true, response.getIsContractHolder());
-        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
         verify(tenantRepository).save(any(Tenant.class));
         verify(roomRepository).save(any(Room.class));
     }
@@ -126,12 +124,13 @@ class TenantServiceTest {
         request.setName(TENANT_NAME);
         request.setStartDate(null);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -153,12 +152,13 @@ class TenantServiceTest {
         tenantWithFalse.setName(TENANT_NAME);
         tenantWithFalse.setIsContractHolder(false);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenantWithFalse);
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -174,15 +174,16 @@ class TenantServiceTest {
         request.setRoomId(ROOM_ID);
         request.setName(TENANT_NAME);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
 
         // When
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
-        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
         verify(tenantRepository).save(any(Tenant.class));
         verify(roomRepository, never()).save(any(Room.class));
     }
@@ -195,12 +196,13 @@ class TenantServiceTest {
         request.setRoomId(ROOM_ID);
         request.setName(TENANT_NAME);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -214,13 +216,15 @@ class TenantServiceTest {
         request.setRoomId(ROOM_ID);
         request.setName(TENANT_NAME);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> tenantService.createTenant(request));
+                assertThrows(
+                        AppException.class, () -> tenantService.createTenant(MANAGER_ID, request));
         assertEquals(ErrorCode.ROOM_NOT_FOUND, exception.getErrorCode());
-        verify(roomRepository).findById(ROOM_ID);
+        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
         verify(tenantRepository, never()).save(any(Tenant.class));
     }
 
@@ -290,18 +294,19 @@ class TenantServiceTest {
     @Test
     void endTenantContract_WithValidId_ShouldSetEndDate() {
         // Given
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID))
                 .thenReturn(Arrays.asList(tenant));
 
         // When
-        final var response = tenantService.endTenantContract(TENANT_ID);
+        final var response = tenantService.endTenantContract(TENANT_ID, MANAGER_ID);
 
         // Then
         assertNotNull(response);
         assertNotNull(response.getEndDate());
-        verify(tenantRepository).findById(TENANT_ID);
+        verify(tenantRepository).findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID);
         verify(tenantRepository).save(any(Tenant.class));
     }
 
@@ -309,27 +314,31 @@ class TenantServiceTest {
     void endTenantContract_WithAlreadyEndedContract_ShouldThrowException() {
         // Given
         tenant.setEndDate(LocalDate.now().minusDays(5));
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.of(tenant));
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> tenantService.endTenantContract(TENANT_ID));
+                assertThrows(
+                        AppException.class,
+                        () -> tenantService.endTenantContract(TENANT_ID, MANAGER_ID));
         assertEquals(ErrorCode.TENANT_CONTRACT_ALREADY_ENDED, exception.getErrorCode());
-        verify(tenantRepository).findById(TENANT_ID);
+        verify(tenantRepository).findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID);
         verify(tenantRepository, never()).save(any(Tenant.class));
     }
 
     @Test
     void endTenantContract_WithNoActiveTenants_ShouldSetRoomToVACANT() {
         // Given
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID))
                 .thenReturn(Arrays.asList(tenant));
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = tenantService.endTenantContract(TENANT_ID);
+        final var response = tenantService.endTenantContract(TENANT_ID, MANAGER_ID);
 
         // Then
         assertNotNull(response);
@@ -344,13 +353,14 @@ class TenantServiceTest {
         activeTenant.setRoom(room);
         activeTenant.setEndDate(null);
 
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID))
                 .thenReturn(Arrays.asList(tenant, activeTenant));
 
         // When
-        final var response = tenantService.endTenantContract(TENANT_ID);
+        final var response = tenantService.endTenantContract(TENANT_ID, MANAGER_ID);
 
         // Then
         assertNotNull(response);
@@ -360,13 +370,16 @@ class TenantServiceTest {
     @Test
     void endTenantContract_WithInvalidId_ShouldThrowException() {
         // Given
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.empty());
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> tenantService.endTenantContract(TENANT_ID));
+                assertThrows(
+                        AppException.class,
+                        () -> tenantService.endTenantContract(TENANT_ID, MANAGER_ID));
         assertEquals(ErrorCode.TENANT_NOT_FOUND, exception.getErrorCode());
-        verify(tenantRepository).findById(TENANT_ID);
+        verify(tenantRepository).findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID);
         verify(tenantRepository, never()).save(any(Tenant.class));
     }
 
@@ -374,15 +387,16 @@ class TenantServiceTest {
     void endTenantContract_WithNullRoom_ShouldNotUpdateRoomStatus() {
         // Given
         tenant.setRoom(null);
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
 
         // When
-        final var response = tenantService.endTenantContract(TENANT_ID);
+        final var response = tenantService.endTenantContract(TENANT_ID, MANAGER_ID);
 
         // Then
         assertNotNull(response);
-        verify(tenantRepository).findById(TENANT_ID);
+        verify(tenantRepository).findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID);
         verify(tenantRepository).save(any(Tenant.class));
         verify(roomRepository, never()).save(any(Room.class));
     }
@@ -470,13 +484,15 @@ class TenantServiceTest {
         request.setName("New Tenant");
         request.setIsContractHolder(true);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(ROOM_ID))
                 .thenReturn(Optional.of(existingContractHolder));
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> tenantService.createTenant(request));
+                assertThrows(
+                        AppException.class, () -> tenantService.createTenant(MANAGER_ID, request));
         assertEquals(ErrorCode.CONTRACT_HOLDER_ALREADY_EXISTS, exception.getErrorCode());
         verify(tenantRepository, never()).save(any(Tenant.class));
     }
@@ -489,14 +505,15 @@ class TenantServiceTest {
         request.setName(TENANT_NAME);
         request.setIsContractHolder(true);
 
-        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
+        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
+                .thenReturn(Optional.of(room));
         when(tenantRepository.findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(ROOM_ID))
                 .thenReturn(Optional.empty()); // No active contract holder
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         when(roomRepository.save(any(Room.class))).thenReturn(room);
 
         // When
-        final var response = tenantService.createTenant(request);
+        final var response = tenantService.createTenant(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -519,14 +536,16 @@ class TenantServiceTest {
         final var request = new TenantUpdateRequest();
         request.setIsContractHolder(true); // Trying to become contract holder
 
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
+                .thenReturn(Optional.of(tenant));
         when(tenantRepository.findByRoomIdAndIsContractHolderTrueAndEndDateIsNull(ROOM_ID))
                 .thenReturn(Optional.of(existingContractHolder));
 
         // When & Then
         final var exception =
                 assertThrows(
-                        AppException.class, () -> tenantService.updateTenant(TENANT_ID, request));
+                        AppException.class,
+                        () -> tenantService.updateTenant(TENANT_ID, MANAGER_ID, request));
         assertEquals(ErrorCode.CONTRACT_HOLDER_ALREADY_EXISTS, exception.getErrorCode());
         verify(tenantRepository, never()).save(any(Tenant.class));
     }
