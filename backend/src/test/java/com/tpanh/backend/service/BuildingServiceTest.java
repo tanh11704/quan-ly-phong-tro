@@ -23,6 +23,7 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.BuildingMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.UserRepository;
+import com.tpanh.backend.config.BuildingProperties;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +54,7 @@ class BuildingServiceTest {
     @Mock private BuildingRepository buildingRepository;
     @Mock private BuildingMapper buildingMapper;
     @Mock private UserRepository userRepository;
-    @Mock private Authentication authentication;
+    @Mock private BuildingProperties buildingProperties;
 
     @InjectMocks private BuildingService buildingService;
 
@@ -71,8 +72,7 @@ class BuildingServiceTest {
         savedBuilding.setWaterUnitPrice(CUSTOM_WATER_PRICE);
         savedBuilding.setWaterCalcMethod(WaterCalcMethod.BY_METER);
 
-        // Mock mapper to return response based on building (lenient for tests that don't use
-        // mapper)
+        // Mock mapper
         lenient()
                 .when(buildingMapper.toResponse(any(Building.class)))
                 .thenAnswer(
@@ -92,16 +92,7 @@ class BuildingServiceTest {
 
     @AfterEach
     void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private void setupSecurityContext() {
-        final var auth = org.mockito.Mockito.mock(Authentication.class);
-        when(auth.isAuthenticated()).thenReturn(true);
-        when(auth.getName()).thenReturn(MANAGER_ID);
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(auth);
-        SecurityContextHolder.setContext(securityContext);
+        // No SecurityContextHolder.clearContext() needed as SecurityContextHolder is no longer mocked
     }
 
     @Test
@@ -112,12 +103,6 @@ class BuildingServiceTest {
                         .id(MANAGER_ID)
                         .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .build();
-        final var authentication = org.mockito.Mockito.mock(Authentication.class);
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn(MANAGER_ID);
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         final var request = new BuildingCreationRequest();
         request.setName(BUILDING_NAME);
@@ -131,7 +116,7 @@ class BuildingServiceTest {
         when(buildingRepository.save(any(Building.class))).thenReturn(savedBuilding);
 
         // When
-        final var response = buildingService.createBuilding(request);
+        final var response = buildingService.createBuilding(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -143,7 +128,6 @@ class BuildingServiceTest {
         assertEquals(CUSTOM_WATER_PRICE, response.getWaterUnitPrice());
         assertEquals(WaterCalcMethod.BY_METER, response.getWaterCalcMethod());
         verify(buildingRepository).save(any(Building.class));
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -154,12 +138,6 @@ class BuildingServiceTest {
                         .id(MANAGER_ID)
                         .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .build();
-        final var authentication = org.mockito.Mockito.mock(Authentication.class);
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn(MANAGER_ID);
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         final var request = new BuildingCreationRequest();
         request.setName(BUILDING_NAME);
@@ -173,17 +151,18 @@ class BuildingServiceTest {
         buildingWithDefaults.setWaterUnitPrice(20000);
 
         when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+        when(buildingProperties.getDefaultElecUnitPrice()).thenReturn(3500);
+        when(buildingProperties.getDefaultWaterUnitPrice()).thenReturn(20000);
         when(buildingRepository.save(any(Building.class))).thenReturn(buildingWithDefaults);
 
         // When
-        final var response = buildingService.createBuilding(request);
+        final var response = buildingService.createBuilding(MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
         assertEquals(3500, response.getElecUnitPrice());
         assertEquals(20000, response.getWaterUnitPrice());
         verify(buildingRepository).save(any(Building.class));
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -215,7 +194,7 @@ class BuildingServiceTest {
     }
 
     @Test
-    void getBuildingsByCurrentManager_WithPageable_ShouldReturnPageResponse() {
+    void getBuildingsByManagerId_WithPageable_ShouldReturnPageResponse() {
         // Given
         final var building2 = new Building();
         building2.setId(2);
@@ -224,12 +203,6 @@ class BuildingServiceTest {
 
         savedBuilding.setManager(User.builder().id(MANAGER_ID).build());
 
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn(MANAGER_ID);
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
         final Pageable pageable = PageRequest.of(0, 10);
         final Page<Building> page =
                 new PageImpl<>(Arrays.asList(savedBuilding, building2), pageable, 2);
@@ -237,7 +210,7 @@ class BuildingServiceTest {
         when(buildingRepository.findByManagerId(MANAGER_ID, pageable)).thenReturn(page);
 
         // When
-        final var response = buildingService.getBuildingsByCurrentManager(pageable);
+        final var response = buildingService.getBuildingsByManagerId(MANAGER_ID, pageable);
 
         // Then
         assertNotNull(response);
@@ -254,10 +227,8 @@ class BuildingServiceTest {
     }
 
     @Test
-    void getBuildingsByCurrentManager_NonPageable_ShouldReturnList() {
+    void getBuildingsByManagerId_NonPageable_ShouldReturnList() {
         // Given
-        setupSecurityContext();
-
         final var building2 = new Building();
         building2.setId(2);
         building2.setName("Trọ Vàng");
@@ -271,7 +242,7 @@ class BuildingServiceTest {
                 .thenReturn(Arrays.asList(savedBuilding, building2));
 
         // When
-        final List<BuildingResponse> result = buildingService.getBuildingsByCurrentManager();
+        final List<BuildingResponse> result = buildingService.getBuildingsByManagerId(MANAGER_ID);
 
         // Then
         assertNotNull(result);
@@ -282,14 +253,12 @@ class BuildingServiceTest {
     }
 
     @Test
-    void getBuildingsByCurrentManager_NonPageable_WithNoBuildings_ShouldReturnEmptyList() {
+    void getBuildingsByManagerId_NonPageable_WithNoBuildings_ShouldReturnEmptyList() {
         // Given
-        setupSecurityContext();
-
         when(buildingRepository.findByManagerId(MANAGER_ID)).thenReturn(Collections.emptyList());
 
         // When
-        final List<BuildingResponse> result = buildingService.getBuildingsByCurrentManager();
+        final List<BuildingResponse> result = buildingService.getBuildingsByManagerId(MANAGER_ID);
 
         // Then
         assertNotNull(result);
@@ -301,8 +270,6 @@ class BuildingServiceTest {
     @Test
     void updateBuilding_WithAllFields_ShouldReturnUpdatedBuilding() {
         // Given
-        setupSecurityContext();
-
         final var request = new BuildingUpdateRequest();
         request.setName("Trọ Mới");
         request.setOwnerName("Nguyễn Văn Mới");
@@ -325,7 +292,7 @@ class BuildingServiceTest {
         when(buildingRepository.save(any(Building.class))).thenReturn(updatedBuilding);
 
         // When
-        final var response = buildingService.updateBuilding(BUILDING_ID, request);
+        final var response = buildingService.updateBuilding(BUILDING_ID, MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -341,8 +308,6 @@ class BuildingServiceTest {
     @Test
     void updateBuilding_WithPartialFields_ShouldOnlyUpdateProvidedFields() {
         // Given
-        setupSecurityContext();
-
         final var request = new BuildingUpdateRequest();
         request.setName("Trọ Cập Nhật");
         // Other fields are null
@@ -361,7 +326,7 @@ class BuildingServiceTest {
         when(buildingRepository.save(any(Building.class))).thenReturn(updatedBuilding);
 
         // When
-        final var response = buildingService.updateBuilding(BUILDING_ID, request);
+        final var response = buildingService.updateBuilding(BUILDING_ID, MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -374,8 +339,6 @@ class BuildingServiceTest {
     @Test
     void updateBuilding_WithInvalidId_ShouldThrowException() {
         // Given
-        setupSecurityContext();
-
         final var request = new BuildingUpdateRequest();
         request.setName("Trọ Mới");
 
@@ -384,15 +347,14 @@ class BuildingServiceTest {
         // When & Then
         final var exception =
                 assertThrows(
-                        AppException.class, () -> buildingService.updateBuilding(999, request));
+                        AppException.class,
+                        () -> buildingService.updateBuilding(999, MANAGER_ID, request));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
     @Test
     void updateBuilding_WithEmptyRequest_ShouldReturnUnchangedBuilding() {
         // Given
-        setupSecurityContext();
-
         final var request = new BuildingUpdateRequest();
         // All fields are null - no updates
 
@@ -401,7 +363,7 @@ class BuildingServiceTest {
         when(buildingRepository.save(any(Building.class))).thenReturn(savedBuilding);
 
         // When
-        final var response = buildingService.updateBuilding(BUILDING_ID, request);
+        final var response = buildingService.updateBuilding(BUILDING_ID, MANAGER_ID, request);
 
         // Then
         assertNotNull(response);
@@ -414,71 +376,31 @@ class BuildingServiceTest {
     @Test
     void deleteBuilding_WithValidId_ShouldDeleteBuilding() {
         // Given
-        setupSecurityContext();
-
         when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
                 .thenReturn(Optional.of(savedBuilding));
         doNothing().when(buildingRepository).delete(savedBuilding);
 
         // When & Then
-        assertDoesNotThrow(() -> buildingService.deleteBuilding(BUILDING_ID));
+        assertDoesNotThrow(() -> buildingService.deleteBuilding(BUILDING_ID, MANAGER_ID));
         verify(buildingRepository).delete(savedBuilding);
     }
 
     @Test
     void deleteBuilding_WithInvalidId_ShouldThrowException() {
         // Given
-        setupSecurityContext();
-
         when(buildingRepository.findByIdAndManagerId(999, MANAGER_ID)).thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> buildingService.deleteBuilding(999));
+                assertThrows(AppException.class, () -> buildingService.deleteBuilding(999, MANAGER_ID));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
     // ===== Tests for getCurrentUserId edge cases =====
 
     @Test
-    void createBuilding_WithNullAuthentication_ShouldThrowUnauthorized() {
-        // Given
-        SecurityContextHolder.clearContext();
-
-        final var request = new BuildingCreationRequest();
-        request.setName(BUILDING_NAME);
-        request.setWaterCalcMethod(WaterCalcMethod.BY_METER);
-
-        // When & Then
-        final var exception =
-                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
-        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
-    }
-
-    @Test
-    void createBuilding_WithUnauthenticatedUser_ShouldThrowUnauthorized() {
-        // Given
-        final var auth = org.mockito.Mockito.mock(Authentication.class);
-        when(auth.isAuthenticated()).thenReturn(false);
-        final var securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(auth);
-        SecurityContextHolder.setContext(securityContext);
-
-        final var request = new BuildingCreationRequest();
-        request.setName(BUILDING_NAME);
-        request.setWaterCalcMethod(WaterCalcMethod.BY_METER);
-
-        // When & Then
-        final var exception =
-                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
-        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
-    }
-
-    @Test
     void createBuilding_WithUserNotFound_ShouldThrowUserNotFound() {
         // Given
-        setupSecurityContext();
-
         final var request = new BuildingCreationRequest();
         request.setName(BUILDING_NAME);
         request.setWaterCalcMethod(WaterCalcMethod.BY_METER);
@@ -487,22 +409,20 @@ class BuildingServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
+                assertThrows(AppException.class, () -> buildingService.createBuilding(MANAGER_ID, request));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
     }
 
     @Test
-    void getBuildingsByCurrentManager_Pageable_WithEmptyResult_ShouldReturnEmptyPageResponse() {
+    void getBuildingsByManagerId_Pageable_WithEmptyResult_ShouldReturnEmptyPageResponse() {
         // Given
-        setupSecurityContext();
-
         final Pageable pageable = PageRequest.of(0, 10);
         final Page<Building> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
         when(buildingRepository.findByManagerId(MANAGER_ID, pageable)).thenReturn(emptyPage);
 
         // When
-        final var response = buildingService.getBuildingsByCurrentManager(pageable);
+        final var response = buildingService.getBuildingsByManagerId(MANAGER_ID, pageable);
 
         // Then
         assertNotNull(response);

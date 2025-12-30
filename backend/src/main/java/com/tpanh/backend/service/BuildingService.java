@@ -20,75 +20,53 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.tpanh.backend.config.BuildingProperties;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BuildingService {
-    private static final int DEFAULT_ELEC_UNIT_PRICE = 3500;
-    private static final int DEFAULT_WATER_UNIT_PRICE = 20000;
-
     private final BuildingRepository buildingRepository;
     private final BuildingMapper buildingMapper;
     private final UserRepository userRepository;
-
-    private String getCurrentUserId() {
-        final var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
-        return authentication.getName();
-    }
+    private final BuildingProperties buildingProperties;
 
     @Transactional
     @CacheEvict(value = "buildings", allEntries = true)
-    public BuildingResponse createBuilding(final BuildingCreationRequest request) {
-        final var currentUserId = getCurrentUserId();
-        final var manager =
-                userRepository
-                        .findById(currentUserId)
-                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    public BuildingResponse createBuilding(final String managerId, final BuildingCreationRequest request) {
+        final var manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         final var building = new Building();
         building.setName(request.getName());
         building.setOwnerName(request.getOwnerName());
         building.setOwnerPhone(request.getOwnerPhone());
-        building.setElecUnitPrice(
-                request.getElecUnitPrice() != null
-                        ? request.getElecUnitPrice()
-                        : DEFAULT_ELEC_UNIT_PRICE);
-        building.setWaterUnitPrice(
-                request.getWaterUnitPrice() != null
-                        ? request.getWaterUnitPrice()
-                        : DEFAULT_WATER_UNIT_PRICE);
+        building.setElecUnitPrice(request.getElecUnitPrice() != null ? request.getElecUnitPrice() : buildingProperties.getDefaultElecUnitPrice());
+        building.setWaterUnitPrice(request.getWaterUnitPrice() != null ? request.getWaterUnitPrice() : buildingProperties.getDefaultWaterUnitPrice());
         building.setWaterCalcMethod(request.getWaterCalcMethod());
         building.setManager(manager);
 
         final var savedBuilding = buildingRepository.save(building);
-        log.info("Building created: id={}, managerId={}", savedBuilding.getId(), currentUserId);
+        log.info("Building created: id={}, managerId={}", savedBuilding.getId(), managerId);
         return buildingMapper.toResponse(savedBuilding);
     }
 
     @Cacheable(value = "buildings", key = "#p0")
     public BuildingResponse getBuildingById(final Integer id) {
-        final var building =
-                buildingRepository
-                        .findById(id)
-                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
+        final var building = buildingRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
         return buildingMapper.toResponse(building);
     }
 
-    public List<BuildingResponse> getBuildingsByCurrentManager() {
-        final var currentUserId = getCurrentUserId();
-        final var buildings = buildingRepository.findByManagerId(currentUserId);
+    public List<BuildingResponse> getBuildingsByManagerId(final String managerId) {
+        final var buildings = buildingRepository.findByManagerId(managerId);
         return buildings.stream().map(buildingMapper::toResponse).toList();
     }
 
-    public PageResponse<BuildingResponse> getBuildingsByCurrentManager(final Pageable pageable) {
-        final var currentUserId = getCurrentUserId();
-        final var page = buildingRepository.findByManagerId(currentUserId, pageable);
+    public PageResponse<BuildingResponse> getBuildingsByManagerId(final String managerId, final Pageable pageable) {
+        final var page = buildingRepository.findByManagerId(managerId, pageable);
         final var content = page.getContent().stream().map(buildingMapper::toResponse).toList();
-
         return PageResponse.<BuildingResponse>builder()
                 .content(content)
                 .page(buildPageInfo(page))
@@ -109,47 +87,29 @@ public class BuildingService {
 
     @Transactional
     @CacheEvict(value = "buildings", allEntries = true)
-    public BuildingResponse updateBuilding(final Integer id, final BuildingUpdateRequest request) {
-        final var currentUserId = getCurrentUserId();
-        final var building =
-                buildingRepository
-                        .findByIdAndManagerId(id, currentUserId)
-                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
+    public BuildingResponse updateBuilding(final Integer id, final String managerId, final BuildingUpdateRequest request) {
+        final var building = buildingRepository.findByIdAndManagerId(id, managerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
-        if (request.getName() != null) {
-            building.setName(request.getName());
-        }
-        if (request.getOwnerName() != null) {
-            building.setOwnerName(request.getOwnerName());
-        }
-        if (request.getOwnerPhone() != null) {
-            building.setOwnerPhone(request.getOwnerPhone());
-        }
-        if (request.getElecUnitPrice() != null) {
-            building.setElecUnitPrice(request.getElecUnitPrice());
-        }
-        if (request.getWaterUnitPrice() != null) {
-            building.setWaterUnitPrice(request.getWaterUnitPrice());
-        }
-        if (request.getWaterCalcMethod() != null) {
-            building.setWaterCalcMethod(request.getWaterCalcMethod());
-        }
+        if (request.getName() != null) building.setName(request.getName());
+        if (request.getOwnerName() != null) building.setOwnerName(request.getOwnerName());
+        if (request.getOwnerPhone() != null) building.setOwnerPhone(request.getOwnerPhone());
+        if (request.getElecUnitPrice() != null) building.setElecUnitPrice(request.getElecUnitPrice());
+        if (request.getWaterUnitPrice() != null) building.setWaterUnitPrice(request.getWaterUnitPrice());
+        if (request.getWaterCalcMethod() != null) building.setWaterCalcMethod(request.getWaterCalcMethod());
 
         final var updatedBuilding = buildingRepository.save(building);
-        log.info("Building updated: id={}, managerId={}", id, currentUserId);
+        log.info("Building updated: id={}, managerId={}", id, managerId);
         return buildingMapper.toResponse(updatedBuilding);
     }
 
     @Transactional
     @CacheEvict(value = "buildings", allEntries = true)
-    public void deleteBuilding(final Integer id) {
-        final var currentUserId = getCurrentUserId();
-        final var building =
-                buildingRepository
-                        .findByIdAndManagerId(id, currentUserId)
-                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
+    public void deleteBuilding(final Integer id, final String managerId) {
+        final var building = buildingRepository.findByIdAndManagerId(id, managerId)
+                .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
         buildingRepository.delete(building);
-        log.info("Building deleted: id={}, managerId={}", id, currentUserId);
+        log.info("Building deleted: id={}, managerId={}", id, managerId);
     }
 }

@@ -55,8 +55,9 @@ public class BuildingController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> createBuilding(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
             @RequestBody @Valid final BuildingCreationRequest request) {
-        final var response = buildingService.createBuilding(request);
+        final var response = buildingService.createBuilding(principal.getUserId(), request);
         return ApiResponse.<BuildingResponse>builder()
                 .result(response)
                 .message("Tạo tòa nhà thành công")
@@ -80,10 +81,11 @@ public class BuildingController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<BuildingResponse> getBuildings(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "id")
                     final Pageable pageable) {
-        return buildingService.getBuildingsByCurrentManager(pageable);
+        return buildingService.getBuildingsByManagerId(principal.getUserId(), pageable);
     }
 
     @Operation(
@@ -130,8 +132,9 @@ public class BuildingController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> updateBuilding(
             @PathVariable("id") final Integer id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
             @RequestBody @Valid final BuildingUpdateRequest request) {
-        final var response = buildingService.updateBuilding(id, request);
+        final var response = buildingService.updateBuilding(id, principal.getUserId(), request);
         return ApiResponse.<BuildingResponse>builder()
                 .result(response)
                 .message("Cập nhật tòa nhà thành công")
@@ -153,8 +156,10 @@ public class BuildingController {
             })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<Void> deleteBuilding(@PathVariable("id") final Integer id) {
-        buildingService.deleteBuilding(id);
+    public ApiResponse<Void> deleteBuilding(
+            @PathVariable("id") final Integer id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal) {
+        buildingService.deleteBuilding(id, principal.getUserId());
         return ApiResponse.<Void>builder().message("Xóa tòa nhà thành công").build();
     }
 
