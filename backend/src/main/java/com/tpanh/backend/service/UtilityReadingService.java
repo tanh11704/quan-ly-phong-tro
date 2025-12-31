@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,7 @@ public class UtilityReadingService {
     private final UtilityReadingMapper utilityReadingMapper;
 
     @Transactional
-    @org.springframework.security.access.prepost.PreAuthorize(
+    @PreAuthorize(
             "@utilityReadingPermission.canAccessRoomUtilityReadings(#request.roomId, authentication)")
     @CacheEvict(value = "rooms", allEntries = true)
     public UtilityReadingResponse createUtilityReading(
@@ -41,8 +42,7 @@ public class UtilityReadingService {
     }
 
     @Transactional
-    @org.springframework.security.access.prepost.PreAuthorize(
-            "@utilityReadingPermission.canAccessUtilityReading(#id, authentication)")
+    @PreAuthorize("@utilityReadingPermission.canAccessUtilityReading(#id, authentication)")
     @CacheEvict(value = "rooms", allEntries = true)
     public UtilityReadingResponse updateUtilityReading(
             final Integer id, final UtilityReadingUpdateRequest request) {
@@ -52,8 +52,7 @@ public class UtilityReadingService {
         return saveAndMap(reading);
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize(
-            "@utilityReadingPermission.canAccessUtilityReading(#id, authentication)")
+    @PreAuthorize("@utilityReadingPermission.canAccessUtilityReading(#id, authentication)")
     public UtilityReadingResponse getUtilityReadingById(final Integer id) {
         final UtilityReading reading =
                 utilityReadingRepository
@@ -62,14 +61,13 @@ public class UtilityReadingService {
         return utilityReadingMapper.toResponse(reading);
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize(
-            "@utilityReadingPermission.canAccessRoomUtilityReadings(#roomId, authentication)")
+    @PreAuthorize("@utilityReadingPermission.canAccessRoomUtilityReadings(#roomId, authentication)")
     public List<UtilityReadingResponse> getUtilityReadingsByRoomId(final Integer roomId) {
         final var readings = utilityReadingRepository.findByRoomIdOrderByMonthDesc(roomId);
         return readings.stream().map(utilityReadingMapper::toResponse).collect(Collectors.toList());
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize(
+    @PreAuthorize(
             "@utilityReadingPermission.canAccessBuildingUtilityReadings(#buildingId, authentication)")
     public List<UtilityReadingResponse> getUtilityReadingsByBuildingAndMonth(
             final Integer buildingId, final String month) {
