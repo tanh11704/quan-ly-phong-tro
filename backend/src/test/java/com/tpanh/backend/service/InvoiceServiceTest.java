@@ -21,6 +21,7 @@ import com.tpanh.backend.dto.InvoiceResponse;
 import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.entity.Invoice;
 import com.tpanh.backend.entity.MeterRecord;
+import com.tpanh.backend.entity.PaymentLog;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.entity.Tenant;
 import com.tpanh.backend.entity.UtilityReading;
@@ -34,9 +35,11 @@ import com.tpanh.backend.mapper.InvoiceMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.InvoiceRepository;
 import com.tpanh.backend.repository.MeterRecordRepository;
+import com.tpanh.backend.repository.PaymentLogRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
+import com.tpanh.backend.security.CurrentUser;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -76,6 +79,8 @@ class InvoiceServiceTest {
     @Mock private UtilityReadingRepository utilityReadingRepository;
     @Mock private EmailService emailService;
     @Mock private BuildingRepository buildingRepository;
+    @Mock private PaymentLogRepository paymentLogRepository;
+    @Mock private CurrentUser currentUser;
 
     @InjectMocks private InvoiceService invoiceService;
 
@@ -744,6 +749,7 @@ class InvoiceServiceTest {
         assertNotNull(result);
         assertEquals(InvoiceStatus.PAID, result.getStatus());
         verify(invoiceRepository).save(any(Invoice.class));
+        verify(paymentLogRepository).save(any(PaymentLog.class));
     }
 
     @Test
@@ -808,6 +814,52 @@ class InvoiceServiceTest {
         // When & Then
         final var exception = assertThrows(AppException.class, () -> invoiceService.payInvoice(1));
         assertEquals(ErrorCode.INVOICE_CANNOT_BE_PAID, exception.getErrorCode());
+    }
+
+    @Test
+    void markOverdueInvoices_ShouldMarkInvoicesAsOverdueAndLog() {
+        // Given
+        final Invoice invoice1 = new Invoice();
+        invoice1.setId(1);
+        invoice1.setStatus(InvoiceStatus.UNPAID);
+        invoice1.setTotalAmount(100000);
+        invoice1.setDueDate(LocalDate.now().minusDays(1));
+
+        final Invoice invoice2 = new Invoice();
+        invoice2.setId(2);
+        invoice2.setStatus(InvoiceStatus.DRAFT);
+        invoice2.setTotalAmount(200000);
+        invoice2.setDueDate(LocalDate.now().minusDays(1));
+
+        when(invoiceRepository.findOverdueInvoices(any(LocalDate.class)))
+                .thenReturn(Arrays.asList(invoice1, invoice2));
+        when(invoiceRepository.save(any(Invoice.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        final int count = invoiceService.markOverdueInvoices();
+
+        // Then
+        assertEquals(2, count);
+        assertEquals(InvoiceStatus.OVERDUE, invoice1.getStatus());
+        assertEquals(InvoiceStatus.OVERDUE, invoice2.getStatus());
+        verify(invoiceRepository, org.mockito.Mockito.times(2)).save(any(Invoice.class));
+        verify(paymentLogRepository, org.mockito.Mockito.times(2)).save(any(PaymentLog.class));
+    }
+
+    @Test
+    void markOverdueInvoices_WithNoOverdueInvoices_ShouldReturnZero() {
+        // Given
+        when(invoiceRepository.findOverdueInvoices(any(LocalDate.class)))
+                .thenReturn(Collections.emptyList());
+
+        // When
+        final int count = invoiceService.markOverdueInvoices();
+
+        // Then
+        assertEquals(0, count);
+        verify(invoiceRepository, never()).save(any(Invoice.class));
+        verify(paymentLogRepository, never()).save(any(PaymentLog.class));
     }
 
     // ===== Tests for sendInvoiceEmail =====

@@ -6,6 +6,7 @@ import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.entity.Invoice;
 import com.tpanh.backend.entity.MeterRecord;
+import com.tpanh.backend.entity.PaymentLog;
 import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.entity.Tenant;
 import com.tpanh.backend.entity.UtilityReading;
@@ -18,9 +19,11 @@ import com.tpanh.backend.mapper.InvoiceMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.InvoiceRepository;
 import com.tpanh.backend.repository.MeterRecordRepository;
+import com.tpanh.backend.repository.PaymentLogRepository;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
 import com.tpanh.backend.repository.UtilityReadingRepository;
+import com.tpanh.backend.security.CurrentUser;
 import com.tpanh.backend.util.PeriodUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -49,6 +52,8 @@ public class InvoiceService {
     private final UtilityReadingRepository utilityReadingRepository;
     private final BuildingRepository buildingRepository;
     private final EmailService emailService;
+    private final PaymentLogRepository paymentLogRepository;
+    private final CurrentUser currentUser;
 
     @Transactional
     @PreAuthorize("@invoicePermission.canAccessBuildingInvoices(#buildingId, authentication)")
@@ -201,9 +206,9 @@ public class InvoiceService {
         if (currentReading.isEmpty() || currentReading.get().getElectricIndex() == null) {
             return null;
         }
-        final String previousMonth = getPreviousMonth(period);
         final var previousReading =
-                utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
+                utilityReadingRepository.findByRoomIdAndMonth(
+                        roomId, PeriodUtils.getPreviousMonth(period));
         final int currentValue = currentReading.get().getElectricIndex();
         final int previousValue =
                 resolvePreviousElectricIndexOrThrow(roomId, period, previousReading);
@@ -228,9 +233,9 @@ public class InvoiceService {
         if (currentReading.isEmpty() || currentReading.get().getWaterIndex() == null) {
             return null;
         }
-        final String previousMonth = getPreviousMonth(period);
         final var previousReading =
-                utilityReadingRepository.findByRoomIdAndMonth(roomId, previousMonth);
+                utilityReadingRepository.findByRoomIdAndMonth(
+                        roomId, PeriodUtils.getPreviousMonth(period));
         final int currentValue = currentReading.get().getWaterIndex();
         final int previousValue = resolvePreviousWaterIndexOrThrow(roomId, period, previousReading);
         final int usage = currentValue - previousValue;
@@ -256,10 +261,10 @@ public class InvoiceService {
         if (currentReading.isEmpty()) {
             return false;
         }
-        final String previousMonth = getPreviousMonth(invoice.getPeriod());
         final var previousReading =
                 utilityReadingRepository.findByRoomIdAndMonth(
-                        invoice.getRoom().getId(), previousMonth);
+                        invoice.getRoom().getId(),
+                        PeriodUtils.getPreviousMonth(invoice.getPeriod()));
         populateElectricityFromUtilityReading(
                 invoice, response, currentReading.get(), previousReading);
         populateWaterFromUtilityReading(invoice, response, currentReading.get(), previousReading);
@@ -416,6 +421,15 @@ public class InvoiceService {
         invoice.setPaidAt(java.time.LocalDateTime.now());
         final Invoice savedInvoice = invoiceRepository.save(invoice);
 
+        paymentLogRepository.save(
+                PaymentLog.create(
+                        savedInvoice,
+                        "PAID",
+                        InvoiceStatus.UNPAID.name(),
+                        InvoiceStatus.PAID.name(),
+                        currentUser.getUserId(),
+                        "Invoice paid manually"));
+
         return invoiceMapper.toResponse(savedInvoice);
     }
 
@@ -456,7 +470,30 @@ public class InvoiceService {
                 invoice.getDueDate());
     }
 
-    private String getPreviousMonth(final String period) {
-        return PeriodUtils.getPreviousMonth(period);
+    @Transactional
+    @CacheEvict(value = "invoices", allEntries = true)
+    public int markOverdueInvoices() {
+        final List<Invoice> overdueInvoices =
+                invoiceRepository.findOverdueInvoices(LocalDate.now());
+        if (overdueInvoices.isEmpty()) {
+            return 0;
+        }
+
+        for (final Invoice invoice : overdueInvoices) {
+            final String oldStatus = invoice.getStatus().name();
+            invoice.setStatus(InvoiceStatus.OVERDUE);
+            final Invoice savedInvoice = invoiceRepository.save(invoice);
+
+            paymentLogRepository.save(
+                    PaymentLog.create(
+                            savedInvoice,
+                            "MARKED_OVERDUE",
+                            oldStatus,
+                            InvoiceStatus.OVERDUE.name(),
+                            "SYSTEM",
+                            "Auto marked overdue by scheduler"));
+        }
+
+        return overdueInvoices.size();
     }
 }

@@ -35,4 +35,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     List<Invoice> findByRoomBuildingIdAndPeriod(Integer buildingId, String period);
 
     boolean existsByIdAndRoomBuildingManagerId(Integer id, String managerId);
+
+    @Query(
+            "SELECT i FROM Invoice i WHERE i.status IN ('DRAFT', 'UNPAID') "
+                    + "AND i.dueDate < :today")
+    List<Invoice> findOverdueInvoices(@Param("today") java.time.LocalDate today);
 }
