@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RoomRepository extends JpaRepository<Room, Integer> {
 
+    boolean existsByIdAndBuildingManagerId(Integer id, String managerId);
+
     Optional<Room> findByIdAndBuildingManagerId(Integer id, String managerId);
 
     List<Room> findByBuildingIdAndBuildingManagerId(Integer buildingId, String managerId);

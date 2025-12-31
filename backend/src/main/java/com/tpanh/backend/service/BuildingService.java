@@ -11,13 +11,14 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.BuildingMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.UserRepository;
-import java.util.List;
+import com.tpanh.backend.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,11 +30,13 @@ public class BuildingService {
     private final BuildingMapper buildingMapper;
     private final UserRepository userRepository;
     private final BuildingProperties buildingProperties;
+    private final CurrentUser currentUser;
 
     @Transactional
     @CacheEvict(value = "buildings", allEntries = true)
-    public BuildingResponse createBuilding(
-            final String managerId, final BuildingCreationRequest request) {
+    public BuildingResponse createBuilding(final BuildingCreationRequest request) {
+        final var managerId = currentUser.getUserId();
+
         final var manager =
                 userRepository
                         .findById(managerId)
@@ -59,6 +62,7 @@ public class BuildingService {
         return buildingMapper.toResponse(savedBuilding);
     }
 
+    @PreAuthorize("@buildingPermission.canAccessBuilding(#id, authentication)")
     @Cacheable(value = "buildings", key = "#id")
     public BuildingResponse getBuildingById(final Integer id) {
         final var building =
@@ -68,13 +72,9 @@ public class BuildingService {
         return buildingMapper.toResponse(building);
     }
 
-    public List<BuildingResponse> getBuildingsByManagerId(final String managerId) {
-        final var buildings = buildingRepository.findByManagerId(managerId);
-        return buildings.stream().map(buildingMapper::toResponse).toList();
-    }
+    public PageResponse<BuildingResponse> getMyBuildings(final Pageable pageable) {
+        final var managerId = currentUser.getUserId();
 
-    public PageResponse<BuildingResponse> getBuildingsByManagerId(
-            final String managerId, final Pageable pageable) {
         final var page = buildingRepository.findByManagerId(managerId, pageable);
         final var content = page.getContent().stream().map(buildingMapper::toResponse).toList();
         return PageResponse.<BuildingResponse>builder()
@@ -96,12 +96,12 @@ public class BuildingService {
     }
 
     @Transactional
+    @PreAuthorize("@buildingPermission.canAccessBuilding(#id, authentication)")
     @CacheEvict(value = "buildings", allEntries = true)
-    public BuildingResponse updateBuilding(
-            final Integer id, final String managerId, final BuildingUpdateRequest request) {
+    public BuildingResponse updateBuilding(final Integer id, final BuildingUpdateRequest request) {
         final var building =
                 buildingRepository
-                        .findByIdAndManagerId(id, managerId)
+                        .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
         if (request.getName() != null) {
@@ -124,19 +124,20 @@ public class BuildingService {
         }
 
         final var updatedBuilding = buildingRepository.save(building);
-        log.info("Building updated: id={}, managerId={}", id, managerId);
+        log.info("Building updated: id={}", id);
         return buildingMapper.toResponse(updatedBuilding);
     }
 
     @Transactional
+    @PreAuthorize("@buildingPermission.canAccessBuilding(#id, authentication)")
     @CacheEvict(value = "buildings", allEntries = true)
-    public void deleteBuilding(final Integer id, final String managerId) {
+    public void deleteBuilding(final Integer id) {
         final var building =
                 buildingRepository
-                        .findByIdAndManagerId(id, managerId)
+                        .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
         buildingRepository.delete(building);
-        log.info("Building deleted: id={}, managerId={}", id, managerId);
+        log.info("Building deleted: id={}", id);
     }
 }

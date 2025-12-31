@@ -24,11 +24,10 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.BuildingMapper;
 import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.UserRepository;
+import com.tpanh.backend.security.CurrentUser;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +52,9 @@ class BuildingServiceTest {
     @Mock private BuildingMapper buildingMapper;
     @Mock private UserRepository userRepository;
     @Mock private BuildingProperties buildingProperties;
+
+    // Use CurrentUser here instead of SecurityContext mock
+    @Mock private CurrentUser currentUser;
 
     @InjectMocks private BuildingService buildingService;
 
@@ -88,15 +90,15 @@ class BuildingServiceTest {
                         });
     }
 
-    @AfterEach
-    void tearDown() {
-        // No SecurityContextHolder.clearContext() needed as SecurityContextHolder is no longer
-        // mocked
+    private void mockUser(String userId) {
+        // Just mock method call on CurrentUser wrapper
+        when(currentUser.getUserId()).thenReturn(userId);
     }
 
     @Test
     void createBuilding_WithAllFields_ShouldReturnBuildingResponse() {
         // Given
+        mockUser(MANAGER_ID);
         final var manager =
                 User.builder()
                         .id(MANAGER_ID)
@@ -115,7 +117,7 @@ class BuildingServiceTest {
         when(buildingRepository.save(any(Building.class))).thenReturn(savedBuilding);
 
         // When
-        final var response = buildingService.createBuilding(MANAGER_ID, request);
+        final var response = buildingService.createBuilding(request);
 
         // Then
         assertNotNull(response);
@@ -132,6 +134,7 @@ class BuildingServiceTest {
     @Test
     void createBuilding_WithDefaultPrices_ShouldUseDefaultValues() {
         // Given
+        mockUser(MANAGER_ID);
         final var manager =
                 User.builder()
                         .id(MANAGER_ID)
@@ -155,7 +158,7 @@ class BuildingServiceTest {
         when(buildingRepository.save(any(Building.class))).thenReturn(buildingWithDefaults);
 
         // When
-        final var response = buildingService.createBuilding(MANAGER_ID, request);
+        final var response = buildingService.createBuilding(request);
 
         // Then
         assertNotNull(response);
@@ -193,8 +196,9 @@ class BuildingServiceTest {
     }
 
     @Test
-    void getBuildingsByManagerId_WithPageable_ShouldReturnPageResponse() {
+    void getMyBuildings_WithPageable_ShouldReturnPageResponse() {
         // Given
+        mockUser(MANAGER_ID);
         final var building2 = new Building();
         building2.setId(2);
         building2.setName("Trọ Vàng");
@@ -209,7 +213,7 @@ class BuildingServiceTest {
         when(buildingRepository.findByManagerId(MANAGER_ID, pageable)).thenReturn(page);
 
         // When
-        final var response = buildingService.getBuildingsByManagerId(MANAGER_ID, pageable);
+        final var response = buildingService.getMyBuildings(pageable);
 
         // Then
         assertNotNull(response);
@@ -224,47 +228,6 @@ class BuildingServiceTest {
         assertTrue(response.getPage().isLast());
         verify(buildingRepository).findByManagerId(MANAGER_ID, pageable);
     }
-
-    @Test
-    void getBuildingsByManagerId_NonPageable_ShouldReturnList() {
-        // Given
-        final var building2 = new Building();
-        building2.setId(2);
-        building2.setName("Trọ Vàng");
-        building2.setElecUnitPrice(3500);
-        building2.setWaterUnitPrice(20000);
-        building2.setManager(User.builder().id(MANAGER_ID).build());
-
-        savedBuilding.setManager(User.builder().id(MANAGER_ID).build());
-
-        when(buildingRepository.findByManagerId(MANAGER_ID))
-                .thenReturn(Arrays.asList(savedBuilding, building2));
-
-        // When
-        final List<BuildingResponse> result = buildingService.getBuildingsByManagerId(MANAGER_ID);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals(BUILDING_NAME, result.get(0).getName());
-        assertEquals("Trọ Vàng", result.get(1).getName());
-        verify(buildingRepository).findByManagerId(MANAGER_ID);
-    }
-
-    @Test
-    void getBuildingsByManagerId_NonPageable_WithNoBuildings_ShouldReturnEmptyList() {
-        // Given
-        when(buildingRepository.findByManagerId(MANAGER_ID)).thenReturn(Collections.emptyList());
-
-        // When
-        final List<BuildingResponse> result = buildingService.getBuildingsByManagerId(MANAGER_ID);
-
-        // Then
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    // ===== Tests for updateBuilding =====
 
     @Test
     void updateBuilding_WithAllFields_ShouldReturnUpdatedBuilding() {
@@ -286,12 +249,11 @@ class BuildingServiceTest {
         updatedBuilding.setWaterUnitPrice(30000);
         updatedBuilding.setWaterCalcMethod(WaterCalcMethod.PER_CAPITA);
 
-        when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
-                .thenReturn(Optional.of(savedBuilding));
+        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(savedBuilding));
         when(buildingRepository.save(any(Building.class))).thenReturn(updatedBuilding);
 
         // When
-        final var response = buildingService.updateBuilding(BUILDING_ID, MANAGER_ID, request);
+        final var response = buildingService.updateBuilding(BUILDING_ID, request);
 
         // Then
         assertNotNull(response);
@@ -320,12 +282,11 @@ class BuildingServiceTest {
         updatedBuilding.setWaterUnitPrice(CUSTOM_WATER_PRICE); // Unchanged
         updatedBuilding.setWaterCalcMethod(WaterCalcMethod.BY_METER); // Unchanged
 
-        when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
-                .thenReturn(Optional.of(savedBuilding));
+        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(savedBuilding));
         when(buildingRepository.save(any(Building.class))).thenReturn(updatedBuilding);
 
         // When
-        final var response = buildingService.updateBuilding(BUILDING_ID, MANAGER_ID, request);
+        final var response = buildingService.updateBuilding(BUILDING_ID, request);
 
         // Then
         assertNotNull(response);
@@ -341,13 +302,12 @@ class BuildingServiceTest {
         final var request = new BuildingUpdateRequest();
         request.setName("Trọ Mới");
 
-        when(buildingRepository.findByIdAndManagerId(999, MANAGER_ID)).thenReturn(Optional.empty());
+        when(buildingRepository.findById(999)).thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
                 assertThrows(
-                        AppException.class,
-                        () -> buildingService.updateBuilding(999, MANAGER_ID, request));
+                        AppException.class, () -> buildingService.updateBuilding(999, request));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -357,12 +317,11 @@ class BuildingServiceTest {
         final var request = new BuildingUpdateRequest();
         // All fields are null - no updates
 
-        when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
-                .thenReturn(Optional.of(savedBuilding));
+        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(savedBuilding));
         when(buildingRepository.save(any(Building.class))).thenReturn(savedBuilding);
 
         // When
-        final var response = buildingService.updateBuilding(BUILDING_ID, MANAGER_ID, request);
+        final var response = buildingService.updateBuilding(BUILDING_ID, request);
 
         // Then
         assertNotNull(response);
@@ -375,24 +334,22 @@ class BuildingServiceTest {
     @Test
     void deleteBuilding_WithValidId_ShouldDeleteBuilding() {
         // Given
-        when(buildingRepository.findByIdAndManagerId(BUILDING_ID, MANAGER_ID))
-                .thenReturn(Optional.of(savedBuilding));
+        when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(savedBuilding));
         doNothing().when(buildingRepository).delete(savedBuilding);
 
         // When & Then
-        assertDoesNotThrow(() -> buildingService.deleteBuilding(BUILDING_ID, MANAGER_ID));
+        assertDoesNotThrow(() -> buildingService.deleteBuilding(BUILDING_ID));
         verify(buildingRepository).delete(savedBuilding);
     }
 
     @Test
     void deleteBuilding_WithInvalidId_ShouldThrowException() {
         // Given
-        when(buildingRepository.findByIdAndManagerId(999, MANAGER_ID)).thenReturn(Optional.empty());
+        when(buildingRepository.findById(999)).thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
-                assertThrows(
-                        AppException.class, () -> buildingService.deleteBuilding(999, MANAGER_ID));
+                assertThrows(AppException.class, () -> buildingService.deleteBuilding(999));
         assertEquals(ErrorCode.BUILDING_NOT_FOUND, exception.getErrorCode());
     }
 
@@ -401,6 +358,7 @@ class BuildingServiceTest {
     @Test
     void createBuilding_WithUserNotFound_ShouldThrowUserNotFound() {
         // Given
+        mockUser(MANAGER_ID);
         final var request = new BuildingCreationRequest();
         request.setName(BUILDING_NAME);
         request.setWaterCalcMethod(WaterCalcMethod.BY_METER);
@@ -409,22 +367,21 @@ class BuildingServiceTest {
 
         // When & Then
         final var exception =
-                assertThrows(
-                        AppException.class,
-                        () -> buildingService.createBuilding(MANAGER_ID, request));
+                assertThrows(AppException.class, () -> buildingService.createBuilding(request));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
     }
 
     @Test
-    void getBuildingsByManagerId_Pageable_WithEmptyResult_ShouldReturnEmptyPageResponse() {
+    void getMyBuildings_Pageable_WithEmptyResult_ShouldReturnEmptyPageResponse() {
         // Given
+        mockUser(MANAGER_ID);
         final Pageable pageable = PageRequest.of(0, 10);
         final Page<Building> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
         when(buildingRepository.findByManagerId(MANAGER_ID, pageable)).thenReturn(emptyPage);
 
         // When
-        final var response = buildingService.getBuildingsByManagerId(MANAGER_ID, pageable);
+        final var response = buildingService.getMyBuildings(pageable);
 
         // Then
         assertNotNull(response);

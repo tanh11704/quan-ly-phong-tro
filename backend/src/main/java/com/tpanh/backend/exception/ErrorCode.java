@@ -61,6 +61,7 @@ public enum ErrorCode {
     FULL_NAME_INVALID_LENGTH(3019, "Họ và tên không được vượt quá 100 ký tự"),
     USER_ALREADY_ACTIVE(3020, "Tài khoản đã được kích hoạt"),
     USER_PENDING_ACTIVATION(3021, "Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email."),
+    UNAUTH(3022, "Người dùng chưa xác thực"),
     ;
 
     ErrorCode(final int code, final String message) {

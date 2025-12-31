@@ -7,7 +7,6 @@ import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.dto.RoomUpdateRequest;
 import com.tpanh.backend.dto.TenantResponse;
-import com.tpanh.backend.security.UserPrincipal;
 import com.tpanh.backend.service.RoomService;
 import com.tpanh.backend.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +20,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Rooms", description = "API quản lý phòng trọ (dành cho Manager)")
 public class RoomController {
+
     private final RoomService roomService;
     private final TenantService tenantService;
 
@@ -60,9 +59,8 @@ public class RoomController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<RoomResponse> createRoom(
-            @AuthenticationPrincipal final UserPrincipal principal,
             @RequestBody @Valid final RoomCreationRequest request) {
-        final var response = roomService.createRoom(principal.getUserId(), request);
+        final var response = roomService.createRoom(request);
         return ApiResponse.<RoomResponse>builder()
                 .result(response)
                 .message("Thêm phòng thành công")
@@ -89,9 +87,8 @@ public class RoomController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<RoomResponse> updateRoom(
             @PathVariable("id") final Integer id,
-            @AuthenticationPrincipal final com.tpanh.backend.security.UserPrincipal principal,
             @RequestBody @Valid final RoomUpdateRequest request) {
-        final var response = roomService.updateRoom(id, principal.getUserId(), request);
+        final var response = roomService.updateRoom(id, request);
         return ApiResponse.<RoomResponse>builder()
                 .result(response)
                 .message("Cập nhật phòng thành công")
@@ -114,10 +111,8 @@ public class RoomController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('MANAGER')")
-    public void deleteRoom(
-            @PathVariable("id") final Integer id,
-            @AuthenticationPrincipal final UserPrincipal principal) {
-        roomService.deleteRoom(id, principal.getUserId());
+    public void deleteRoom(@PathVariable("id") final Integer id) {
+        roomService.deleteRoom(id);
     }
 
     @Operation(
@@ -137,15 +132,8 @@ public class RoomController {
             })
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ApiResponse<RoomResponse> getRoomById(
-            @PathVariable("id") final Integer id,
-            @AuthenticationPrincipal final UserPrincipal principal) {
-        final RoomResponse response;
-        if (principal.hasRole("ADMIN")) {
-            response = roomService.getRoomById(id);
-        } else {
-            response = roomService.getRoomById(id, principal.getUserId());
-        }
+    public ApiResponse<RoomResponse> getRoomById(@PathVariable("id") final Integer id) {
+        final var response = roomService.getRoomById(id);
         return ApiResponse.<RoomResponse>builder()
                 .result(response)
                 .message("Lấy thông tin phòng thành công")

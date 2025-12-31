@@ -91,8 +91,6 @@ public class SecurityConfig {
                             .AuthorizationManagerRequestMatcherRegistry
                     authorize) {
         configurePublicEndpoints(authorize);
-        configureAdminEndpoints(authorize);
-        configureManagerEndpoints(authorize);
         authorize.anyRequest().authenticated();
     }
 
@@ -101,40 +99,11 @@ public class SecurityConfig {
                             .AuthorizationManagerRequestMatcherRegistry
                     authorize) {
         authorize
-                .requestMatchers(
-                        HttpMethod.GET,
-                        "/v3/api-docs",
-                        "/v3/api-docs/**",
-                        "/v3/api-docs.yaml",
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
-                        "/swagger-ui/index.html",
-                        "/swagger-resources/**",
-                        "/webjars/**")
+                .requestMatchers(SecurityConstants.PERMIT_ALL_ENDPOINTS)
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/v3/api-docs/swagger-config")
                 .permitAll()
                 .requestMatchers("/api/v1/auth/**", "/api/v1/token")
                 .permitAll();
-    }
-
-    private void configureAdminEndpoints(
-            final AuthorizeHttpRequestsConfigurer<HttpSecurity>
-                            .AuthorizationManagerRequestMatcherRegistry
-                    authorize) {
-        authorize.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
-    }
-
-    private void configureManagerEndpoints(
-            final AuthorizeHttpRequestsConfigurer<HttpSecurity>
-                            .AuthorizationManagerRequestMatcherRegistry
-                    authorize) {
-        authorize
-                .requestMatchers(
-                        "/api/v1/buildings/**",
-                        "/api/v1/rooms/**",
-                        "/api/v1/invoices/**",
-                        "/api/v1/tenants/**")
-                .hasAnyRole("MANAGER", "ADMIN");
     }
 }

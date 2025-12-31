@@ -24,6 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
@@ -31,7 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(final HttpServletRequest request) {
         final String path = request.getServletPath();
-        return Arrays.stream(SecurityConstants.ALL_PUBLIC_PATHS).anyMatch(path::startsWith);
+        return Arrays.stream(SecurityConstants.AUTHENTICATION_BYPASS_PATHS)
+                .anyMatch(path::startsWith);
     }
 
     @Override
@@ -49,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (final Exception e) {
             SecurityContextHolder.clearContext();
-            log.warn("JWT authentication failed: {}", e.getMessage());
+            log.debug("JWT authentication failed: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
     }
@@ -60,7 +62,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final var authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
     }
 
     private String getJwtFromRequest(final HttpServletRequest request) {

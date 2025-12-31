@@ -8,7 +8,6 @@ import com.tpanh.backend.dto.BuildingUpdateRequest;
 import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.RoomResponse;
 import com.tpanh.backend.enums.RoomStatus;
-import com.tpanh.backend.security.UserPrincipal;
 import com.tpanh.backend.service.BuildingService;
 import com.tpanh.backend.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,9 +56,8 @@ public class BuildingController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> createBuilding(
-            @AuthenticationPrincipal final UserPrincipal principal,
             @RequestBody @Valid final BuildingCreationRequest request) {
-        final var response = buildingService.createBuilding(principal.getUserId(), request);
+        final var response = buildingService.createBuilding(request);
         return ApiResponse.<BuildingResponse>builder()
                 .result(response)
                 .message("Tạo tòa nhà thành công")
@@ -84,11 +81,10 @@ public class BuildingController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<BuildingResponse> getBuildings(
-            @AuthenticationPrincipal final UserPrincipal principal,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "id")
                     final Pageable pageable) {
-        return buildingService.getBuildingsByManagerId(principal.getUserId(), pageable);
+        return buildingService.getMyBuildings(pageable);
     }
 
     @Operation(
@@ -135,9 +131,8 @@ public class BuildingController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<BuildingResponse> updateBuilding(
             @PathVariable("id") final Integer id,
-            @AuthenticationPrincipal final UserPrincipal principal,
             @RequestBody @Valid final BuildingUpdateRequest request) {
-        final var response = buildingService.updateBuilding(id, principal.getUserId(), request);
+        final var response = buildingService.updateBuilding(id, request);
         return ApiResponse.<BuildingResponse>builder()
                 .result(response)
                 .message("Cập nhật tòa nhà thành công")
@@ -159,10 +154,8 @@ public class BuildingController {
             })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<Void> deleteBuilding(
-            @PathVariable("id") final Integer id,
-            @AuthenticationPrincipal final UserPrincipal principal) {
-        buildingService.deleteBuilding(id, principal.getUserId());
+    public ApiResponse<Void> deleteBuilding(@PathVariable("id") final Integer id) {
+        buildingService.deleteBuilding(id);
         return ApiResponse.<Void>builder().message("Xóa tòa nhà thành công").build();
     }
 
@@ -184,19 +177,15 @@ public class BuildingController {
                         description = "Không có quyền truy cập")
             })
     @GetMapping("/{id}/rooms")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public PageResponse<RoomResponse> getRoomsByBuildingId(
             @PathVariable("id") final Integer id,
-            @AuthenticationPrincipal final UserPrincipal principal,
             @Parameter(description = "Lọc theo trạng thái phòng", example = "VACANT")
                     @RequestParam(value = "status", required = false)
                     final RoomStatus status,
             @Parameter(description = "Thông tin phân trang (page, size, sort)")
                     @PageableDefault(size = PaginationConfig.DEFAULT_PAGE_SIZE, sort = "roomNo")
                     final Pageable pageable) {
-        if (principal.hasRole("ADMIN")) {
-            return roomService.getRoomsByBuildingId(id, status, pageable);
-        }
-        return roomService.getRoomsByBuildingId(id, status, principal.getUserId(), pageable);
+        return roomService.getRoomsByBuildingId(id, status, pageable);
     }
 }
