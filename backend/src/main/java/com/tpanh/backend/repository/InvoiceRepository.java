@@ -33,4 +33,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             Pageable pageable);
 
     List<Invoice> findByRoomBuildingIdAndPeriod(Integer buildingId, String period);
+
+    boolean existsByIdAndBuildingManagerId(Integer id, String managerId);
 }

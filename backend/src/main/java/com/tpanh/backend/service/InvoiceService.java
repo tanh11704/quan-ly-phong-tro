@@ -15,6 +15,7 @@ import com.tpanh.backend.enums.WaterCalcMethod;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.InvoiceMapper;
+import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.InvoiceRepository;
 import com.tpanh.backend.repository.MeterRecordRepository;
 import com.tpanh.backend.repository.RoomRepository;
@@ -31,6 +32,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,17 +48,20 @@ public class InvoiceService {
     private final TenantRepository tenantRepository;
     private final MeterRecordRepository meterRecordRepository;
     private final UtilityReadingRepository utilityReadingRepository;
+    private final BuildingRepository buildingRepository;
     private final EmailService emailService;
 
     @Transactional
+    @PreAuthorize("@invoicePermission.canAccessBuildingInvoices(#buildingId, authentication)")
     @Caching(
             evict = {
-                @CacheEvict(value = "rooms", key = "#p0.id"),
+                @CacheEvict(value = "rooms", allEntries = true),
                 @CacheEvict(value = "tenantsByRoom", allEntries = true)
             })
-    public List<InvoiceResponse> createInvoice(final Building building, final String period) {
+    public List<InvoiceResponse> createInvoicesForBuilding(
+            final Integer buildingId, final String period) {
         final List<InvoiceResponse> results = new ArrayList<>();
-        final List<Room> rooms = roomRepository.findByBuildingId(building.getId());
+        final List<Room> rooms = roomRepository.findByBuildingId(buildingId);
 
         for (final Room room : rooms) {
             if (shouldSkipRoom(room.getId(), period)) {
@@ -68,8 +73,8 @@ public class InvoiceService {
                 continue;
             }
 
-            final int elecCost = calculateElectricityCost(room.getId(), period, building);
-            final int waterCost = calculateWaterCost(room.getId(), period, building);
+            final int elecCost = calculateElectricityCost(room.getId(), period, buildingId);
+            final int waterCost = calculateWaterCost(room.getId(), period, buildingId);
 
             final Invoice invoice = buildInvoice(room, tenant, period, elecCost, waterCost);
             final Invoice savedInvoice = invoiceRepository.save(invoice);
@@ -89,7 +94,12 @@ public class InvoiceService {
     }
 
     private int calculateElectricityCost(
-            final Integer roomId, final String period, final Building building) {
+            final Integer roomId, final String period, final Integer buildingId) {
+        final var building =
+                buildingRepository
+                        .findById(buildingId)
+                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
+
         final Integer elecUnitPrice = building.getElecUnitPrice();
         if (elecUnitPrice == null) {
             return 0;
@@ -103,7 +113,11 @@ public class InvoiceService {
     }
 
     private int calculateWaterCost(
-            final Integer roomId, final String period, final Building building) {
+            final Integer roomId, final String period, final Integer buildingId) {
+        final var building =
+                buildingRepository
+                        .findById(buildingId)
+                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
         final var costFromUtilityReading = calculateWaterUsageFromUtilityReading(roomId, period);
         if (costFromUtilityReading != null) {
             final int tenantCount = tenantRepository.countByRoomId(roomId);
@@ -150,6 +164,7 @@ public class InvoiceService {
         return 0;
     }
 
+    @PreAuthorize("@invoicePermission.canAccessBuildingInvoices(#buildingId, authentication)")
     public PageResponse<InvoiceResponse> getInvoices(
             final Integer buildingId,
             final String period,
@@ -168,7 +183,8 @@ public class InvoiceService {
                 .build();
     }
 
-    @Cacheable(value = "invoices", key = "#p0")
+    @PreAuthorize("@invoicePermission.canAccessInvoice(#id, authentication)")
+    @Cacheable(value = "invoices", key = "#id")
     public InvoiceDetailResponse getInvoiceDetail(final Integer id) {
         final Invoice invoice = getInvoiceOrThrow(id);
         final InvoiceDetailResponse response = invoiceMapper.toDetailResponse(invoice);
@@ -384,6 +400,7 @@ public class InvoiceService {
         return hasHistoryBeforeCurrentMonth ? null : 0;
     }
 
+    @PreAuthorize("@invoicePermission.canAccessInvoice(#id, authentication)")
     @Transactional
     @CacheEvict(value = "invoices", key = "#p0")
     public InvoiceResponse payInvoice(final Integer id) {
@@ -419,6 +436,8 @@ public class InvoiceService {
                 .build();
     }
 
+    @Transactional
+    @PreAuthorize("@invoicePermission.canAccessInvoice(#id, authentication)")
     public void sendInvoiceEmail(final Integer invoiceId) {
         final Invoice invoice =
                 invoiceRepository

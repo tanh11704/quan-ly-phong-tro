@@ -6,11 +6,7 @@ import com.tpanh.backend.dto.InvoiceCreationRequest;
 import com.tpanh.backend.dto.InvoiceDetailResponse;
 import com.tpanh.backend.dto.InvoiceResponse;
 import com.tpanh.backend.dto.PageResponse;
-import com.tpanh.backend.entity.Building;
 import com.tpanh.backend.enums.InvoiceStatus;
-import com.tpanh.backend.exception.AppException;
-import com.tpanh.backend.exception.ErrorCode;
-import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.service.InvoiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class InvoiceController {
 
     private final InvoiceService invoiceService;
-    private final BuildingRepository buildingRepository;
 
     @Operation(
             summary = "Tạo hóa đơn cho tòa nhà",
@@ -70,15 +64,10 @@ public class InvoiceController {
         final var authentication =
                 org.springframework.security.core.context.SecurityContextHolder.getContext()
                         .getAuthentication();
-        final var currentUserId = authentication.getName();
-
-        final Building building =
-                buildingRepository
-                        .findByIdAndManagerId(request.getBuildingId(), currentUserId)
-                        .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
 
         final List<InvoiceResponse> result =
-                invoiceService.createInvoice(building, request.getPeriod());
+                invoiceService.createInvoicesForBuilding(
+                        request.getBuildingId(), request.getPeriod());
 
         return ApiResponse.<List<InvoiceResponse>>builder()
                 .result(result)
@@ -121,14 +110,6 @@ public class InvoiceController {
                             sort = "createdAt",
                             direction = Sort.Direction.DESC)
                     final Pageable pageable) {
-        final var authentication = SecurityContextHolder.getContext().getAuthentication();
-        final var currentUserId = authentication.getName();
-
-        // Verify building belongs to current manager
-        buildingRepository
-                .findByIdAndManagerId(buildingId, currentUserId)
-                .orElseThrow(() -> new AppException(ErrorCode.BUILDING_NOT_FOUND));
-
         return invoiceService.getInvoices(buildingId, period, status, pageable);
     }
 
