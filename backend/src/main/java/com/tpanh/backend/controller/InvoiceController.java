@@ -61,10 +61,6 @@ public class InvoiceController {
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<List<InvoiceResponse>> createInvoices(
             @RequestBody @Valid final InvoiceCreationRequest request) {
-        final var authentication =
-                org.springframework.security.core.context.SecurityContextHolder.getContext()
-                        .getAuthentication();
-
         final List<InvoiceResponse> result =
                 invoiceService.createInvoicesForBuilding(
                         request.getBuildingId(), request.getPeriod());
