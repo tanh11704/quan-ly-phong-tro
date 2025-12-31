@@ -108,9 +108,6 @@ public class RoomService {
     @PreAuthorize("@buildingPermission.canAccessBuilding(#buildingId, authentication)")
     public PageResponse<RoomResponse> getRoomsByBuildingId(
             final Integer buildingId, final RoomStatus status, final Pageable pageable) {
-        if (!buildingRepository.existsById(buildingId)) {
-            throw new AppException(ErrorCode.BUILDING_NOT_FOUND);
-        }
 
         final Page<Room> page;
         if (status != null) {

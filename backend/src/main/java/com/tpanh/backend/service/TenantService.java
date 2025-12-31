@@ -11,6 +11,7 @@ import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.TenantMapper;
 import com.tpanh.backend.repository.RoomRepository;
 import com.tpanh.backend.repository.TenantRepository;
+import com.tpanh.backend.security.CurrentUser;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,22 +20,25 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class TenantService {
+
     private final TenantRepository tenantRepository;
     private final RoomRepository roomRepository;
     private final TenantMapper tenantMapper;
+    private final CurrentUser currentUser;
 
+    @PreAuthorize("@tenantPermission.canAccessRoomTenants(#request.roomId, authentication)")
     @Transactional
-    public TenantResponse createTenant(
-            final String managerId, final TenantCreationRequest request) {
+    public TenantResponse createTenant(final TenantCreationRequest request) {
         final var room =
                 roomRepository
-                        .findByIdAndBuildingManagerId(request.getRoomId(), managerId)
+                        .findById(request.getRoomId())
                         .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
         final boolean isContractHolder = Boolean.TRUE.equals(request.getIsContractHolder());
@@ -73,7 +77,8 @@ public class TenantService {
         }
     }
 
-    @Cacheable(value = "tenants", key = "#p0")
+    @PreAuthorize("@tenantPermission.canAccessTenant(#id, authentication)")
+    @Cacheable(value = "tenants", key = "'tenant:' + #id")
     public TenantResponse getTenantById(final Integer id) {
         final var tenant =
                 tenantRepository
@@ -82,7 +87,8 @@ public class TenantService {
         return tenantMapper.toResponse(tenant);
     }
 
-    @Cacheable(value = "tenantsByRoom", key = "#p0")
+    @PreAuthorize("@tenantPermission.canAccessRoomTenants(#roomId, authentication)")
+    @Cacheable(value = "tenantsByRoom", key = "'room:' + #roomId")
     public List<TenantResponse> getTenantsByRoomId(final Integer roomId) {
         if (!roomRepository.existsById(roomId)) {
             throw new AppException(ErrorCode.ROOM_NOT_FOUND);
@@ -92,6 +98,7 @@ public class TenantService {
         return tenants.stream().map(tenantMapper::toResponse).toList();
     }
 
+    @PreAuthorize("@tenantPermission.canAccessRoomTenants(#roomId, authentication)")
     public PageResponse<TenantResponse> getTenantsByRoomId(
             final Integer roomId, final Pageable pageable) {
         if (!roomRepository.existsById(roomId)) {
@@ -119,11 +126,12 @@ public class TenantService {
                 .build();
     }
 
+    @PreAuthorize("@tenantPermission.canAccessTenant(#id, authentication)")
     @Transactional
-    public TenantResponse endTenantContract(final Integer id, final String managerId) {
+    public TenantResponse endTenantContract(final Integer id) {
         final var tenant =
                 tenantRepository
-                        .findByIdAndRoomBuildingManagerId(id, managerId)
+                        .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
 
         if (tenant.getEndDate() != null) {
@@ -159,13 +167,13 @@ public class TenantService {
         }
     }
 
+    @PreAuthorize("@tenantPermission.canAccessTenant(#id, authentication)")
     @Transactional
     @CacheEvict(value = "tenants", key = "#id")
-    public TenantResponse updateTenant(
-            final Integer id, final String managerId, final TenantUpdateRequest request) {
+    public TenantResponse updateTenant(final Integer id, final TenantUpdateRequest request) {
         final var tenant =
                 tenantRepository
-                        .findByIdAndRoomBuildingManagerId(id, managerId)
+                        .findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.TENANT_NOT_FOUND));
 
         validateContractHolderChange(tenant, request);
@@ -207,6 +215,12 @@ public class TenantService {
         }
     }
 
+    @PreAuthorize(
+"""
+    (#buildingId == null || @tenantPermission.canAccessBuildingTenants(#buildingId, authentication))
+    and
+    (#roomId == null || @tenantPermission.canAccessRoomTenants(#roomId, authentication))
+""")
     public PageResponse<TenantResponse> getTenants(
             final Integer buildingId,
             final Integer roomId,

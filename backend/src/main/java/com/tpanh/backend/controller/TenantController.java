@@ -6,7 +6,6 @@ import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.TenantCreationRequest;
 import com.tpanh.backend.dto.TenantResponse;
 import com.tpanh.backend.dto.TenantUpdateRequest;
-import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.security.UserPrincipal;
 import com.tpanh.backend.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,8 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Tenants", description = "API quản lý khách thuê (dành cho Manager)")
 public class TenantController {
+
     private final TenantService tenantService;
-    private final BuildingRepository buildingRepository;
 
     @Operation(
             summary = "Thêm khách thuê",
@@ -61,9 +60,8 @@ public class TenantController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<TenantResponse> createTenant(
-            @AuthenticationPrincipal final UserPrincipal principal,
             @RequestBody @Valid final TenantCreationRequest request) {
-        final var response = tenantService.createTenant(principal.getUserId(), request);
+        final var response = tenantService.createTenant(request);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
                 .message("Thêm khách thuê thành công")
@@ -110,17 +108,6 @@ public class TenantController {
                             sort = "startDate",
                             direction = Sort.Direction.DESC)
                     final Pageable pageable) {
-
-        // Verify building belongs to current manager if buildingId is provided
-        if (buildingId != null) {
-            buildingRepository
-                    .findByIdAndManagerId(buildingId, principal.getUserId())
-                    .orElseThrow(
-                            () ->
-                                    new com.tpanh.backend.exception.AppException(
-                                            com.tpanh.backend.exception.ErrorCode
-                                                    .BUILDING_NOT_FOUND));
-        }
 
         return tenantService.getTenants(buildingId, roomId, active, pageable);
     }
@@ -172,10 +159,9 @@ public class TenantController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public ApiResponse<TenantResponse> updateTenant(
-            @AuthenticationPrincipal final UserPrincipal principal,
             @PathVariable("id") final Integer id,
             @RequestBody @Valid final TenantUpdateRequest request) {
-        final var response = tenantService.updateTenant(id, principal.getUserId(), request);
+        final var response = tenantService.updateTenant(id, request);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
                 .message("Cập nhật thông tin khách thuê thành công")
@@ -202,10 +188,8 @@ public class TenantController {
             })
     @PutMapping("/{id}/end")
     @PreAuthorize("hasRole('MANAGER')")
-    public ApiResponse<TenantResponse> endTenantContract(
-            @AuthenticationPrincipal final UserPrincipal principal,
-            @PathVariable("id") final Integer id) {
-        final var response = tenantService.endTenantContract(id, principal.getUserId());
+    public ApiResponse<TenantResponse> endTenantContract(@PathVariable("id") final Integer id) {
+        final var response = tenantService.endTenantContract(id);
         return ApiResponse.<TenantResponse>builder()
                 .result(response)
                 .message("Kết thúc hợp đồng thành công")

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TenantRepository extends JpaRepository<Tenant, Integer> {
+
     Optional<Tenant> findByIdAndRoomBuildingManagerId(Integer id, String managerId);
 
     Optional<Tenant> findByRoomIdAndIsContractHolderTrue(Integer roomId);
@@ -21,6 +22,8 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
     List<Tenant> findByRoomIdOrderByStartDateDesc(Integer roomId);
 
     Page<Tenant> findByRoomIdOrderByStartDateDesc(Integer roomId, Pageable pageable);
+
+    boolean existsByIdAndRoomBuildingManagerId(Integer id, String managerId);
 
     @Query(
             "SELECT t FROM Tenant t WHERE t.room.building.id = :buildingId "

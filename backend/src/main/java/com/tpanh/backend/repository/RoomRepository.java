@@ -29,4 +29,6 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     Page<Room> findByBuildingIdAndStatus(Integer buildingId, RoomStatus status, Pageable pageable);
 
     List<Room> findByBuildingIdAndStatus(Integer buildingId, RoomStatus status);
+
+    boolean existsByBuildingIdAndBuildingManagerId(Integer buildingId, String managerId);
 }

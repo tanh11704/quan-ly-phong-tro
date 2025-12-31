@@ -127,7 +127,7 @@ class UserServiceTest {
                 User.builder()
                         .id(USER_ID)
                         .fullName("Tenant User")
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(true)
                         .build();
 
@@ -145,7 +145,7 @@ class UserServiceTest {
         assertNotNull(result);
         assertEquals(USER_ID, result.getId());
         assertEquals("Tenant User", result.getFullName());
-        assertTrue(result.getRoles().contains(Role.TENANT));
+        assertTrue(result.getRoles().contains(Role.USER));
         assertEquals(null, result.getUsername()); // Tenant có thể không có username
         verify(userRepository).findById(USER_ID);
     }
@@ -172,7 +172,7 @@ class UserServiceTest {
                 User.builder()
                         .id("user-3")
                         .fullName("User 3")
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(false)
                         .build();
 
@@ -187,7 +187,7 @@ class UserServiceTest {
         assertEquals("user-3", result.get(2).getId());
         assertTrue(result.get(0).getRoles().contains(Role.ADMIN));
         assertTrue(result.get(1).getRoles().contains(Role.MANAGER));
-        assertTrue(result.get(2).getRoles().contains(Role.TENANT));
+        assertTrue(result.get(2).getRoles().contains(Role.USER));
         assertTrue(result.get(0).getActive());
         assertTrue(result.get(1).getActive());
         assertFalse(result.get(2).getActive());
