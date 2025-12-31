@@ -24,6 +24,9 @@ public class Tenant {
     @JoinColumn(name = "room_id")
     private Room room;
 
+    @Column(name = "user_id")
+    private String userId;
+
     private String name;
     private String phone;
     private String email;

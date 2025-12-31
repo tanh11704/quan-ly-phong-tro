@@ -23,6 +23,9 @@ public class UserDTO {
     @Schema(description = "Tên đầy đủ", example = "Nguyễn Văn A")
     private String fullName;
 
+    @Schema(description = "Số điện thoại", example = "0987654321")
+    private String phoneNumber;
+
     @Schema(description = "Roles của người dùng", example = "[\"ADMIN\"]")
     private Set<Role> roles;
 

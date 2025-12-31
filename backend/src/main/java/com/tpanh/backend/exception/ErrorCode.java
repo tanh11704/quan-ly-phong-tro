@@ -39,6 +39,13 @@ public enum ErrorCode {
     CANNOT_GRANT_ADMIN_ROLE(2014, "Không thể gán quyền ADMIN"),
     INVALID_ROLE_GRANT(2015, "Không thể gán quyền này"),
     ROLE_ALREADY_GRANTED(2016, "Người dùng đã có quyền này"),
+    INVITATION_NOT_FOUND(2017, "Không tìm thấy lời mời"),
+    INVITATION_PENDING_EXISTS(2018, "Đã có lời mời đang chờ xử lý cho email này"),
+    INVITATION_EXPIRED(2019, "Lời mời đã hết hạn"),
+    INVITATION_CANCELLED(2020, "Lời mời đã bị hủy"),
+    INVITATION_EMAIL_MISMATCH(2021, "Email xác thực không khớp với lời mời"),
+    INVITATION_ALREADY_ACCEPTED(2022, "Lời mời đã được chấp nhận trước đó"),
+    CONTRACT_END_DATE_MUST_BE_FUTURE(2023, "Ngày kết thúc hợp đồng phải ở tương lai"),
     // Nhóm lỗi Xác thực (30xx) - Authentication
     USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),
     PASSWORD_REQUIRED(3002, "Mật khẩu không được để trống"),

@@ -39,6 +39,7 @@ public class User {
     private static final int ZALO_ID_LENGTH = 50;
     private static final int FULL_NAME_LENGTH = 100;
     private static final int EMAIL_LENGTH = 255;
+    private static final int PHONE_NUMBER_LENGTH = 15;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -56,6 +57,9 @@ public class User {
 
     @Column(name = "full_name", length = FULL_NAME_LENGTH, nullable = false)
     private String fullName;
+
+    @Column(name = "phone_number", length = PHONE_NUMBER_LENGTH)
+    private String phoneNumber;
 
     // Multi-role support: User can have multiple roles
     @ElementCollection(fetch = FetchType.EAGER)

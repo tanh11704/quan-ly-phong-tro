@@ -107,6 +107,7 @@ public class RegistrationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
                 .roles(new java.util.HashSet<>(java.util.Set.of(DEFAULT_REGISTRATION_ROLE)))
                 .status(UserStatus.PENDING)
                 .active(false)

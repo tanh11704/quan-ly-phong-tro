@@ -46,4 +46,7 @@ public class RegistrationRequest {
             example = "manager@example.com",
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String email;
+
+    @Schema(description = "Số điện thoại", example = "0987654321")
+    private String phoneNumber;
 }

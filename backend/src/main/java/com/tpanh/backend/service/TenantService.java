@@ -47,9 +47,14 @@ public class TenantService {
         }
 
         final var tenant = buildTenantFromRequest(request, room, isContractHolder);
+        return createTenant(tenant);
+    }
+
+    @Transactional
+    public TenantResponse createTenant(final Tenant tenant) {
         final var savedTenant = tenantRepository.save(tenant);
-        updateRoomToOccupiedIfNeeded(room);
-        evictTenantCaches(request.getRoomId(), savedTenant.getId());
+        updateRoomToOccupiedIfNeeded(tenant.getRoom());
+        evictTenantCaches(tenant.getRoom().getId(), savedTenant.getId());
         return tenantMapper.toResponse(savedTenant);
     }
 
