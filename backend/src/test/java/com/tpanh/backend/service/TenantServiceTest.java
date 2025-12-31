@@ -98,8 +98,7 @@ class TenantServiceTest {
         request.setEmail(TENANT_EMAIL);
         request.setIsContractHolder(true);
 
-        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
-                .thenReturn(Optional.of(room));
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.of(room));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
 
         // When
@@ -109,7 +108,7 @@ class TenantServiceTest {
         assertNotNull(response);
         assertEquals(TENANT_ID, response.getId());
         assertEquals(TENANT_NAME, response.getName());
-        verify(roomRepository).findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID);
+        verify(roomRepository).findById(ROOM_ID);
         verify(tenantRepository).save(any(Tenant.class));
         verify(roomRepository).save(room); // Should update room status
         assertEquals(RoomStatus.OCCUPIED, room.getStatus());
@@ -121,8 +120,7 @@ class TenantServiceTest {
         final var request = new TenantCreationRequest();
         request.setRoomId(ROOM_ID);
 
-        when(roomRepository.findByIdAndBuildingManagerId(ROOM_ID, MANAGER_ID))
-                .thenReturn(Optional.empty());
+        when(roomRepository.findById(ROOM_ID)).thenReturn(Optional.empty());
 
         // When & Then
         final var exception =
@@ -145,8 +143,7 @@ class TenantServiceTest {
         updatedTenant.setPhone(TENANT_PHONE);
         updatedTenant.setRoom(room);
 
-        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
-                .thenReturn(Optional.of(tenant));
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(updatedTenant);
 
         // When
@@ -155,7 +152,7 @@ class TenantServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("Nguyễn Văn B", response.getName());
-        verify(tenantRepository).findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID);
+        verify(tenantRepository).findById(TENANT_ID);
         verify(tenantRepository).save(tenant);
     }
 
@@ -164,8 +161,7 @@ class TenantServiceTest {
     @Test
     void endTenantContract_WithValidId_ShouldUpdateEndDate() {
         // Given
-        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
-                .thenReturn(Optional.of(tenant));
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenReturn(tenant);
         // Mock active tenants check for room status update (e.g. still 1 active left)
         when(tenantRepository.findByRoomIdOrderByStartDateDesc(ROOM_ID))
@@ -179,15 +175,14 @@ class TenantServiceTest {
         // Then
         assertNotNull(response.getEndDate());
         verify(tenantRepository).save(tenant);
-        verify(tenantRepository).findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID);
+        verify(tenantRepository).findById(TENANT_ID);
     }
 
     @Test
     void endTenantContract_AlreadyEnded_ShouldThrowException() {
         // Given
         tenant.setEndDate(LocalDate.now().minusDays(1));
-        when(tenantRepository.findByIdAndRoomBuildingManagerId(TENANT_ID, MANAGER_ID))
-                .thenReturn(Optional.of(tenant));
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
         // When & Then
         final var exception =

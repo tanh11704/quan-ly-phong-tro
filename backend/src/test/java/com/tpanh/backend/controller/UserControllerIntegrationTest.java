@@ -173,7 +173,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.result.id").exists())
                 .andExpect(jsonPath("$.result.username").value("tenantuser"))
                 .andExpect(jsonPath("$.result.fullName").value("Tenant User"))
-                .andExpect(jsonPath("$.result.roles[0]").value("TENANT"))
+                .andExpect(jsonPath("$.result.roles[0]").value("USER"))
                 .andExpect(jsonPath("$.message").value("Lấy thông tin người dùng thành công"));
     }
 }

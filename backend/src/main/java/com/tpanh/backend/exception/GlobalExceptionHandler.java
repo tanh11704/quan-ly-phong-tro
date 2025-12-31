@@ -2,8 +2,10 @@ package com.tpanh.backend.exception;
 
 import com.tpanh.backend.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -49,6 +51,18 @@ public class GlobalExceptionHandler {
                 || errorCode == ErrorCode.ROOM_NOT_FOUND
                 || errorCode == ErrorCode.TENANT_NOT_FOUND
                 || errorCode == ErrorCode.USER_NOT_FOUND;
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class)
+    ResponseEntity<ApiResponse<Void>> handlingAccessDeniedException(
+            final AccessDeniedException exception) {
+        log.warn("Access denied: {}", exception.getMessage());
+
+        final ApiResponse<Void> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.FORBIDDEN.getCode());
+        apiResponse.setMessage(ErrorCode.FORBIDDEN.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiResponse);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)

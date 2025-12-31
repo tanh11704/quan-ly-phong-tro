@@ -360,7 +360,7 @@ class InvoiceControllerIntegrationTest {
     }
 
     @Test
-    void createInvoices_WithInvalidBuildingId_ShouldReturnNotFound() throws Exception {
+    void createInvoices_WithInvalidBuildingId_ShouldReturnForbidden() throws Exception {
         // Given
         final var request = new InvoiceCreationRequest();
         request.setBuildingId(99999);
@@ -372,7 +372,7 @@ class InvoiceControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -536,12 +536,12 @@ class InvoiceControllerIntegrationTest {
     }
 
     @Test
-    void getInvoices_WithInvalidBuildingId_ShouldReturnNotFound() throws Exception {
+    void getInvoices_WithInvalidBuildingId_ShouldReturnForbidden() throws Exception {
         mockMvc.perform(
                         get("/api/v1/invoices")
                                 .header("Authorization", "Bearer " + authToken)
                                 .param("buildingId", "99999"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 
     // ===== Tests for getInvoiceDetail endpoint =====
@@ -660,21 +660,23 @@ class InvoiceControllerIntegrationTest {
     }
 
     @Test
-    void payInvoice_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void payInvoice_WithInvalidId_ShouldReturnForbidden() throws Exception {
         mockMvc.perform(
                         put("/api/v1/invoices/99999/pay")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest()); // AppException is mapped to 400
+                .andExpect(
+                        status().isForbidden()); // Permission check fails for non-existent resource
     }
 
     // ===== Tests for sendInvoiceEmail endpoint =====
 
     @Test
-    void sendInvoiceEmail_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void sendInvoiceEmail_WithInvalidId_ShouldReturnForbidden() throws Exception {
         mockMvc.perform(
                         post("/api/v1/invoices/99999/send-email")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest()); // AppException is mapped to 400
+                .andExpect(
+                        status().isForbidden()); // Permission check fails for non-existent resource
     }
 
     @Test
@@ -701,6 +703,6 @@ class InvoiceControllerIntegrationTest {
         mockMvc.perform(
                         post("/api/v1/invoices/" + invoiceId + "/send-email")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isForbidden());
     }
 }

@@ -1,6 +1,5 @@
 package com.tpanh.backend.controller;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -9,12 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpanh.backend.dto.AuthenticationRequest;
+import com.tpanh.backend.dto.BuildingCreationRequest;
+import com.tpanh.backend.dto.RoomCreationRequest;
 import com.tpanh.backend.dto.UtilityReadingCreationRequest;
 import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
-import com.tpanh.backend.entity.Building;
-import com.tpanh.backend.entity.Room;
 import com.tpanh.backend.entity.User;
-import com.tpanh.backend.entity.UtilityReading;
 import com.tpanh.backend.enums.Role;
 import com.tpanh.backend.enums.RoomStatus;
 import com.tpanh.backend.enums.WaterCalcMethod;
@@ -27,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,16 +57,24 @@ class UtilityReadingControllerIntegrationTest {
     @Autowired private BuildingRepository buildingRepository;
     @Autowired private RoomRepository roomRepository;
     @Autowired private UtilityReadingRepository utilityReadingRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     private MockMvc mockMvc;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper =
+            new ObjectMapper()
+                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                    .disable(
+                            com.fasterxml.jackson.databind.SerializationFeature
+                                    .WRITE_DATES_AS_TIMESTAMPS);
 
-    private String managerId;
+    private static final String USERNAME = "testmanager";
+    private static final String PASSWORD = "testpass123";
+    private String authToken;
     private Integer buildingId;
     private Integer roomId;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         mockMvc =
                 MockMvcBuilders.webAppContextSetup(webApplicationContext)
                         .apply(springSecurity())
@@ -77,31 +85,70 @@ class UtilityReadingControllerIntegrationTest {
         buildingRepository.deleteAll();
         userRepository.deleteAll();
 
+        // Create user with encoded password
         final var manager =
                 User.builder()
-                        .username("manager")
-                        .password("pass")
+                        .username(USERNAME)
+                        .password(passwordEncoder.encode(PASSWORD))
                         .fullName("Test Manager")
                         .roles(new java.util.HashSet<>(java.util.Set.of(Role.MANAGER)))
                         .active(true)
                         .build();
-        final var savedManager = userRepository.save(manager);
-        managerId = savedManager.getId();
+        userRepository.save(manager);
 
-        final var building = new Building();
-        building.setName("Trọ Xanh");
-        building.setWaterCalcMethod(WaterCalcMethod.BY_METER);
-        building.setElecUnitPrice(3000);
-        building.setWaterUnitPrice(20000);
-        building.setManager(savedManager);
-        buildingId = buildingRepository.save(building).getId();
+        // Authenticate and get JWT token
+        final var authRequest = new AuthenticationRequest();
+        authRequest.setUsername(USERNAME);
+        authRequest.setPassword(PASSWORD);
 
-        final var room = new Room();
-        room.setBuilding(building);
-        room.setRoomNo("P.101");
-        room.setPrice(3000000);
-        room.setStatus(RoomStatus.OCCUPIED);
-        roomId = roomRepository.save(room).getId();
+        final var authResponse =
+                mockMvc.perform(
+                                post("/api/v1/auth/token")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(authRequest)))
+                        .andReturn();
+
+        final var authResponseJson =
+                objectMapper.readTree(authResponse.getResponse().getContentAsString());
+        authToken = authResponseJson.get("result").get("token").asText();
+
+        // Create building via API to set up proper manager relationship
+        final var buildingRequest = new BuildingCreationRequest();
+        buildingRequest.setName("Trọ Xanh");
+        buildingRequest.setWaterCalcMethod(WaterCalcMethod.BY_METER);
+        buildingRequest.setElecUnitPrice(3000);
+        buildingRequest.setWaterUnitPrice(20000);
+
+        final var buildingResponse =
+                mockMvc.perform(
+                                post("/api/v1/buildings")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(buildingRequest)))
+                        .andReturn();
+
+        final var buildingResponseJson =
+                objectMapper.readTree(buildingResponse.getResponse().getContentAsString());
+        buildingId = buildingResponseJson.get("result").get("id").asInt();
+
+        // Create room via API
+        final var roomRequest = new RoomCreationRequest();
+        roomRequest.setBuildingId(buildingId);
+        roomRequest.setRoomNo("P.101");
+        roomRequest.setPrice(3000000);
+        roomRequest.setStatus(RoomStatus.OCCUPIED);
+
+        final var roomResponse =
+                mockMvc.perform(
+                                post("/api/v1/rooms")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(roomRequest)))
+                        .andReturn();
+
+        final var roomResponseJson =
+                objectMapper.readTree(roomResponse.getResponse().getContentAsString());
+        roomId = roomResponseJson.get("result").get("id").asInt();
     }
 
     @Test
@@ -115,7 +162,7 @@ class UtilityReadingControllerIntegrationTest {
 
         mockMvc.perform(
                         post("/api/v1/utility-readings")
-                                .with(user(managerId).roles("MANAGER"))
+                                .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -127,19 +174,31 @@ class UtilityReadingControllerIntegrationTest {
 
     @Test
     void updateUtilityReading_shouldReturnOk() throws Exception {
-        final var reading = new UtilityReading();
-        reading.setRoom(roomRepository.findById(roomId).orElseThrow());
-        reading.setMonth("2025-01");
-        reading.setElectricIndex(100);
-        reading.setWaterIndex(50);
-        final var saved = utilityReadingRepository.save(reading);
+        // Create via API first
+        final var createReq = new UtilityReadingCreationRequest();
+        createReq.setRoomId(roomId);
+        createReq.setMonth("2025-01");
+        createReq.setElectricIndex(100);
+        createReq.setWaterIndex(50);
+
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/utility-readings")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(createReq)))
+                        .andReturn();
+
+        final var createResponseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var readingId = createResponseJson.get("result").get("id").asInt();
 
         final var req = new UtilityReadingUpdateRequest();
         req.setElectricIndex(120);
 
         mockMvc.perform(
-                        put("/api/v1/utility-readings/" + saved.getId())
-                                .with(user(managerId).roles("MANAGER"))
+                        put("/api/v1/utility-readings/" + readingId)
+                                .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -149,32 +208,53 @@ class UtilityReadingControllerIntegrationTest {
 
     @Test
     void getUtilityReadingById_shouldReturnOk() throws Exception {
-        final var reading = new UtilityReading();
-        reading.setRoom(roomRepository.findById(roomId).orElseThrow());
-        reading.setMonth("2025-01");
-        reading.setElectricIndex(100);
-        final var saved = utilityReadingRepository.save(reading);
+        // Create via API first
+        final var createReq = new UtilityReadingCreationRequest();
+        createReq.setRoomId(roomId);
+        createReq.setMonth("2025-01");
+        createReq.setElectricIndex(100);
+        createReq.setWaterIndex(50);
+
+        final var createResponse =
+                mockMvc.perform(
+                                post("/api/v1/utility-readings")
+                                        .header("Authorization", "Bearer " + authToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(createReq)))
+                        .andReturn();
+
+        final var createResponseJson =
+                objectMapper.readTree(createResponse.getResponse().getContentAsString());
+        final var readingId = createResponseJson.get("result").get("id").asInt();
 
         mockMvc.perform(
-                        get("/api/v1/utility-readings/" + saved.getId())
-                                .with(user(managerId).roles("MANAGER")))
+                        get("/api/v1/utility-readings/" + readingId)
+                                .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.id").value(saved.getId()))
+                .andExpect(jsonPath("$.result.id").value(readingId))
                 .andExpect(
                         jsonPath("$.message").value("Lấy thông tin chỉ số điện nước thành công"));
     }
 
     @Test
     void getUtilityReadingsByRoomId_shouldReturnOk() throws Exception {
-        final var reading = new UtilityReading();
-        reading.setRoom(roomRepository.findById(roomId).orElseThrow());
-        reading.setMonth("2025-01");
-        reading.setElectricIndex(100);
-        utilityReadingRepository.save(reading);
+        // Create via API first
+        final var createReq = new UtilityReadingCreationRequest();
+        createReq.setRoomId(roomId);
+        createReq.setMonth("2025-01");
+        createReq.setElectricIndex(100);
+        createReq.setWaterIndex(50);
+
+        mockMvc.perform(
+                        post("/api/v1/utility-readings")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(
                         get("/api/v1/utility-readings/rooms/" + roomId)
-                                .with(user(managerId).roles("MANAGER")))
+                                .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").isArray())
                 .andExpect(jsonPath("$.message").value("Lấy lịch sử chỉ số điện nước thành công"));
@@ -182,15 +262,23 @@ class UtilityReadingControllerIntegrationTest {
 
     @Test
     void getUtilityReadingsByBuildingAndMonth_shouldReturnOk() throws Exception {
-        final var reading = new UtilityReading();
-        reading.setRoom(roomRepository.findById(roomId).orElseThrow());
-        reading.setMonth("2025-01");
-        reading.setElectricIndex(100);
-        utilityReadingRepository.save(reading);
+        // Create via API first
+        final var createReq = new UtilityReadingCreationRequest();
+        createReq.setRoomId(roomId);
+        createReq.setMonth("2025-01");
+        createReq.setElectricIndex(100);
+        createReq.setWaterIndex(50);
+
+        mockMvc.perform(
+                        post("/api/v1/utility-readings")
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(
                         get("/api/v1/utility-readings/buildings/" + buildingId)
-                                .with(user(managerId).roles("MANAGER"))
+                                .header("Authorization", "Bearer " + authToken)
                                 .param("month", "2025-01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").isArray())

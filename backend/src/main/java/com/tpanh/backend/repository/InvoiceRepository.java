@@ -34,5 +34,5 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
 
     List<Invoice> findByRoomBuildingIdAndPeriod(Integer buildingId, String period);
 
-    boolean existsByIdAndBuildingManagerId(Integer id, String managerId);
+    boolean existsByIdAndRoomBuildingManagerId(Integer id, String managerId);
 }

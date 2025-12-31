@@ -31,6 +31,7 @@ import com.tpanh.backend.enums.WaterCalcMethod;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.InvoiceMapper;
+import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.repository.InvoiceRepository;
 import com.tpanh.backend.repository.MeterRecordRepository;
 import com.tpanh.backend.repository.RoomRepository;
@@ -73,7 +74,8 @@ class InvoiceServiceTest {
     @Mock private TenantRepository tenantRepository;
     @Mock private MeterRecordRepository meterRecordRepository;
     @Mock private UtilityReadingRepository utilityReadingRepository;
-    @Mock private com.tpanh.backend.service.EmailService emailService;
+    @Mock private EmailService emailService;
+    @Mock private BuildingRepository buildingRepository;
 
     @InjectMocks private InvoiceService invoiceService;
 
@@ -163,6 +165,8 @@ class InvoiceServiceTest {
                         utilityReadingRepository.existsByRoomIdAndMonthLessThan(
                                 anyInt(), anyString()))
                 .thenReturn(false);
+
+        lenient().when(buildingRepository.findById(BUILDING_ID)).thenReturn(Optional.of(building));
     }
 
     @Test
@@ -193,7 +197,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -222,7 +227,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.existsByRoomIdAndPeriod(ROOM_ID_1, PERIOD)).thenReturn(true);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -241,7 +247,8 @@ class InvoiceServiceTest {
                 .thenReturn(Optional.empty());
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -277,7 +284,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -315,7 +323,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -352,7 +361,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -413,7 +423,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(invoice1).thenReturn(invoice2);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -427,7 +438,8 @@ class InvoiceServiceTest {
         when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Collections.emptyList());
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -463,7 +475,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -937,7 +950,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -966,7 +980,8 @@ class InvoiceServiceTest {
 
         final var ex =
                 assertThrows(
-                        AppException.class, () -> invoiceService.createInvoice(building, PERIOD));
+                        AppException.class,
+                        () -> invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD));
         assertEquals(ErrorCode.MISSING_PREVIOUS_UTILITY_READING, ex.getErrorCode());
     }
 
@@ -1010,7 +1025,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -1057,7 +1073,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -1104,7 +1121,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -1153,7 +1171,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, januaryPeriod);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, januaryPeriod);
 
         // Then
         assertNotNull(result);
@@ -1200,7 +1219,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -1237,7 +1257,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);
@@ -1286,7 +1307,8 @@ class InvoiceServiceTest {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(savedInvoice);
 
         // When
-        final List<InvoiceResponse> result = invoiceService.createInvoice(building, PERIOD);
+        final List<InvoiceResponse> result =
+                invoiceService.createInvoicesForBuilding(BUILDING_ID, PERIOD);
 
         // Then
         assertNotNull(result);

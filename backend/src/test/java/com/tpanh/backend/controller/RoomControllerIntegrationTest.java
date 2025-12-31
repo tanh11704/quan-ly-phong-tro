@@ -165,7 +165,7 @@ class RoomControllerIntegrationTest {
     }
 
     @Test
-    void createRoom_WithInvalidBuildingId_ShouldReturnNotFound() throws Exception {
+    void createRoom_WithInvalidBuildingId_ShouldReturnForbidden() throws Exception {
         // Given
         final var request = new RoomCreationRequest();
         request.setBuildingId(99999);
@@ -178,7 +178,7 @@ class RoomControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -253,15 +253,15 @@ class RoomControllerIntegrationTest {
     }
 
     @Test
-    void getRoomById_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void getRoomById_WithInvalidId_ShouldReturnForbidden() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/v1/rooms/99999").header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
     @Test
-    void updateRoom_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void updateRoom_WithInvalidId_ShouldReturnForbidden() throws Exception {
         // Given
         final var updateRequest = new RoomUpdateRequest();
         updateRequest.setPrice(3500000);
@@ -272,7 +272,7 @@ class RoomControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -304,12 +304,12 @@ class RoomControllerIntegrationTest {
     }
 
     @Test
-    void deleteRoom_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void deleteRoom_WithInvalidId_ShouldReturnForbidden() throws Exception {
         // When & Then
         mockMvc.perform(
                         delete("/api/v1/rooms/99999")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -336,7 +336,7 @@ class RoomControllerIntegrationTest {
         // When & Then
         mockMvc.perform(
                         get("/api/v1/rooms/" + roomId + "/tenants")
-                                .with(user("testmanager").roles("MANAGER")))
+                                .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.message").value("Lấy danh sách khách thuê thành công"));

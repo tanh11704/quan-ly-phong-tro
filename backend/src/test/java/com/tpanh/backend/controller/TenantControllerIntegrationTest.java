@@ -183,7 +183,7 @@ class TenantControllerIntegrationTest {
     }
 
     @Test
-    void createTenant_WithInvalidRoomId_ShouldReturnNotFound() throws Exception {
+    void createTenant_WithInvalidRoomId_ShouldReturnForbidden() throws Exception {
         // Given
         final var request = new TenantCreationRequest();
         request.setRoomId(99999);
@@ -195,7 +195,7 @@ class TenantControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -220,7 +220,7 @@ class TenantControllerIntegrationTest {
         // Then - Verify room status is updated
         mockMvc.perform(
                         get("/api/v1/rooms/" + roomId + "/tenants")
-                                .with(user("testmanager").roles("MANAGER")))
+                                .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(
@@ -259,10 +259,10 @@ class TenantControllerIntegrationTest {
     }
 
     @Test
-    void getTenantById_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void getTenantById_WithInvalidId_ShouldReturnForbidden() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/v1/tenants/99999").header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -300,7 +300,7 @@ class TenantControllerIntegrationTest {
         // When & Then
         mockMvc.perform(
                         get("/api/v1/rooms/" + roomId + "/tenants")
-                                .with(user("testmanager").roles("MANAGER")))
+                                .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(2))
@@ -371,12 +371,12 @@ class TenantControllerIntegrationTest {
     }
 
     @Test
-    void endTenantContract_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void endTenantContract_WithInvalidId_ShouldReturnForbidden() throws Exception {
         // When & Then
         mockMvc.perform(
                         put("/api/v1/tenants/99999/end")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 

@@ -23,7 +23,8 @@ public class InvoicePermission extends AbstractPermission {
             return true;
         }
 
-        return invoiceRepository.existsByIdAndBuildingManagerId(invoiceId, principal.getUserId());
+        return invoiceRepository.existsByIdAndRoomBuildingManagerId(
+                invoiceId, principal.getUserId());
     }
 
     public boolean canAccessBuildingInvoices(

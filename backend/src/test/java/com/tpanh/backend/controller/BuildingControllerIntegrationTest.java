@@ -205,12 +205,12 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void getBuildingById_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void getBuildingById_WithInvalidId_ShouldReturnForbidden() throws Exception {
         // When & Then
         mockMvc.perform(
                         get("/api/v1/buildings/99999")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").exists());
     }
 
@@ -324,7 +324,7 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void updateBuilding_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void updateBuilding_WithInvalidId_ShouldReturnForbidden() throws Exception {
         final var updateRequest = new BuildingUpdateRequest();
         updateRequest.setName("Trọ Mới");
 
@@ -333,7 +333,7 @@ class BuildingControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + authToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -380,15 +380,15 @@ class BuildingControllerIntegrationTest {
         mockMvc.perform(
                         get("/api/v1/buildings/" + buildingId)
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void deleteBuilding_WithInvalidId_ShouldReturnNotFound() throws Exception {
+    void deleteBuilding_WithInvalidId_ShouldReturnForbidden() throws Exception {
         mockMvc.perform(
                         delete("/api/v1/buildings/99999")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -456,10 +456,10 @@ class BuildingControllerIntegrationTest {
     }
 
     @Test
-    void getRoomsByBuildingId_WithInvalidBuildingId_ShouldReturnNotFound() throws Exception {
+    void getRoomsByBuildingId_WithInvalidBuildingId_ShouldReturnForbidden() throws Exception {
         mockMvc.perform(
                         get("/api/v1/buildings/99999/rooms")
                                 .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 }
