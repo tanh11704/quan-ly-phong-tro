@@ -84,7 +84,7 @@ public class AuthenticationService {
         return User.builder()
                 .zaloId(zaloUserInfo.getId())
                 .fullName(zaloUserInfo.getName())
-                .roles(new HashSet<>(Set.of(Role.TENANT)))
+                .roles(new HashSet<>(Set.of(Role.USER)))
                 .status(UserStatus.ACTIVE)
                 .active(true)
                 .build();

@@ -32,6 +32,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
+
     private static final int ID_LENGTH = 50;
     private static final int USERNAME_LENGTH = 50;
     private static final int PASSWORD_LENGTH = 255;

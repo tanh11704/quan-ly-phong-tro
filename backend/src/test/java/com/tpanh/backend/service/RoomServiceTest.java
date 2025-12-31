@@ -184,7 +184,6 @@ class RoomServiceTest {
         room2.setId(2);
         room2.setBuilding(building);
 
-        when(buildingRepository.existsById(BUILDING_ID)).thenReturn(true);
         when(roomRepository.findByBuildingId(BUILDING_ID)).thenReturn(Arrays.asList(room, room2));
 
         // When
@@ -193,7 +192,7 @@ class RoomServiceTest {
         // Then
         assertNotNull(response);
         assertEquals(2, response.size());
-        verify(buildingRepository).existsById(BUILDING_ID);
+
         verify(roomRepository).findByBuildingId(BUILDING_ID);
     }
 
@@ -218,8 +217,6 @@ class RoomServiceTest {
         room2.setId(2);
         room2.setBuilding(building);
 
-        when(buildingRepository.existsById(BUILDING_ID)).thenReturn(true);
-
         final Pageable pageable = PageRequest.of(0, 10);
         final Page<Room> page = new PageImpl<>(Arrays.asList(room, room2), pageable, 2);
         when(roomRepository.findByBuildingId(BUILDING_ID, pageable)).thenReturn(page);
@@ -230,7 +227,7 @@ class RoomServiceTest {
         // Then
         assertNotNull(response);
         assertEquals(2, response.getContent().size());
-        verify(buildingRepository).existsById(BUILDING_ID);
+
         verify(roomRepository).findByBuildingId(BUILDING_ID, pageable);
     }
 }

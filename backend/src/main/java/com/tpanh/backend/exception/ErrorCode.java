@@ -6,7 +6,6 @@ import lombok.Getter;
 public enum ErrorCode {
     // Nhóm lỗi hệ thống (99xx)
     UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống chưa được định nghĩa"),
-
     // Nhóm lỗi Validation (10xx)
     INVALID_KEY(1001, "Mã lỗi không hợp lệ"),
     INVALID_BUILDING_ID(1002, "ID tòa nhà không được để trống"),
@@ -21,7 +20,6 @@ public enum ErrorCode {
     PRICE_INVALID(1011, "Giá thuê không hợp lệ"),
     ROOM_ID_REQUIRED(1012, "ID phòng không được để trống"),
     TENANT_NAME_REQUIRED(1013, "Tên khách thuê không được để trống"),
-
     // Nhóm lỗi Nghiệp vụ (20xx) - Business Logic
     BUILDING_NOT_FOUND(2001, "Không tìm thấy tòa nhà này trong hệ thống"),
     ROOM_NOT_FOUND(2002, "Không tìm thấy phòng trọ"),
@@ -38,7 +36,9 @@ public enum ErrorCode {
             2012,
             "Thiếu chỉ số điện/nước tháng trước. Vui lòng kiểm tra và nhập bổ sung trước khi tạo hóa đơn"),
     CONTRACT_HOLDER_ALREADY_EXISTS(2013, "Phòng đã có người đại diện hợp đồng đang hoạt động"),
-
+    CANNOT_GRANT_ADMIN_ROLE(2014, "Không thể gán quyền ADMIN"),
+    INVALID_ROLE_GRANT(2015, "Không thể gán quyền này"),
+    ROLE_ALREADY_GRANTED(2016, "Người dùng đã có quyền này"),
     // Nhóm lỗi Xác thực (30xx) - Authentication
     USERNAME_REQUIRED(3001, "Tên đăng nhập không được để trống"),
     PASSWORD_REQUIRED(3002, "Mật khẩu không được để trống"),

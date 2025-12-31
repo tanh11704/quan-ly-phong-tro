@@ -131,7 +131,7 @@ class UserControllerIntegrationTest {
                 User.builder()
                         .zaloId("zalo-id-123")
                         .fullName("Tenant User")
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(true)
                         .build();
         final var savedTenant = userRepository.save(tenantUser);
@@ -143,7 +143,7 @@ class UserControllerIntegrationTest {
                         .username("tenantuser")
                         .password(passwordEncoder.encode("tenantpass"))
                         .fullName("Tenant User")
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(true)
                         .build();
         userRepository.save(tempUser);

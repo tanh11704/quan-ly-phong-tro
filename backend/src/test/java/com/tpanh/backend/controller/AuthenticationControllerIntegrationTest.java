@@ -207,7 +207,7 @@ class AuthenticationControllerIntegrationTest {
                 User.builder()
                         .zaloId(zaloId)
                         .fullName("Existing Zalo User")
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(true)
                         .build();
         userRepository.save(existingUser);
@@ -241,7 +241,7 @@ class AuthenticationControllerIntegrationTest {
                 User.builder()
                         .zaloId(zaloId)
                         .fullName("Inactive Zalo User")
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(false)
                         .build();
         userRepository.save(inactiveUser);

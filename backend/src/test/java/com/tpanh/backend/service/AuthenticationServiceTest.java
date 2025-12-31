@@ -175,7 +175,7 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
-        assertTrue(response.getRoles().contains(Role.TENANT));
+        assertTrue(response.getRoles().contains(Role.USER));
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
         verify(userRepository).save(any(User.class));
@@ -197,7 +197,7 @@ class AuthenticationServiceTest {
                         .id(USER_ID)
                         .zaloId(ZALO_ID)
                         .fullName(ZALO_NAME)
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(true)
                         .build();
 
@@ -211,7 +211,7 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
-        assertTrue(response.getRoles().contains(Role.TENANT));
+        assertTrue(response.getRoles().contains(Role.USER));
         verify(zaloIdentityClient).getUserInfo(ZALO_TOKEN);
         verify(userRepository).findByZaloId(ZALO_ID);
         verify(userRepository, never()).save(any(User.class));
@@ -233,7 +233,7 @@ class AuthenticationServiceTest {
                         .id(USER_ID)
                         .zaloId(ZALO_ID)
                         .fullName(ZALO_NAME)
-                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.TENANT)))
+                        .roles(new java.util.HashSet<>(java.util.Set.of(Role.USER)))
                         .active(false)
                         .build();
 

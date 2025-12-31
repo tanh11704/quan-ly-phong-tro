@@ -2,6 +2,7 @@ package com.tpanh.backend.service;
 
 import com.tpanh.backend.dto.PageResponse;
 import com.tpanh.backend.dto.UserDTO;
+import com.tpanh.backend.enums.Role;
 import com.tpanh.backend.exception.AppException;
 import com.tpanh.backend.exception.ErrorCode;
 import com.tpanh.backend.mapper.UserMapper;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
@@ -78,5 +80,34 @@ public class UserService {
                 savedUser.getId());
 
         return userMapper.toDTO(savedUser);
+    }
+
+    @Transactional
+    public UserDTO grantRole(final String userId, final Role role) {
+        final var user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        validateGrantRole(role);
+
+        if (user.getRoles().contains(role)) {
+            throw new AppException(ErrorCode.ROLE_ALREADY_GRANTED);
+        }
+        user.addRole(role);
+        final var savedUser = userRepository.save(user);
+
+        log.info("Granted role {} to user {}", role, userId);
+        return userMapper.toDTO(savedUser);
+    }
+
+    private void validateGrantRole(final Role role) {
+        if (role == Role.ADMIN) {
+            throw new AppException(ErrorCode.CANNOT_GRANT_ADMIN_ROLE);
+        }
+
+        if (role != Role.MANAGER) {
+            throw new AppException(ErrorCode.INVALID_ROLE_GRANT);
+        }
     }
 }
