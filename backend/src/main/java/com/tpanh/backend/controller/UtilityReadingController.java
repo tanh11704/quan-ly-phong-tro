@@ -4,7 +4,6 @@ import com.tpanh.backend.dto.ApiResponse;
 import com.tpanh.backend.dto.UtilityReadingCreationRequest;
 import com.tpanh.backend.dto.UtilityReadingResponse;
 import com.tpanh.backend.dto.UtilityReadingUpdateRequest;
-import com.tpanh.backend.repository.BuildingRepository;
 import com.tpanh.backend.service.UtilityReadingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,7 +14,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class UtilityReadingController {
 
     private final UtilityReadingService utilityReadingService;
-    private final BuildingRepository buildingRepository;
 
     @Operation(
             summary = "Ghi chỉ số điện nước",
@@ -162,16 +159,6 @@ public class UtilityReadingController {
             @Parameter(description = "Tháng (VD: 2025-01)", example = "2025-01")
                     @RequestParam("month")
                     final String month) {
-        final var authentication = SecurityContextHolder.getContext().getAuthentication();
-        final var currentUserId = authentication.getName();
-
-        // Verify building belongs to current manager
-        buildingRepository
-                .findByIdAndManagerId(buildingId, currentUserId)
-                .orElseThrow(
-                        () ->
-                                new com.tpanh.backend.exception.AppException(
-                                        com.tpanh.backend.exception.ErrorCode.BUILDING_NOT_FOUND));
 
         final var response =
                 utilityReadingService.getUtilityReadingsByBuildingAndMonth(buildingId, month);
