@@ -29,7 +29,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,11 +52,6 @@ public class InvoiceService {
 
     @Transactional
     @PreAuthorize("@invoicePermission.canAccessBuildingInvoices(#buildingId, authentication)")
-    @Caching(
-            evict = {
-                @CacheEvict(value = "rooms", allEntries = true),
-                @CacheEvict(value = "tenantsByRoom", allEntries = true)
-            })
     public List<InvoiceResponse> createInvoicesForBuilding(
             final Integer buildingId, final String period) {
         final List<InvoiceResponse> results = new ArrayList<>();

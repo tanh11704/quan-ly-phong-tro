@@ -97,7 +97,7 @@ public class BuildingService {
 
     @Transactional
     @PreAuthorize("@buildingPermission.canAccessBuilding(#id, authentication)")
-    @CacheEvict(value = "buildings", allEntries = true)
+    @CacheEvict(value = "buildings", key = "#id")
     public BuildingResponse updateBuilding(final Integer id, final BuildingUpdateRequest request) {
         final var building =
                 buildingRepository
@@ -130,7 +130,7 @@ public class BuildingService {
 
     @Transactional
     @PreAuthorize("@buildingPermission.canAccessBuilding(#id, authentication)")
-    @CacheEvict(value = "buildings", allEntries = true)
+    @CacheEvict(value = "buildings", key = "#id")
     public void deleteBuilding(final Integer id) {
         final var building =
                 buildingRepository

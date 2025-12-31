@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +30,6 @@ public class UtilityReadingService {
     @Transactional
     @PreAuthorize(
             "@utilityReadingPermission.canAccessRoomUtilityReadings(#request.roomId, authentication)")
-    @CacheEvict(value = "rooms", allEntries = true)
     public UtilityReadingResponse createUtilityReading(
             final UtilityReadingCreationRequest request) {
         final Room room = getRoomOrThrow(request.getRoomId());
@@ -43,7 +41,6 @@ public class UtilityReadingService {
 
     @Transactional
     @PreAuthorize("@utilityReadingPermission.canAccessUtilityReading(#id, authentication)")
-    @CacheEvict(value = "rooms", allEntries = true)
     public UtilityReadingResponse updateUtilityReading(
             final Integer id, final UtilityReadingUpdateRequest request) {
         final UtilityReading reading = getReadingOrThrow(id);

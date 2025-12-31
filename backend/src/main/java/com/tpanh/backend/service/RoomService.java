@@ -52,7 +52,7 @@ public class RoomService {
     @PreAuthorize("@roomPermission.canAccessRoom(#id, authentication)")
     @Caching(
             evict = {
-                @CacheEvict(value = "roomById", key = "'room:' + #id"),
+                @CacheEvict(value = "roomById", key = "#id"),
                 @CacheEvict(value = "roomsByBuilding", allEntries = true)
             })
     public RoomResponse updateRoom(final Integer id, final RoomUpdateRequest request) {
@@ -71,7 +71,7 @@ public class RoomService {
     @PreAuthorize("@roomPermission.canAccessRoom(#id, authentication)")
     @Caching(
             evict = {
-                @CacheEvict(value = "roomById", key = "'room:' + #id"),
+                @CacheEvict(value = "roomById", key = "#id"),
                 @CacheEvict(value = "roomsByBuilding", allEntries = true)
             })
     public void deleteRoom(final Integer id) {
@@ -89,7 +89,7 @@ public class RoomService {
         return rooms.stream().map(roomMapper::toResponse).toList();
     }
 
-    @Cacheable(value = "roomById", key = "'room:' + #id")
+    @Cacheable(value = "roomById", key = "#id")
     @PreAuthorize("@roomPermission.canAccessRoom(#id, authentication)")
     public RoomResponse getRoomById(final Integer id) {
         final var room =

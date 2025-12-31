@@ -78,7 +78,7 @@ public class TenantService {
     }
 
     @PreAuthorize("@tenantPermission.canAccessTenant(#id, authentication)")
-    @Cacheable(value = "tenants", key = "'tenant:' + #id")
+    @Cacheable(value = "tenants", key = "#id")
     public TenantResponse getTenantById(final Integer id) {
         final var tenant =
                 tenantRepository
